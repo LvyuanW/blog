@@ -66,6 +66,8 @@ def plain(value):
     return ' '.join(html.fragment_fromstring(value, create_parent='div').text_content().split())
 
 def run(work, pdf_dir):
+    titles_path = ROOT / 'content/title-overrides.json'
+    title_overrides = json.loads(titles_path.read_text()) if titles_path.exists() else {}
     manifests = [work / 'manifest.json'] + sorted(work.glob('manifest-extra-*.json'))
     by_slug = {}
     for manifest in manifests:
@@ -80,6 +82,7 @@ def run(work, pdf_dir):
         slug = re.sub(r'^new\d+_', '', a['slug']).replace('_', '-')
         keep = ['title', 'original_title', 'url', 'date', 'publisher', 'author', 'date_kind', 'source_order', 'content_kind', 'source_note']
         data = {k: a[k] for k in keep if k in a}
+        data['title'] = title_overrides.get(a['slug'], data['title'])
         data.update({'slug': slug, 'source_id': a['slug'], 'category': category(a), 'blocks': []})
         shared_ids = set()
         id_counts = {}

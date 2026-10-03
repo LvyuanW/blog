@@ -1,0 +1,4 @@
+{
+  "traces_documentation": "传统软件由代码描述，而 Agent 由执行轨迹描述",
+  "improvement": "基于执行轨迹数据才能建立 Agent 迭代机制"
+}

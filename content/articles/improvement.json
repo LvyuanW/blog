@@ -1,5 +1,5 @@
 {
-  "title": "Agent 改进循环始于执行轨迹",
+  "title": "基于执行轨迹数据才能建立 Agent 迭代机制",
   "original_title": "The agent improvement loop starts with a trace",
   "url": "https://www.langchain.com/blog/traces-start-agent-improvement-loop",
   "date": "2026-03-31",

@@ -1,5 +1,5 @@
 {
-  "title": "代码是软件应用的文档，执行轨迹是 AI 应用的文档",
+  "title": "传统软件由代码描述，而 Agent 由执行轨迹描述",
   "original_title": "In software, the code documents the app. In AI, the traces do.",
   "url": "https://www.langchain.com/blog/in-software-the-code-documents-the-app-in-ai-the-traces-do",
   "date": "2026-01-10",

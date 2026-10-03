@@ -1,0 +1,375 @@
+{
+  "title": "如何通过中间件定制 Agent 运行框架",
+  "original_title": "How Middleware Lets You Customize Your Agent Harness",
+  "url": "https://www.langchain.com/blog/how-middleware-lets-you-customize-your-agent-harness",
+  "date": "2026-03-26",
+  "publisher": "LangChain",
+  "author": "Sydney Runkle",
+  "source_order": 22,
+  "slug": "middleware",
+  "source_id": "new22_middleware",
+  "category": "基础与架构",
+  "blocks": [
+    {
+      "id": "new22_middleware-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agent harnesses are what help build an agent, they connect an LLM to its environment and let it do things.</p>",
+      "zh": "<p>Agent 运行框架帮助我们构建 Agent：它将 LLM 与环境连接起来，让模型能够采取行动。</p>"
+    },
+    {
+      "id": "new22_middleware-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When you’re building an agent, it’s likely you’ll want build an application specific agent harness. “Agent Middleware” empowers you to build on top of LangChain and Deep Agent’s solid foundation, but customize them for your use case.</p>",
+      "zh": "<p>构建 Agent 时，你很可能希望拥有一个针对具体应用的运行框架。“Agent 中间件”让你能够以 LangChain 和 Deep Agents 的坚实基础为起点，再根据自己的使用场景进行定制。</p>"
+    },
+    {
+      "id": "new22_middleware-002",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What are agent harnesses</h2>",
+      "zh": "<h2>什么是 Agent 运行框架</h2>"
+    },
+    {
+      "id": "new22_middleware-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>An agent is a system built around a model. The model needs to be connected to an environment, data, memory, and tools. Agent harnesses are the system that helps you do that.</p>",
+      "zh": "<p>Agent 是围绕模型构建的系统。模型需要连接环境、数据、记忆与工具。Agent 运行框架，就是帮助你完成这些连接的系统。</p>"
+    },
+    {
+      "id": "new22_middleware-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The core of every agent harness is the same, and remarkably simple: an LLM, running in a loop, calling tools. Simple as it is, there's power in this core loop.</p>",
+      "zh": "<p>每个 Agent 运行框架的核心都相同，而且非常简单：一个在循环中运行、不断调用工具的 LLM。虽然简单，这个核心循环却蕴含着强大的能力。</p>"
+    },
+    {
+      "id": "new22_middleware-005",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/dd903fe6f1114bdbe9eb939f.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new22_middleware-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain contains <code>create_agent</code> - an abstraction with just this core loop.</p>",
+      "zh": "<p>LangChain 提供了 <code>create_agent</code>，它是仅包含这一核心循环的抽象。</p>"
+    },
+    {
+      "id": "new22_middleware-007",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Why you would want to customize your agent harnesses</h2>",
+      "zh": "<h2>为什么要定制 Agent 运行框架</h2>"
+    },
+    {
+      "id": "new22_middleware-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Different agent use cases have different needs. They may require different agent harnesses.</p>",
+      "zh": "<p>不同的 Agent 使用场景有不同需求，也可能需要不同的运行框架。</p>"
+    },
+    {
+      "id": "new22_middleware-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Some parts of the an agent harness - like instructions or tools - are pretty easy to customize. <code>create_agent</code> in LangChain lets you pass in a system prompt and tools for example.</p>",
+      "zh": "<p>运行框架的某些部分，例如指令或工具，很容易定制。比如，LangChain 中的 <code>create_agent</code> 允许你传入系统提示词和工具。</p>"
+    },
+    {
+      "id": "new22_middleware-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Other parts are more involved. What if you want always run a certain step before the model executes? What if you always want to check the tool output for certain things?</p>",
+      "zh": "<p>其他部分就更复杂一些。如果你希望每次模型执行前，都先运行一个指定步骤，该怎么办？如果你希望每次都检查工具输出中是否存在某些内容，又该怎么办？</p>"
+    },
+    {
+      "id": "new22_middleware-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Things that involve changing the core loop of the agent are trickier to change. When done correctly, it enables really powerful customization that still allows you to build on the core harness.</p>",
+      "zh": "<p>涉及修改 Agent 核心循环的内容，更难调整。但如果处理得当，就能在继续利用核心运行框架的同时，实现非常强大的定制。</p>"
+    },
+    {
+      "id": "new22_middleware-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>AgentMiddleware</code> is our answer for this - how we let people customize LangChain agents.</p>",
+      "zh": "<p><code>AgentMiddleware</code> 就是我们对此的答案，也是我们让开发者定制 LangChain Agent 的方式。</p>"
+    },
+    {
+      "id": "new22_middleware-013",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What is agent middleware?</h2>",
+      "zh": "<h2>什么是 Agent 中间件？</h2>"
+    },
+    {
+      "id": "new22_middleware-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>💡</p>",
+      "zh": "<p>💡</p>"
+    },
+    {
+      "id": "new22_middleware-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>“Middleware” is a general term often used in other software engineering practices, but below we refer to a different system which we call agent middleware.</p>",
+      "zh": "<p>“中间件”是其他软件工程实践中也经常使用的通用术语。不过，下文讨论的是一种不同的系统，我们称它为 Agent 中间件。</p>"
+    },
+    {
+      "id": "new22_middleware-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Middleware exposes a set of hooks that let you run custom logic before and after each step, so you can control what happens at every stage of the loop:</p>",
+      "zh": "<p>中间件提供一组钩子，让你在每个步骤执行前后运行自定义逻辑，从而控制循环中每个阶段发生什么：</p>"
+    },
+    {
+      "id": "new22_middleware-017",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/1f7f1be513737702fb2b4d79.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new22_middleware-018",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong><code>before_agent</code></strong>: Runs once on invocation. Good for loading memory, connecting to resources, or validating initial input.</li><li><strong><code>before_model</code></strong>: Fires before each model call. Use it to trim history or catch PII before it hits the LLM.</li><li><strong><code>wrap_model_call</code></strong>: Wraps the model call end-to-end. Caching, retries, and dynamic model requests like changing available tools all live here.</li><li><strong><code>wrap_tool_call</code></strong>: Wraps tool execution similarly. Inject context, intercept results, or gate which tools actually run.</li><li><strong><code>after_model</code></strong>: Runs after the model responds but before tools execute. The most natural place for human-in-the-loop.</li><li><strong><code>after_agent</code></strong>: Runs once on completion. Save results, send notifications, clean up.</li></ul>",
+      "zh": "<ul><li><strong><code>before_agent</code></strong>：在 Agent 被调用时运行一次。适合加载记忆、连接资源，或验证初始输入。</li><li><strong><code>before_model</code></strong>：每次模型调用前触发。可以用来裁剪历史记录，或在个人身份信息（PII）传入 LLM 前将其检测出来。</li><li><strong><code>wrap_model_call</code></strong>：从头到尾包装模型调用。缓存、重试，以及动态调整模型请求（例如改变可用工具），都在这里处理。</li><li><strong><code>wrap_tool_call</code></strong>：以类似方式包装工具执行。可以注入上下文、拦截结果，或控制哪些工具实际获准执行。</li><li><strong><code>after_model</code></strong>：在模型响应后、工具执行前运行。这是引入人类介入最自然的位置。</li><li><strong><code>after_agent</code></strong>：在完成时运行一次。可以保存结果、发送通知、清理资源。</li></ul>"
+    },
+    {
+      "id": "new22_middleware-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Middleware are composable, so you can mix and match to your heart’s content.</p>",
+      "zh": "<p>中间件可以组合，因此你可以按需灵活搭配。</p>"
+    },
+    {
+      "id": "new22_middleware-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain ships a set of prebuilt middleware for the most common patterns, like summarization, retries, and PII redaction. Builders can also subclass the <code>AgentMiddleware</code> class to write your own for anything bespoke to your business.</p>",
+      "zh": "<p>LangChain 内置了一组用于常见模式的中间件，例如摘要、重试与 PII 隐去。开发者还可以继承 <code>AgentMiddleware</code> 类，为业务特有的需求编写自己的中间件。</p>"
+    },
+    {
+      "id": "new22_middleware-021",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Examples of Middleware</h2>",
+      "zh": "<h2>中间件示例</h2>"
+    },
+    {
+      "id": "new22_middleware-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Customization needs tend to cluster around the same themes. Below are the most common use cases:</p>",
+      "zh": "<p>定制需求往往围绕相似的主题展开。下面是最常见的使用场景：</p>"
+    },
+    {
+      "id": "new22_middleware-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Business logic &amp; compliance.</strong> Some things can't live in a prompt, like PII redaction and content moderation. These are deterministic policies that have to fire every time. You can't prompt your way to HIPAA compliance.</p>",
+      "zh": "<p><strong>业务逻辑与合规。</strong>有些事情不能只靠提示词处理，例如 PII 隐去和内容审核。这些是必须每次都执行的确定性策略。你不能只靠提示词就满足 HIPAA 合规要求。</p>"
+    },
+    {
+      "id": "new22_middleware-024",
+      "tag": "h6",
+      "preserve": false,
+      "en": "<h6>Deep dive: PII detection</h6>",
+      "zh": "<h6>深入了解：PII 检测</h6>"
+    },
+    {
+      "id": "new22_middleware-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain’s builtin <a href=\"https://langchain-5e9cc07a-preview-srimpr-1771619406-31dcf4f.mintlify.app/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#pii-detection\" rel=\"noopener noreferrer\">PIIMiddleware</a> implements <code>before_model</code> and <code>after_model</code> hooks. It has the ability to mask/redact/hash PII on model inputs, outputs, and tool outputs. It can also raise a <code>PIIDetectionError</code> for the most critical PII detection situations.</p>",
+      "zh": "<p>LangChain 内置的 <a href=\"https://langchain-5e9cc07a-preview-srimpr-1771619406-31dcf4f.mintlify.app/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#pii-detection\" rel=\"noopener noreferrer\">PIIMiddleware</a> 实现了 <code>before_model</code> 和 <code>after_model</code> 钩子。它能够对模型输入、模型输出和工具输出中的 PII 进行遮蔽、隐去或哈希处理。对于最关键的 PII 检测情形，它还可以抛出 <code>PIIDetectionError</code>。</p>"
+    },
+    {
+      "id": "new22_middleware-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Dynamic agent control.</strong> Middleware can reshape the agent at runtime: inject tools based on current state, swap the model mid-task, update the system prompt as context evolves. It's active control over how the agent behaves at each step.</p>",
+      "zh": "<p><strong>动态控制 Agent。</strong>中间件可以在运行时调整 Agent：根据当前状态注入工具、在任务进行中更换模型，或者随着上下文变化更新系统提示词。这意味着主动控制 Agent 在每一步的行为。</p>"
+    },
+    {
+      "id": "new22_middleware-027",
+      "tag": "h6",
+      "preserve": false,
+      "en": "<h6>Deep dive: dynamic tool selection</h6>",
+      "zh": "<h6>深入了解：动态工具选择</h6>"
+    },
+    {
+      "id": "new22_middleware-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain’s <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#llm-tool-selector\" rel=\"noopener noreferrer\">LLMToolSelectorMiddleware</a> runs a fast LLM in the <code>wrap_model_call</code> hook to identify which tools from a registry are relevant for a given request. It then binds those tools to the model request to minimize context bloat from unnecessary tools in the main model call.</p>",
+      "zh": "<p>LangChain 的 <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#llm-tool-selector\" rel=\"noopener noreferrer\">LLMToolSelectorMiddleware</a> 在 <code>wrap_model_call</code> 钩子中运行一个速度较快的 LLM，判断工具注册表中哪些工具与当前请求相关。随后，它将这些工具绑定到模型请求上，尽量减少主模型调用中不必要工具造成的上下文膨胀。</p>"
+    },
+    {
+      "id": "new22_middleware-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Context management.</strong> The model is only as good as what you put in front of it. For example, you might need to summarize when you're approaching token limits and trim noisy tool inputs/outputs. Context engineering is a runtime problem, not a one-time prompt problem.</p>",
+      "zh": "<p><strong>上下文管理。</strong>模型的表现取决于你提供给它的内容。例如，接近 token 上限时，你可能需要生成摘要，并裁剪充满噪声的工具输入与输出。上下文工程是运行时的问题，而不是一次性编写提示词的问题。</p>"
+    },
+    {
+      "id": "new22_middleware-030",
+      "tag": "h6",
+      "preserve": false,
+      "en": "<h6>Deep dive: summarization and context offloading</h6>",
+      "zh": "<h6>深入了解：摘要与上下文卸载</h6>"
+    },
+    {
+      "id": "new22_middleware-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain’s builtin <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#summarization\" rel=\"noopener noreferrer\">SummarizationMiddleware</a> implements the <code>before_model</code> hook. To avoid context overflow, if message history exceeds a certain token threshold, its contents are summarized before being passed to the model. Extensions of this middleware implement a <code>wrap_tool_call</code> hook to extend verbose tool call inputs and outputs to the filesystem.</p>",
+      "zh": "<p>LangChain 内置的 <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#summarization\" rel=\"noopener noreferrer\">SummarizationMiddleware</a> 实现了 <code>before_model</code> 钩子。为避免上下文溢出，当消息历史超过一定 token 阈值时，它会先对内容进行摘要，再传给模型。这个中间件的扩展版本会实现 <code>wrap_tool_call</code> 钩子，将冗长的工具调用输入与输出转存到文件系统。</p>"
+    },
+    {
+      "id": "new22_middleware-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Production readiness.</strong> Middleware allows you to build in model/tool retry logic, model fallbacks, and human-in-the-loop with interrupts. These kinds of features don’t show up in demos, but are essential for production agents.</p>",
+      "zh": "<p><strong>为生产环境做好准备。</strong>中间件让你能够内置模型／工具重试逻辑、模型回退，以及通过中断实现的人类介入。这些功能在演示中不一定显眼，却是生产环境中的 Agent 必不可少的。</p>"
+    },
+    {
+      "id": "new22_middleware-033",
+      "tag": "h6",
+      "preserve": false,
+      "en": "<h6>Deep dive: model retries</h6>",
+      "zh": "<h6>深入了解：模型重试</h6>"
+    },
+    {
+      "id": "new22_middleware-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain’s builtin <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#model-retry\" rel=\"noopener noreferrer\">ModelRetryMiddleware</a> implements the <code>wrap_model_call</code> hook in order to wrap a model’s API call with a retry handler. This handler supports retry configuration such as retry count, backoff factor, and initial delay (to troubleshoot rate limiting).</p>",
+      "zh": "<p>LangChain 内置的 <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#model-retry\" rel=\"noopener noreferrer\">ModelRetryMiddleware</a> 实现了 <code>wrap_model_call</code> 钩子，用重试处理器包装模型的 API 调用。这个处理器支持重试次数、退避系数，以及初始延迟等重试配置，以应对速率限制问题。</p>"
+    },
+    {
+      "id": "new22_middleware-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Toolsets.</strong> Inject tools that require custom setup and teardown around the agent loop like connecting to an external tool server, initializing a shell, or spinning up a sandbox.</p>",
+      "zh": "<p><strong>工具集。</strong>注入那些需要在 Agent 循环前后进行自定义初始化和清理的工具，例如连接外部工具服务器、初始化 Shell，或启动沙箱。</p>"
+    },
+    {
+      "id": "new22_middleware-036",
+      "tag": "h6",
+      "preserve": false,
+      "en": "<h6>Deep dive: shell tool middleware</h6>",
+      "zh": "<h6>深入了解：Shell 工具中间件</h6>"
+    },
+    {
+      "id": "new22_middleware-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain’s <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#shell-tool\" rel=\"noopener noreferrer\">ShellToolMiddleware</a> implements the <code>before_agent</code> and <code>after_agent</code> hooks in order to initialize and teardown shell resources around the core agent loop. It also adds the shell tool to the model’s list of tools.</p>",
+      "zh": "<p>LangChain 的 <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/built-in?ref=blog.langchain.com#shell-tool\" rel=\"noopener noreferrer\">ShellToolMiddleware</a> 实现了 <code>before_agent</code> 和 <code>after_agent</code> 钩子，在核心 Agent 循环前后初始化并释放 Shell 资源。它还会把 Shell 工具加入模型的工具列表。</p>"
+    },
+    {
+      "id": "new22_middleware-038",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Deep Agents case study</h2>",
+      "zh": "<h2>Deep Agents 案例研究</h2>"
+    },
+    {
+      "id": "new22_middleware-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Deep Agents is a batteries included agent harness built entirely on <code>create_agent</code>, LangChain's standard entry point for building agents, with an opinionated middleware stack on top.</p>",
+      "zh": "<p>Deep Agents 是一个功能齐备、开箱即用的 Agent 运行框架。它完全构建在 LangChain 用于创建 Agent 的标准入口 <code>create_agent</code> 之上，并在上层加入了一组体现既定设计取舍的中间件。</p>"
+    },
+    {
+      "id": "new22_middleware-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here are a few of the middlewares that power Deep Agents:</p>",
+      "zh": "<p>下面是支撑 Deep Agents 的几个中间件：</p>"
+    },
+    {
+      "id": "new22_middleware-041",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><code>FilesystemMiddleware</code>: file-based context on/offloading and long-term memory</li><li><code>SubagentMiddleware</code>: subagents with context isolation</li><li><code>SummarizationMiddleware</code>: context overflow management for long-running tasks</li><li><code>SkillsMiddleware</code>: progressive disclosure of specialized capabilities</li><li>And more!</li></ul>",
+      "zh": "<ul><li><code>FilesystemMiddleware</code>：基于文件的上下文加载、卸载与长期记忆</li><li><code>SubagentMiddleware</code>：具有上下文隔离的子 Agent</li><li><code>SummarizationMiddleware</code>：长时间任务的上下文溢出管理</li><li><code>SkillsMiddleware</code>：专门能力的渐进式披露</li><li>以及更多功能！</li></ul>"
+    },
+    {
+      "id": "new22_middleware-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For a full review of the middleware powering Deep Agents, see <a href=\"https://docs.langchain.com/oss/python/deepagents/harness?ref=blog.langchain.com\" rel=\"noopener noreferrer\">this guide</a> and Vivek’s <a href=\"https://blog.langchain.com/the-anatomy-of-an-agent-harness/\" rel=\"noopener noreferrer\">anatomy of a harness</a> post.</p>",
+      "zh": "<p>如需全面了解支撑 Deep Agents 的中间件，请参阅<a href=\"https://docs.langchain.com/oss/python/deepagents/harness?ref=blog.langchain.com\" rel=\"noopener noreferrer\">这份指南</a>，以及 Vivek 撰写的<a href=\"https://blog.langchain.com/the-anatomy-of-an-agent-harness/\" rel=\"noopener noreferrer\">《剖析 Agent 运行框架》</a>。</p>"
+    },
+    {
+      "id": "new22_middleware-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>On top of all of this - you can add even more middleware to Deep Agents to customize it for your use case!</p>",
+      "zh": "<p>在上述能力的基础上，你还可以向 Deep Agents 添加更多中间件，让它适应自己的使用场景！</p>"
+    },
+    {
+      "id": "new22_middleware-044",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Why we’re betting on agent middleware</h2>",
+      "zh": "<h2>为什么我们看好 Agent 中间件</h2>"
+    },
+    {
+      "id": "new22_middleware-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Models are getting more capable, and that will change parts of the middleware stack. Some of what Deep Agents does today — summarization, tool selection, output trimming — will eventually be absorbed into the model itself.</p>",
+      "zh": "<p>模型正在变得更强，这会改变中间件栈中的一部分。Deep Agents 如今承担的一些工作——摘要、工具选择、输出裁剪——最终会被模型本身吸收。</p>"
+    },
+    {
+      "id": "new22_middleware-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But the underlying need won't change. Builders will always need levers for customization: deterministic policy enforcement, production readiness guardrails, use-case-specific business logic. None of that moves into the model. The harness is still where it lives, and middleware is still the cleanest way to expose it.</p>",
+      "zh": "<p>但底层需求不会改变。开发者始终需要进行定制的手段：确定性地执行策略、为生产使用提供防护机制，以及实现特定场景的业务逻辑。这些都不会转移到模型内部。它们仍然属于运行框架，而中间件依旧是将这些能力开放出来的最清晰方式。</p>"
+    },
+    {
+      "id": "new22_middleware-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We've seen this play out since the LangChain v1 launch. Middleware lets different teams own different concerns, keeps business logic decoupled from core agent code, and makes it easy to reuse logic across an org. Building Deep Agents entirely on top of it convinced us it's the right abstraction.</p>",
+      "zh": "<p>自 LangChain v1 发布以来，我们已经看到了这一点。中间件让不同团队负责不同事项，让业务逻辑与 Agent 核心代码解耦，并且便于在整个组织内复用逻辑。完全基于中间件构建 Deep Agents 的经历，让我们确信这是一种正确的抽象。</p>"
+    },
+    {
+      "id": "new22_middleware-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Want to get started from a barebones agent harness? Try out middleware in <a href=\"https://docs.langchain.com/oss/python/langchain/agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><code>create_agent</code></a>.</p>",
+      "zh": "<p>想从最精简的 Agent 运行框架开始？试试 <a href=\"https://docs.langchain.com/oss/python/langchain/agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><code>create_agent</code></a> 中的中间件。</p>"
+    },
+    {
+      "id": "new22_middleware-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Want to build on top of a more robust agent harness? Try out middleware in <a href=\"https://docs.langchain.com/oss/python/deepagents/quickstart?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><code>create_deep_agent</code></a>.</p>",
+      "zh": "<p>想在更完善的 Agent 运行框架上构建？试试 <a href=\"https://docs.langchain.com/oss/python/deepagents/quickstart?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><code>create_deep_agent</code></a> 中的中间件。</p>"
+    },
+    {
+      "id": "new22_middleware-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Want to contribute your own middleware? See guides for that <a href=\"https://docs.langchain.com/oss/python/integrations/middleware?ref=blog.langchain.com\" rel=\"noopener noreferrer\">here</a>.</p>",
+      "zh": "<p>想贡献自己编写的中间件？请查看<a href=\"https://docs.langchain.com/oss/python/integrations/middleware?ref=blog.langchain.com\" rel=\"noopener noreferrer\">这里的指南</a>。</p>"
+    }
+  ],
+  "description": "Agent 运行框架帮助我们构建 Agent：它将 LLM 与环境连接起来，让模型能够采取行动",
+  "reading_minutes": 8,
+  "downloads": {
+    "zh": "/downloads/middleware-zh.pdf",
+    "en": "/downloads/middleware-en.pdf"
+  }
+}

@@ -1,0 +1,1426 @@
+{
+  "title": "Claude Code 最佳实践",
+  "original_title": "Best practices for Claude Code",
+  "url": "https://code.claude.com/docs/en/best-practices",
+  "date": "2026-10-02",
+  "publisher": "Anthropic",
+  "date_kind": "last updated",
+  "source_order": 9,
+  "slug": "best-practices",
+  "source_id": "new09_best_practices",
+  "category": "基础与架构",
+  "blocks": [
+    {
+      "id": "new09_best_practices-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tips and patterns for getting the most out of Claude Code, from configuring your environment to scaling across parallel sessions.</p>",
+      "zh": "<p>从配置环境到扩展并行会话，本文介绍充分发挥 Claude Code 能力的技巧与模式。</p>"
+    },
+    {
+      "id": "new09_best_practices-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code is an agentic coding environment. Unlike a chatbot that answers questions and waits, Claude Code can read your files, run commands, make changes, and autonomously work through problems while you watch, redirect, or step away entirely.</p>",
+      "zh": "<p>Claude Code 是一个具备自主执行能力的编程环境。与回答问题后就等待下一条消息的聊天机器人不同，Claude Code 可以读取文件、运行命令、进行修改并自主解决问题；在此期间，你可以旁观、调整方向，也可以完全离开。</p>"
+    },
+    {
+      "id": "new09_best_practices-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This changes how you work. Instead of writing code yourself and asking Claude to review it, you describe what you want and Claude figures out how to build it. Claude explores, plans, and implements.</p>",
+      "zh": "<p>这改变了你的工作方式。你不再自己编写代码再让 Claude 审查，而是描述想要的结果，由 Claude 想清楚如何实现。Claude 会探索、规划并实施。</p>"
+    },
+    {
+      "id": "new09_best_practices-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But this autonomy still comes with a learning curve. Claude works within certain constraints you need to understand.</p>",
+      "zh": "<p>不过，这种自主性仍然需要一个学习过程。Claude 的工作受到某些约束，你需要理解这些约束。</p>"
+    },
+    {
+      "id": "new09_best_practices-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This guide covers patterns that have proven effective across Anthropic’s internal teams and for engineers using Claude Code across various codebases, languages, and environments. For how the agentic loop works, see <a href=\"https://code.claude.com/docs/en/how-claude-code-works\" rel=\"noopener noreferrer\">How Claude Code works</a>.</p>",
+      "zh": "<p>本指南介绍的模式，已经在 Anthropic 内部团队，以及使用 Claude Code 处理各种代码库、语言和环境的工程师中被证明有效。有关 Agent 循环的工作方式，请参阅<a href=\"https://code.claude.com/docs/en/how-claude-code-works\" rel=\"noopener noreferrer\">《Claude Code 如何工作》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-005",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Most best practices are based on one constraint: Claude’s context window fills up fast, and performance degrades as it fills.</p>",
+      "zh": "<p>大多数最佳实践都基于一个约束：Claude 的上下文窗口很快就会填满，而且随着内容增多，其表现会下降。</p>"
+    },
+    {
+      "id": "new09_best_practices-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude’s context window holds your entire conversation, including every message, every file Claude reads, and every command output. However, this can fill up fast. A single debugging session or codebase exploration might generate and consume tens of thousands of tokens.</p>",
+      "zh": "<p>Claude 的上下文窗口容纳整个对话，包括每一条消息、Claude 读取的每个文件，以及每条命令的输出。然而，它很快就可能被填满。单次调试会话或代码库探索，就可能生成并消耗数万 token。</p>"
+    },
+    {
+      "id": "new09_best_practices-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This matters since LLM performance degrades as context fills. When the context window is getting full, Claude may start “forgetting” earlier instructions or making more mistakes. The context window is the most important resource to manage. To see how a session fills up in practice, <a href=\"https://code.claude.com/docs/en/context-window\" rel=\"noopener noreferrer\">watch an interactive walkthrough</a> of what loads at startup and what each file read costs. Track context usage continuously with a <a href=\"https://code.claude.com/docs/en/statusline\" rel=\"noopener noreferrer\">custom status line</a>, and see <a href=\"https://code.claude.com/docs/en/costs#reduce-token-usage\" rel=\"noopener noreferrer\">Reduce token usage</a> for strategies on reducing token usage.</p>",
+      "zh": "<p>这很关键，因为随着上下文被填满，大语言模型的表现会下降。当上下文窗口接近满载时，Claude 可能开始“忘记”早先的指令，或犯更多错误。上下文窗口是最需要管理的资源。要了解一次会话实际如何逐渐填满，请<a href=\"https://code.claude.com/docs/en/context-window\" rel=\"noopener noreferrer\">观看交互式演示</a>，了解启动时加载了什么，以及每次文件读取的开销。使用<a href=\"https://code.claude.com/docs/en/statusline\" rel=\"noopener noreferrer\">自定义状态栏</a>持续跟踪上下文使用量，并参阅<a href=\"https://code.claude.com/docs/en/costs#reduce-token-usage\" rel=\"noopener noreferrer\">《减少 token 使用量》</a>了解相关策略。</p>"
+    },
+    {
+      "id": "new09_best_practices-009",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-010",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-give-claude-a-way-to-verify-its-work\"><span>Give Claude a way to verify its work</span></h2>",
+      "zh": "<h2>让 Claude 有办法验证自己的工作</h2>"
+    },
+    {
+      "id": "new09_best_practices-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Give Claude a check it can run: tests, a build, a screenshot to compare. It’s the difference between a session you watch and one you walk away from.</p>",
+      "zh": "<p>给 Claude 一项能够运行的检查：测试、构建，或者可供对比的截图。这决定了你是必须守着会话，还是可以放心离开。</p>"
+    },
+    {
+      "id": "new09_best_practices-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude stops when the work looks done. Without a check it can run, “looks done” is the only signal available, and you become the verification loop: every mistake waits for you to notice it. Give Claude something that produces a pass or fail, and the loop closes on its own. Claude does the work, runs the check, reads the result, and iterates until the check passes.</p>",
+      "zh": "<p>当工作看起来完成时，Claude 就会停下来。如果没有可以运行的检查，“看起来完成”就是唯一可用的信号，而你就成了验证循环：每个错误都要等你发现。给 Claude 一个能产出通过或失败结果的检查，这个循环便能自行闭合。Claude 完成工作、运行检查、读取结果，并不断迭代，直到检查通过。</p>"
+    },
+    {
+      "id": "new09_best_practices-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The check is anything that returns a signal Claude can read in the conversation: a test suite, a build exit code, a linter, a script that diffs output against a fixture, or a <a href=\"https://code.claude.com/docs/en/chrome\" rel=\"noopener noreferrer\">browser screenshot</a> compared against a design. Run <a href=\"https://code.claude.com/docs/en/skills#run-and-verify-your-app\" rel=\"noopener noreferrer\"><code>/verify</code></a> yourself after Claude’s check passes to confirm the change against the running app.</p>",
+      "zh": "<p>检查可以是任何能够返回信号、并让 Claude 在对话中读取的东西：测试套件、构建退出码、代码检查器、将输出与固定测试样本进行差异比较的脚本，或者与设计稿对照的<a href=\"https://code.claude.com/docs/en/chrome\" rel=\"noopener noreferrer\">浏览器截图</a>。Claude 的检查通过后，你再亲自运行 <a href=\"https://code.claude.com/docs/en/skills#run-and-verify-your-app\" rel=\"noopener noreferrer\"><code>/verify</code></a>，在正在运行的应用中确认这些改动。</p>"
+    },
+    {
+      "id": "new09_best_practices-014",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table><thead><tr><th>Strategy</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><strong>Provide verification criteria</strong></td><td><em>”implement a function that validates email addresses\"</em></td><td><em>\"write a validateEmail function. example test cases: <a href=\"mailto:user@example.com\">user@example.com</a> is true, invalid is false, <a href=\"mailto:user@.com\">user@.com</a> is false. run the tests after implementing”</em></td></tr><tr><td><strong>Verify UI changes visually</strong></td><td><em>”make the dashboard look better\"</em></td><td><em>\"[paste screenshot] implement this design. take a screenshot of the result and compare it to the original. list differences and fix them”</em></td></tr><tr><td><strong>Address root causes, not symptoms</strong></td><td><em>”the build is failing\"</em></td><td><em>\"the build fails with this error: [paste error]. fix it and verify the build succeeds. address the root cause, don’t suppress the error”</em></td></tr></tbody></table>"
+    },
+    {
+      "id": "new09_best_practices-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once the check exists, decide how hard it gates the stop:</p>",
+      "zh": "<p>有了检查之后，再决定它要在多大程度上控制任务能否停止：</p>"
+    },
+    {
+      "id": "new09_best_practices-016",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong>In one prompt</strong>: ask Claude to run the check and iterate in the same message, as in the table above.</li>\n<li><strong>Across a session</strong>: set the check as a <a href=\"https://code.claude.com/docs/en/goal\" rel=\"noopener noreferrer\"><code>/goal</code> condition</a>. A separate evaluator re-checks it after every turn and Claude keeps working until the goal resolves. If Claude stalls, Claude Code eventually stops the run with the goal still set — see <a href=\"https://code.claude.com/docs/en/goal#how-evaluation-works\" rel=\"noopener noreferrer\">how /goal evaluation works</a>.</li>\n<li><strong>As a deterministic gate</strong>: a <a href=\"https://code.claude.com/docs/en/hooks#stop\" rel=\"noopener noreferrer\">Stop hook</a> runs your check as a script and blocks the turn from ending until it passes. <a href=\"https://code.claude.com/docs/en/hooks#stop-input\" rel=\"noopener noreferrer\">Stop input</a> covers the cap on consecutive blocks.</li>\n<li><strong>By a second opinion</strong>: a <a href=\"https://code.claude.com/docs/en/sub-agents\" rel=\"noopener noreferrer\">verification subagent</a> or a <a href=\"https://code.claude.com/docs/en/workflows\" rel=\"noopener noreferrer\">dynamic workflow</a> that checks its own findings has a fresh model try to refute the result, so the agent doing the work isn’t the one grading it.</li>\n</ul>",
+      "zh": "<ul><li><strong>在单条提示词中：</strong>像上表一样，在同一条消息中要求 Claude 运行检查并迭代。</li><li><strong>贯穿整个会话：</strong>将检查设为 <a href=\"https://code.claude.com/docs/en/goal\" rel=\"noopener noreferrer\"><code>/goal</code> 条件</a>。独立的评估器会在每轮之后重新检查，Claude 则持续工作，直到目标得到解决。如果 Claude 停滞不前，Claude Code 最终会停止运行，但仍保留已设置的目标；请参阅<a href=\"https://code.claude.com/docs/en/goal#how-evaluation-works\" rel=\"noopener noreferrer\"> /goal 评估的工作方式</a>。</li><li><strong>作为确定性关卡：</strong><a href=\"https://code.claude.com/docs/en/hooks#stop\" rel=\"noopener noreferrer\">Stop hook</a> 以脚本形式运行检查，在通过之前阻止本轮结束。<a href=\"https://code.claude.com/docs/en/hooks#stop-input\" rel=\"noopener noreferrer\">Stop input</a> 说明了连续阻止的次数上限。</li><li><strong>引入第二意见：</strong>使用<a href=\"https://code.claude.com/docs/en/sub-agents\" rel=\"noopener noreferrer\">验证子 Agent</a>，或会检查自身发现的<a href=\"https://code.claude.com/docs/en/workflows\" rel=\"noopener noreferrer\">动态工作流</a>，让一个拥有新上下文的模型尝试反驳结果，使执行任务的 Agent 不再同时负责给自己打分。</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Each step trades setup for attention. The prompt version works on any task today. The <code>/goal</code> and Stop hook versions are what let an unattended run finish correctly without you.</p>",
+      "zh": "<p>每种做法都是用前期配置换取更少的持续关注。提示词方式现在就适用于任何任务。<code>/goal</code> 和 Stop hook 方式则能让无人值守的运行在你不在场时正确完成。</p>"
+    },
+    {
+      "id": "new09_best_practices-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Have Claude show evidence rather than asserting success: the test output, the command it ran and what it returned, or a screenshot of the result. Reviewing evidence is faster than re-running the verification yourself, and it works for sessions you weren’t watching.</p>",
+      "zh": "<p>让 Claude 展示证据，而不只是宣称成功：例如测试输出、它运行的命令及返回结果，或结果截图。查看证据比自己重新验证更快，也适用于你没有全程旁观的会话。</p>"
+    },
+    {
+      "id": "new09_best_practices-019",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-020",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-explore-first-then-plan-then-code\"><span>Explore first, then plan, then code</span></h2>",
+      "zh": "<h2>先探索，再规划，最后编写代码</h2>"
+    },
+    {
+      "id": "new09_best_practices-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Separate research and planning from implementation to avoid solving the wrong problem.</p>",
+      "zh": "<p>将研究和规划与实施分开，避免解决了错误的问题。</p>"
+    },
+    {
+      "id": "new09_best_practices-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Letting Claude jump straight to coding can produce code that solves the wrong problem. Use <a href=\"https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode\" rel=\"noopener noreferrer\">plan mode</a> to separate exploration from execution.</p>",
+      "zh": "<p>让 Claude 直接开始写代码，可能产出解决错误问题的实现。使用<a href=\"https://code.claude.com/docs/en/permission-modes#analyze-before-you-edit-with-plan-mode\" rel=\"noopener noreferrer\">规划模式</a>，将探索与执行分开。</p>"
+    },
+    {
+      "id": "new09_best_practices-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The recommended workflow has four phases:</p>",
+      "zh": "<p>推荐的工作流分为四个阶段：</p>"
+    },
+    {
+      "id": "new09_best_practices-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>1</p>",
+      "zh": "<p>1</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Explore</p>",
+      "zh": "<p>探索</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Enter plan mode by pressing <code>Shift+Tab</code> until the status bar shows <code>⏸ plan mode on</code>, or start the session with <code>claude --permission-mode plan</code>. Claude reads files and answers questions without making changes.</p>",
+      "zh": "<p>反复按 <code>Shift+Tab</code>，直到状态栏显示 <code>⏸ plan mode on</code>，即可进入规划模式；也可以用 <code>claude --permission-mode plan</code> 启动会话。Claude 会读取文件并回答问题，但不会进行修改。</p>"
+    },
+    {
+      "id": "new09_best_practices-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>claude (plan mode)</p>",
+      "zh": "<p>claude（规划模式）</p>"
+    },
+    {
+      "id": "new09_best_practices-028",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>read /src/auth and understand how we handle sessions and login.\nalso look at how we manage environment variables for secrets.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>2</p>",
+      "zh": "<p>2</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Plan</p>",
+      "zh": "<p>规划</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Ask Claude to create a detailed implementation plan.</p>",
+      "zh": "<p>让 Claude 创建详细的实施计划。</p>"
+    },
+    {
+      "id": "new09_best_practices-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>claude (plan mode)</p>",
+      "zh": "<p>claude（规划模式）</p>"
+    },
+    {
+      "id": "new09_best_practices-033",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>I want to add Google OAuth. What files need to change?\nWhat's the session flow? Create a plan.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Press <code>Ctrl+G</code> to open the plan in your text editor for direct editing before Claude proceeds.</p>",
+      "zh": "<p>按 <code>Ctrl+G</code>，在文本编辑器中打开计划，以便在 Claude 继续之前直接编辑。</p>"
+    },
+    {
+      "id": "new09_best_practices-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>3</p>",
+      "zh": "<p>3</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Implement</p>",
+      "zh": "<p>实施</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Switch out of plan mode by approving the plan or pressing <code>Shift+Tab</code>, then let Claude code, verifying against its plan.</p>",
+      "zh": "<p>通过批准计划或按 <code>Shift+Tab</code> 退出规划模式，然后让 Claude 编写代码，并依据计划进行验证。</p>"
+    },
+    {
+      "id": "new09_best_practices-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>claude</p>",
+      "zh": "<p>claude</p>"
+    },
+    {
+      "id": "new09_best_practices-039",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>implement the OAuth flow from your plan. write tests for the\ncallback handler, run the test suite and fix any failures.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>4</p>",
+      "zh": "<p>4</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Commit</p>",
+      "zh": "<p>提交</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Ask Claude to commit with a descriptive message and create a PR.</p>",
+      "zh": "<p>让 Claude 使用能清楚描述改动的提交说明提交代码，并创建 PR。</p>"
+    },
+    {
+      "id": "new09_best_practices-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>claude</p>",
+      "zh": "<p>claude</p>"
+    },
+    {
+      "id": "new09_best_practices-044",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>commit with a descriptive message and open a PR\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Plan mode is useful, but also adds overhead.</p>",
+      "zh": "<p>规划模式很有用，但也会增加额外开销。</p>"
+    },
+    {
+      "id": "new09_best_practices-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For tasks where the scope is clear and the fix is small (like fixing a typo, adding a log line, or renaming a variable) ask Claude to do it directly.</p>",
+      "zh": "<p>对于范围明确、改动很小的任务，例如修正拼写、添加一行日志或重命名变量，直接让 Claude 执行即可。</p>"
+    },
+    {
+      "id": "new09_best_practices-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Planning is most useful when you’re uncertain about the approach, when the change modifies multiple files, or when you’re unfamiliar with the code being modified. If you could describe the diff in one sentence, skip the plan.</p>",
+      "zh": "<p>当你不确定采用什么方案、改动涉及多个文件，或不熟悉将要修改的代码时，规划最有价值。如果你能用一句话描述整个 diff，就跳过规划。</p>"
+    },
+    {
+      "id": "new09_best_practices-048",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-049",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-provide-specific-context-in-your-prompts\"><span>Provide specific context in your prompts</span></h2>",
+      "zh": "<h2>在提示词中提供具体上下文</h2>"
+    },
+    {
+      "id": "new09_best_practices-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The more precise your instructions, the fewer corrections you’ll need.</p>",
+      "zh": "<p>指令越精确，之后需要纠正的次数就越少。</p>"
+    },
+    {
+      "id": "new09_best_practices-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude can infer intent, but it can’t read your mind. Reference specific files, mention constraints, and point to example patterns.</p>",
+      "zh": "<p>Claude 可以推断意图，但不会读心。引用具体文件、说明约束，并指出可参考的示例模式。</p>"
+    },
+    {
+      "id": "new09_best_practices-052",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table><thead><tr><th>Strategy</th><th>Before</th><th>After</th></tr></thead><tbody><tr><td><strong>Scope the task.</strong> Specify which file, what scenario, and testing preferences.</td><td><em>”add tests for foo.py\"</em></td><td><em>\"write a test for foo.py covering the edge case where the user is logged out. avoid mocks.”</em></td></tr><tr><td><strong>Point to sources.</strong> Direct Claude to the source that can answer a question.</td><td><em>”why does ExecutionFactory have such a weird api?\"</em></td><td><em>\"look through ExecutionFactory’s git history and summarize how its api came to be”</em></td></tr><tr><td><strong>Reference existing patterns.</strong> Point Claude to patterns in your codebase.</td><td><em>”add a calendar widget\"</em></td><td><em>\"look at how existing widgets are implemented on the home page to understand the patterns. HotDogWidget.php is a good example. follow the pattern to implement a new calendar widget that lets the user select a month and paginate forwards/backwards to pick a year. build from scratch without libraries other than the ones already used in the codebase.”</em></td></tr><tr><td><strong>Describe the symptom.</strong> Provide the symptom, the likely location, and what “fixed” looks like.</td><td><em>”fix the login bug\"</em></td><td><em>\"users report that login fails after session timeout. check the auth flow in src/auth/, especially token refresh. write a failing test that reproduces the issue, then fix it”</em></td></tr></tbody></table>"
+    },
+    {
+      "id": "new09_best_practices-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Vague prompts can be useful when you’re exploring and can afford to course-correct. A prompt like <code>\"what would you improve in this file?\"</code> can surface things you wouldn’t have thought to ask about.</p>",
+      "zh": "<p>当你正在探索，并且能够接受之后再调整方向时，模糊的提示词也有用。像 <code>\"what would you improve in this file?\"</code> 这样的提示词，可能会让你发现原本没有想到要问的事情。</p>"
+    },
+    {
+      "id": "new09_best_practices-054",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-provide-rich-content\"><span>Provide rich content</span></h3>",
+      "zh": "<h3>提供丰富的内容</h3>"
+    },
+    {
+      "id": "new09_best_practices-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Use <code>@</code> to reference files, paste screenshots/images, or pipe data directly.</p>",
+      "zh": "<p>使用 <code>@</code> 引用文件，粘贴截图或图片，或通过管道直接输入数据。</p>"
+    },
+    {
+      "id": "new09_best_practices-056",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can provide rich data to Claude in several ways:</p>",
+      "zh": "<p>你可以通过多种方式向 Claude 提供丰富的数据：</p>"
+    },
+    {
+      "id": "new09_best_practices-057",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong>Reference files with <code>@</code></strong> instead of describing where code lives. Claude reads the file before responding.</li>\n<li><strong>Paste images directly</strong>. Copy/paste or drag and drop images into the prompt.</li>\n<li><strong>Give URLs</strong> for documentation and API references. Use <code>/permissions</code> to allowlist frequently-used domains.</li>\n<li><strong>Pipe in data</strong> by running <code>cat error.log | claude -p \"explain this error\"</code> to send file contents directly.</li>\n<li><strong>Let Claude fetch what it needs</strong>. Tell Claude to pull context itself using Bash commands, MCP tools, or by reading files.</li>\n</ul>",
+      "zh": "<ul><li><strong>使用 <code>@</code> 引用文件，</strong>而不是描述代码位于哪里。Claude 会先读取文件，再作答。</li><li><strong>直接粘贴图片。</strong>将图片复制粘贴或拖放到提示词中。</li><li><strong>提供 URL，</strong>用于引用文档和 API 参考资料。用 <code>/permissions</code> 将常用域名加入允许列表。</li><li><strong>通过管道输入数据：</strong>运行 <code>cat error.log | claude -p \"explain this error\"</code>，直接发送文件内容。</li><li><strong>让 Claude 自行获取所需信息。</strong>告诉 Claude 使用 Bash 命令、MCP 工具或读取文件的方式，自行取得上下文。</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-058",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-059",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-configure-your-environment\"><span>Configure your environment</span></h2>",
+      "zh": "<h2>配置环境</h2>"
+    },
+    {
+      "id": "new09_best_practices-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A few setup steps make Claude Code significantly more effective across all your sessions. For a full overview of extension features and when to use each one, see <a href=\"https://code.claude.com/docs/en/features-overview\" rel=\"noopener noreferrer\">Extend Claude Code</a>.</p>",
+      "zh": "<p>几个配置步骤，就能显著提升 Claude Code 在所有会话中的效果。有关扩展功能的完整概览，以及何时使用各项功能，请参阅<a href=\"https://code.claude.com/docs/en/features-overview\" rel=\"noopener noreferrer\">《扩展 Claude Code》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-061",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-write-an-effective-claude-md\"><span>Write an effective CLAUDE.md</span></h3>",
+      "zh": "<h3>编写有效的 CLAUDE.md</h3>"
+    },
+    {
+      "id": "new09_best_practices-062",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run <code>/init</code> to generate a starter CLAUDE.md file based on your current project structure, then refine over time.</p>",
+      "zh": "<p>运行 <code>/init</code>，根据当前项目结构生成初始 CLAUDE.md 文件，再逐步完善。</p>"
+    },
+    {
+      "id": "new09_best_practices-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>CLAUDE.md is a special file that Claude reads at the start of every conversation. Include Bash commands, code style, and workflow rules. This gives Claude persistent context it can’t infer from code alone.</p>",
+      "zh": "<p>CLAUDE.md 是一个特殊文件，Claude 会在每次对话开始时读取它。将 Bash 命令、代码风格和工作流规则写在其中，为 Claude 提供仅靠代码无法推断的持久上下文。</p>"
+    },
+    {
+      "id": "new09_best_practices-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There’s no required format for CLAUDE.md files, but keep it short and human-readable. For example:</p>",
+      "zh": "<p>CLAUDE.md 文件没有固定格式要求，但应保持简短，方便人类阅读。例如：</p>"
+    },
+    {
+      "id": "new09_best_practices-065",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>CLAUDE.md</p>",
+      "zh": "<p>CLAUDE.md</p>"
+    },
+    {
+      "id": "new09_best_practices-066",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code># Code style\n- Use ES modules (import/export) syntax, not CommonJS (require)\n- Destructure imports when possible (eg. import { foo } from 'bar')\n\n# Workflow\n- Be sure to typecheck when you're done making a series of code changes\n- Prefer running single tests, and not the whole test suite, for performance\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run <code>/context</code> to confirm Claude loaded the file. CLAUDE.md is loaded every session, so only include things that apply broadly. For domain knowledge or workflows that are only relevant sometimes, use <a href=\"https://code.claude.com/docs/en/skills\" rel=\"noopener noreferrer\">skills</a> instead. Claude loads them on demand without bloating every conversation.</p>",
+      "zh": "<p>运行 <code>/context</code>，确认 Claude 已加载该文件。每次会话都会加载 CLAUDE.md，因此只放入普遍适用的内容。对于只在部分情况下相关的领域知识或工作流，改用 <a href=\"https://code.claude.com/docs/en/skills\" rel=\"noopener noreferrer\">Skills</a>。Claude 会按需加载它们，避免让每次对话都膨胀。</p>"
+    },
+    {
+      "id": "new09_best_practices-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Keep it concise. For each line, ask: <em>“Would removing this cause Claude to make mistakes?”</em> If not, cut it. Bloated CLAUDE.md files cause Claude to ignore your actual instructions!</p>",
+      "zh": "<p>保持简洁。对每一行都问自己：<em>“删掉它，会导致 Claude 犯错吗？”</em>如果不会，就删掉。臃肿的 CLAUDE.md 会让 Claude 忽略你真正的指令！</p>"
+    },
+    {
+      "id": "new09_best_practices-069",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table><thead><tr><th>✅ Include</th><th>❌ Exclude</th></tr></thead><tbody><tr><td>Bash commands Claude can’t guess</td><td>Anything Claude can figure out by reading code</td></tr><tr><td>Code style rules that differ from defaults</td><td>Standard language conventions Claude already knows</td></tr><tr><td>Testing instructions and preferred test runners</td><td>Detailed API documentation (link to docs instead)</td></tr><tr><td>Repository etiquette (branch naming, PR conventions)</td><td>Information that changes frequently</td></tr><tr><td>Architectural decisions specific to your project</td><td>Long explanations or tutorials</td></tr><tr><td>Developer environment quirks (required env vars)</td><td>File-by-file descriptions of the codebase</td></tr><tr><td>Common gotchas or non-obvious behaviors</td><td>Self-evident practices like “write clean code”</td></tr></tbody></table>"
+    },
+    {
+      "id": "new09_best_practices-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If Claude keeps doing something you don’t want despite having a rule against it, the file is probably too long and the rule is getting lost. If Claude asks you questions that are answered in CLAUDE.md, the phrasing might be ambiguous. Treat CLAUDE.md like code: review it when things go wrong, prune it regularly, and test changes by observing whether Claude’s behavior actually shifts. For a checked-in CLAUDE.md, run <a href=\"https://code.claude.com/docs/en/commands#all-commands\" rel=\"noopener noreferrer\"><code>/doctor</code></a> and Claude proposes cuts for content it can derive from the codebase.</p>",
+      "zh": "<p>如果明明已有禁止规则，Claude 仍不断做你不希望它做的事，可能是文件太长，规则被淹没了。如果 Claude 问的问题在 CLAUDE.md 中已有答案，可能是措辞存在歧义。把 CLAUDE.md 当作代码来对待：出问题时检查它，定期精简，并通过观察 Claude 的行为是否真正改变来验证修改。对于已提交到仓库的 CLAUDE.md，运行 <a href=\"https://code.claude.com/docs/en/commands#all-commands\" rel=\"noopener noreferrer\"><code>/doctor</code></a>，Claude 就会建议删减那些能够从代码库推导出来的内容。</p>"
+    },
+    {
+      "id": "new09_best_practices-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If Claude keeps skipping one instruction, add emphasis such as “IMPORTANT” to that line alone. If you emphasize many lines, none of them stands out. Check CLAUDE.md into git so your team can contribute. The file compounds in value over time.</p>",
+      "zh": "<p>如果 Claude 总是跳过某一条指令，只在那一行加上“IMPORTANT”之类的强调。如果强调很多行，就没有哪一行能突出出来。将 CLAUDE.md 提交到 git，让团队也能参与维护。这个文件的价值会随时间累积。</p>"
+    },
+    {
+      "id": "new09_best_practices-072",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>CLAUDE.md files can import additional files using <code>@path/to/import</code> syntax. For import rules and where CLAUDE.md files can live, see <a href=\"https://code.claude.com/docs/en/memory#claude-md-files\" rel=\"noopener noreferrer\">CLAUDE.md files</a>.</p>",
+      "zh": "<p>CLAUDE.md 可以使用 <code>@path/to/import</code> 语法导入其他文件。有关导入规则和 CLAUDE.md 可以放在哪些位置，请参阅<a href=\"https://code.claude.com/docs/en/memory#claude-md-files\" rel=\"noopener noreferrer\">《CLAUDE.md 文件》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-073",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-configure-permissions\"><span>Configure permissions</span></h3>",
+      "zh": "<h3>配置权限</h3>"
+    },
+    {
+      "id": "new09_best_practices-074",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To get fewer prompts without giving up control, pre-approve the tools you trust with <code>/permissions</code> and let sandboxed commands run without asking with <code>/sandbox</code>. Switch to Manual mode when you want to approve edits and commands yourself.</p>",
+      "zh": "<p>要在保留控制权的同时减少提示，可以用 <code>/permissions</code> 预先批准可信工具，并用 <code>/sandbox</code> 允许沙箱中的命令不经询问直接运行。如果想亲自批准编辑和命令，则切换到 Manual 模式。</p>"
+    },
+    {
+      "id": "new09_best_practices-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With Claude Code v2.1.283 or later, auto mode is the <a href=\"https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode\" rel=\"noopener noreferrer\">built-in starting permission mode</a> for interactive terminal and VS Code sessions: a separate classifier model reviews most actions instead of you and blocks only what looks risky, such as scope escalation, unknown infrastructure, or hostile-content-driven actions. On earlier versions, auto mode is the built-in starting permission mode only on Pro, Max, and Team plans.</p>",
+      "zh": "<p>从 Claude Code v2.1.283 开始，auto 模式是交互式终端和 VS Code 会话的<a href=\"https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode\" rel=\"noopener noreferrer\">内置初始权限模式</a>：一个独立的分类器模型会替你审查大多数操作，仅阻止看起来存在风险的操作，例如扩大任务范围、操作未知基础设施，或受恶意内容驱使的操作。在更早的版本中，只有 Pro、Max 和 Team 套餐默认以 auto 模式作为内置初始权限模式。</p>"
+    },
+    {
+      "id": "new09_best_practices-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In Manual mode, Claude Code asks before actions that might modify your system: file writes, Bash commands, MCP tools. That’s safe but tedious. After the tenth approval you’re clicking through rather than reviewing. Two tools cut those interruptions in Manual mode and apply in auto mode as well:</p>",
+      "zh": "<p>在 Manual 模式下，Claude Code 会在执行可能修改系统的操作之前询问，例如写入文件、运行 Bash 命令和使用 MCP 工具。这很安全，但也很繁琐。批准到第十次时，你可能已经只是在机械地点确认，而不是认真审查。有两种工具可以减少 Manual 模式中的打断，而且同样适用于 auto 模式：</p>"
+    },
+    {
+      "id": "new09_best_practices-077",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong>Permission allowlists</strong>: permit specific tools you know are safe, like <code>npm run lint</code> or <code>git commit</code></li>\n<li><strong>Sandboxing</strong>: enable OS-level isolation that restricts filesystem and network access, allowing Claude to work more freely within defined boundaries</li>\n</ul>",
+      "zh": "<ul><li><strong>权限允许列表：</strong>允许你知道安全的特定工具操作，例如 <code>npm run lint</code> 或 <code>git commit</code>。</li><li><strong>沙箱：</strong>启用操作系统级隔离，限制文件系统和网络访问，让 Claude 在明确的边界内更自由地工作。</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-078",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Read more about <a href=\"https://code.claude.com/docs/en/permission-modes\" rel=\"noopener noreferrer\">permission modes</a>, <a href=\"https://code.claude.com/docs/en/permissions\" rel=\"noopener noreferrer\">permission rules</a>, and <a href=\"https://code.claude.com/docs/en/sandboxing\" rel=\"noopener noreferrer\">sandboxing</a>.</p>",
+      "zh": "<p>进一步了解<a href=\"https://code.claude.com/docs/en/permission-modes\" rel=\"noopener noreferrer\">权限模式</a>、<a href=\"https://code.claude.com/docs/en/permissions\" rel=\"noopener noreferrer\">权限规则</a>和<a href=\"https://code.claude.com/docs/en/sandboxing\" rel=\"noopener noreferrer\">沙箱</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-079",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-use-cli-tools\"><span>Use CLI tools</span></h3>",
+      "zh": "<h3>使用 CLI 工具</h3>"
+    },
+    {
+      "id": "new09_best_practices-080",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tell Claude Code to use CLI tools like <code>gh</code>, <code>aws</code>, <code>gcloud</code>, and <code>sentry-cli</code> when interacting with external services.</p>",
+      "zh": "<p>与外部服务交互时，告诉 Claude Code 使用 <code>gh</code>、<code>aws</code>、<code>gcloud</code> 和 <code>sentry-cli</code> 等 CLI 工具。</p>"
+    },
+    {
+      "id": "new09_best_practices-081",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>CLI tools are the most context-efficient way to interact with external services. If you use GitHub, install the <code>gh</code> CLI. Claude knows how to use it for creating issues, opening pull requests, and reading comments. Without <code>gh</code>, Claude can still use the GitHub API, but unauthenticated requests often hit rate limits.</p>",
+      "zh": "<p>CLI 工具是与外部服务交互时最节省上下文的方式。如果你使用 GitHub，就安装 <code>gh</code> CLI。Claude 知道如何用它创建 issue、发起拉取请求和读取评论。没有 <code>gh</code>，Claude 仍可以使用 GitHub API，但未经认证的请求经常会触发速率限制。</p>"
+    },
+    {
+      "id": "new09_best_practices-082",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude is also effective at learning CLI tools it doesn’t already know. Try prompts like <code>Use 'foo-cli-tool --help' to learn about foo tool, then use it to solve A, B, C.</code></p>",
+      "zh": "<p>Claude 也很擅长学习自己还不熟悉的 CLI 工具。可以尝试这样的提示词：<code>Use 'foo-cli-tool --help' to learn about foo tool, then use it to solve A, B, C.</code></p>"
+    },
+    {
+      "id": "new09_best_practices-083",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-connect-mcp-servers\"><span>Connect MCP servers</span></h3>",
+      "zh": "<h3>连接 MCP 服务器</h3>"
+    },
+    {
+      "id": "new09_best_practices-084",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run <code>claude mcp add</code> with a server name and URL or command to connect external tools like Notion, Figma, or your database. For example: <code>claude mcp add --transport http notion https://mcp.notion.com/mcp</code>.</p>",
+      "zh": "<p>运行 <code>claude mcp add</code>，并提供服务器名称及 URL 或命令，即可连接 Notion、Figma 或数据库等外部工具。例如：<code>claude mcp add --transport http notion https://mcp.notion.com/mcp</code>。</p>"
+    },
+    {
+      "id": "new09_best_practices-085",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With <a href=\"https://code.claude.com/docs/en/mcp\" rel=\"noopener noreferrer\">MCP servers</a>, you can ask Claude to implement features from issue trackers, query databases, analyze monitoring data, integrate designs from Figma, and automate workflows.</p>",
+      "zh": "<p>借助 <a href=\"https://code.claude.com/docs/en/mcp\" rel=\"noopener noreferrer\">MCP 服务器</a>，你可以让 Claude 根据问题跟踪系统中的条目实现功能、查询数据库、分析监控数据、集成 Figma 设计，以及自动执行工作流。</p>"
+    },
+    {
+      "id": "new09_best_practices-086",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-set-up-hooks\"><span>Set up hooks</span></h3>",
+      "zh": "<h3>设置 Hooks</h3>"
+    },
+    {
+      "id": "new09_best_practices-087",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Use hooks for actions that must happen every time with zero exceptions.</p>",
+      "zh": "<p>对于每次都必须执行、不能有任何例外的操作，使用 Hooks。</p>"
+    },
+    {
+      "id": "new09_best_practices-088",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://code.claude.com/docs/en/hooks-guide\" rel=\"noopener noreferrer\">Hooks</a> run scripts automatically at specific points in Claude’s workflow. Unlike CLAUDE.md instructions which are advisory, hooks are deterministic and guarantee the action happens.</p>",
+      "zh": "<p><a href=\"https://code.claude.com/docs/en/hooks-guide\" rel=\"noopener noreferrer\">Hooks</a> 会在 Claude 工作流的特定节点自动运行脚本。CLAUDE.md 中的指令属于建议性要求，而 Hooks 是确定性的，可以保证操作执行。</p>"
+    },
+    {
+      "id": "new09_best_practices-089",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude can write hooks for you. Try prompts like <em>“Write a hook that runs eslint after every file edit”</em> or <em>“Write a hook that blocks writes to the migrations folder.”</em> Edit <code>.claude/settings.json</code> directly to configure hooks by hand, and run <code>/hooks</code> to browse what’s configured.</p>",
+      "zh": "<p>Claude 可以帮你编写 Hooks。试试这样的提示词：<em>“编写一个 Hook，在每次文件编辑后运行 eslint”</em>，或<em>“编写一个 Hook，阻止对 migrations 文件夹的写入。”</em>若要手动配置 Hooks，直接编辑 <code>.claude/settings.json</code>，并运行 <code>/hooks</code> 浏览现有配置。</p>"
+    },
+    {
+      "id": "new09_best_practices-090",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-create-skills\"><span>Create skills</span></h3>",
+      "zh": "<h3>创建 Skills</h3>"
+    },
+    {
+      "id": "new09_best_practices-091",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Create <code>SKILL.md</code> files in <code>.claude/skills/</code> to give Claude domain knowledge and reusable workflows.</p>",
+      "zh": "<p>在 <code>.claude/skills/</code> 中创建 <code>SKILL.md</code> 文件，为 Claude 提供领域知识和可复用工作流。</p>"
+    },
+    {
+      "id": "new09_best_practices-092",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://code.claude.com/docs/en/skills\" rel=\"noopener noreferrer\">Skills</a> extend Claude’s knowledge with information specific to your project, team, or domain. Claude applies them automatically when relevant, or you can invoke them directly with <code>/skill-name</code>.</p>",
+      "zh": "<p><a href=\"https://code.claude.com/docs/en/skills\" rel=\"noopener noreferrer\">Skills</a> 使用与你的项目、团队或领域相关的特定信息扩展 Claude 的知识。Claude 会在相关时自动应用它们，你也可以通过 <code>/skill-name</code> 直接调用。</p>"
+    },
+    {
+      "id": "new09_best_practices-093",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Create a skill by adding a directory with a <code>SKILL.md</code> to <code>.claude/skills/</code>:</p>",
+      "zh": "<p>在 <code>.claude/skills/</code> 中添加一个包含 <code>SKILL.md</code> 的目录，即可创建 Skill：</p>"
+    },
+    {
+      "id": "new09_best_practices-094",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>.claude/skills/api-conventions/SKILL.md</p>",
+      "zh": "<p>.claude/skills/api-conventions/SKILL.md</p>"
+    },
+    {
+      "id": "new09_best_practices-095",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>---\nname: api-conventions\ndescription: REST API design conventions for our services\n---\n# API Conventions\n- Use kebab-case for URL paths\n- Use camelCase for JSON properties\n- Always include pagination for list endpoints\n- Version APIs in the URL path (/v1/, /v2/)\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-096",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills can also define repeatable workflows you invoke directly:</p>",
+      "zh": "<p>Skills 也可以定义由你直接调用的可重复工作流：</p>"
+    },
+    {
+      "id": "new09_best_practices-097",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>.claude/skills/fix-issue/SKILL.md</p>",
+      "zh": "<p>.claude/skills/fix-issue/SKILL.md</p>"
+    },
+    {
+      "id": "new09_best_practices-098",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>---\nname: fix-issue\ndescription: Fix a GitHub issue\ndisable-model-invocation: true\n---\nAnalyze and fix the GitHub issue: $ARGUMENTS.\n\n1. Use `gh issue view` to get the issue details\n2. Understand the problem described in the issue\n3. Search the codebase for relevant files\n4. Implement the necessary changes to fix the issue\n5. Write and run tests to verify the fix\n6. Ensure code passes linting and type checking\n7. Create a descriptive commit message\n8. Push and create a PR\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-099",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run <code>/fix-issue 1234</code> to invoke it. Use <code>disable-model-invocation: true</code> for workflows with side effects that you want to trigger manually.</p>",
+      "zh": "<p>运行 <code>/fix-issue 1234</code> 即可调用它。对于具有副作用、且希望手动触发的工作流，使用 <code>disable-model-invocation: true</code>。</p>"
+    },
+    {
+      "id": "new09_best_practices-100",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-create-custom-subagents\"><span>Create custom subagents</span></h3>",
+      "zh": "<h3>创建自定义子 Agent</h3>"
+    },
+    {
+      "id": "new09_best_practices-101",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Define specialized assistants in <code>.claude/agents/</code> that Claude can delegate to for isolated tasks.</p>",
+      "zh": "<p>在 <code>.claude/agents/</code> 中定义专门的助手，让 Claude 可以将独立任务委派给它们。</p>"
+    },
+    {
+      "id": "new09_best_practices-102",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://code.claude.com/docs/en/sub-agents\" rel=\"noopener noreferrer\">Subagents</a> run in their own context with their own set of allowed tools. They’re useful for tasks that read many files or need specialized focus without cluttering your main conversation.</p>",
+      "zh": "<p><a href=\"https://code.claude.com/docs/en/sub-agents\" rel=\"noopener noreferrer\">子 Agent</a> 在各自的上下文中运行，并有各自允许使用的工具集。它们适合需要读取大量文件或专注于特定领域的任务，同时不会把主对话塞满。</p>"
+    },
+    {
+      "id": "new09_best_practices-103",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>.claude/agents/security-reviewer.md</p>",
+      "zh": "<p>.claude/agents/security-reviewer.md</p>"
+    },
+    {
+      "id": "new09_best_practices-104",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>---\nname: security-reviewer\ndescription: Reviews code for security vulnerabilities\ntools: Read, Grep, Glob, Bash\nmodel: opus\n---\nYou are a senior security engineer. Review code for:\n- Injection vulnerabilities (SQL, XSS, command injection)\n- Authentication and authorization flaws\n- Secrets or credentials in code\n- Insecure data handling\n\nProvide specific line references and suggested fixes.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-105",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tell Claude to use subagents explicitly: <em>“Use a subagent to review this code for security issues.”</em></p>",
+      "zh": "<p>明确告诉 Claude 使用子 Agent：<em>“使用一个子 Agent，审查这段代码中的安全问题。”</em></p>"
+    },
+    {
+      "id": "new09_best_practices-106",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-install-plugins\"><span>Install plugins</span></h3>",
+      "zh": "<h3>安装插件</h3>"
+    },
+    {
+      "id": "new09_best_practices-107",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run <code>/plugin</code> to browse the marketplace. Plugins add skills, tools, and integrations without configuration.</p>",
+      "zh": "<p>运行 <code>/plugin</code> 浏览插件市场。插件可以添加 Skills、工具和集成，无须配置。</p>"
+    },
+    {
+      "id": "new09_best_practices-108",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://code.claude.com/docs/en/plugins/overview\" rel=\"noopener noreferrer\">Plugins</a> bundle skills, hooks, subagents, and MCP servers into a single installable unit from the community and Anthropic. If you work with a typed language, install a <a href=\"https://code.claude.com/docs/en/plugins/code-intelligence\" rel=\"noopener noreferrer\">code intelligence plugin</a> to give Claude precise symbol navigation and automatic error detection after edits.</p>",
+      "zh": "<p><a href=\"https://code.claude.com/docs/en/plugins/overview\" rel=\"noopener noreferrer\">插件</a>将 Skills、Hooks、子 Agent 和 MCP 服务器打包成一个可安装单元，由社区和 Anthropic 提供。如果你使用有类型系统的编程语言，安装一个<a href=\"https://code.claude.com/docs/en/plugins/code-intelligence\" rel=\"noopener noreferrer\">代码智能插件</a>，让 Claude 能够精确导航到符号，并在编辑后自动检测错误。</p>"
+    },
+    {
+      "id": "new09_best_practices-109",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For guidance on choosing between skills, subagents, hooks, and MCP, see <a href=\"https://code.claude.com/docs/en/features-overview#match-features-to-your-goal\" rel=\"noopener noreferrer\">Extend Claude Code</a>.</p>",
+      "zh": "<p>有关如何在 Skills、子 Agent、Hooks 和 MCP 之间选择，请参阅<a href=\"https://code.claude.com/docs/en/features-overview#match-features-to-your-goal\" rel=\"noopener noreferrer\">《扩展 Claude Code》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-110",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-111",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-communicate-effectively\"><span>Communicate effectively</span></h2>",
+      "zh": "<h2>有效沟通</h2>"
+    },
+    {
+      "id": "new09_best_practices-112",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Ask Claude the questions you’d ask another engineer, and for larger features have Claude interview you and write a spec before you start implementing.</p>",
+      "zh": "<p>把你会问其他工程师的问题拿来问 Claude；对于规模较大的功能，在开始实现之前，先让 Claude 向你提问并写出规格说明。</p>"
+    },
+    {
+      "id": "new09_best_practices-113",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-ask-codebase-questions\"><span>Ask codebase questions</span></h3>",
+      "zh": "<h3>询问代码库相关问题</h3>"
+    },
+    {
+      "id": "new09_best_practices-114",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Ask Claude questions you’d ask a senior engineer.</p>",
+      "zh": "<p>向 Claude 提出你会问资深工程师的问题。</p>"
+    },
+    {
+      "id": "new09_best_practices-115",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When onboarding to a new codebase, use Claude Code for learning and exploration. You can ask Claude the same sorts of questions you would ask another engineer:</p>",
+      "zh": "<p>熟悉新代码库时，可以使用 Claude Code 进行学习和探索。你可以像向其他工程师请教一样提问：</p>"
+    },
+    {
+      "id": "new09_best_practices-116",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>How does logging work?</li>\n<li>How do I make a new API endpoint?</li>\n<li>What does <code>async move { ... }</code> do on line 134 of <code>foo.rs</code>?</li>\n<li>What edge cases does <code>CustomerOnboardingFlowImpl</code> handle?</li>\n<li>Why does this code call <code>foo()</code> instead of <code>bar()</code> on line 333?</li>\n</ul>",
+      "zh": "<ul><li>日志机制如何工作？</li><li>怎样创建一个新的 API 端点？</li><li><code>foo.rs</code> 第 134 行的 <code>async move { ... }</code> 是做什么的？</li><li><code>CustomerOnboardingFlowImpl</code> 处理了哪些边界情况？</li><li>为什么这段代码在第 333 行调用 <code>foo()</code>，而不是 <code>bar()</code>？</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-117",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Using Claude Code this way is an effective onboarding workflow, improving ramp-up time and reducing load on other engineers. No special prompting required: ask questions directly.</p>",
+      "zh": "<p>这样使用 Claude Code，是一种有效的上手工作流，能够缩短熟悉项目的时间，并减轻其他工程师的负担。不需要特殊的提示技巧，直接提问即可。</p>"
+    },
+    {
+      "id": "new09_best_practices-118",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-let-claude-interview-you\"><span>Let Claude interview you</span></h3>",
+      "zh": "<h3>让 Claude 向你提问</h3>"
+    },
+    {
+      "id": "new09_best_practices-119",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For larger features, have Claude interview you first. Start with a minimal prompt and ask Claude to interview you using the <code>AskUserQuestion</code> tool.</p>",
+      "zh": "<p>对于规模较大的功能，先让 Claude 对你进行访谈。用一个最简提示词开始，并要求 Claude 使用 <code>AskUserQuestion</code> 工具向你提问。</p>"
+    },
+    {
+      "id": "new09_best_practices-120",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude asks about things you might not have considered yet, including technical implementation, UI/UX, edge cases, and tradeoffs. Replace <code>[brief description]</code> with your feature before sending the prompt.</p>",
+      "zh": "<p>Claude 会询问你可能还没有考虑到的事情，包括技术实现、UI/UX、边界情况和取舍。发送提示词之前，将 <code>[brief description]</code> 替换为你的功能描述。</p>"
+    },
+    {
+      "id": "new09_best_practices-121",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>I want to build [brief description]. Interview me in detail using the AskUserQuestion tool.\n\nAsk about technical implementation, UI/UX, edge cases, concerns, and tradeoffs. Don't ask obvious questions, dig into the hard parts I might not have considered.\n\nKeep interviewing until we've covered everything, then write a complete spec to SPEC.md.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-122",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once the spec is complete, start a fresh session to execute it. The new session has clean context focused entirely on implementation, and you have a written spec to reference.</p>",
+      "zh": "<p>规格说明完成后，启动一个新会话来实施。新会话拥有干净的上下文，可以完全聚焦实现，而你也有一份书面规格说明可供参考。</p>"
+    },
+    {
+      "id": "new09_best_practices-123",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The most useful specs are self-contained: they name the files and interfaces involved, state what is out of scope, and end with an end-to-end verification step that proves the feature works. Time spent making the spec precise pays off more than time spent watching the implementation.</p>",
+      "zh": "<p>最有用的规格说明是自包含的：明确涉及哪些文件和接口，说明哪些内容不在范围内，并以一个能证明功能有效的端到端验证步骤收尾。花时间把规格说明写准确，比花时间盯着实现过程更有回报。</p>"
+    },
+    {
+      "id": "new09_best_practices-124",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-125",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-manage-your-session\"><span>Manage your session</span></h2>",
+      "zh": "<h2>管理会话</h2>"
+    },
+    {
+      "id": "new09_best_practices-126",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Conversations are persistent and reversible. Use this to your advantage!</p>",
+      "zh": "<p>对话可以持久保存，也可以回退。充分利用这一点！</p>"
+    },
+    {
+      "id": "new09_best_practices-127",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-course-correct-early-and-often\"><span>Course-correct early and often</span></h3>",
+      "zh": "<h3>尽早、频繁地纠正方向</h3>"
+    },
+    {
+      "id": "new09_best_practices-128",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Correct Claude as soon as you notice it going off track.</p>",
+      "zh": "<p>一旦发现 Claude 偏离方向，就立即纠正。</p>"
+    },
+    {
+      "id": "new09_best_practices-129",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The best results come from tight feedback loops. Though Claude occasionally solves problems perfectly on the first attempt, correcting it quickly generally produces better solutions faster.</p>",
+      "zh": "<p>紧密的反馈循环能带来最好的结果。虽然 Claude 偶尔能在第一次尝试时就完美解决问题，但快速纠正它，通常能更快得到更好的方案。</p>"
+    },
+    {
+      "id": "new09_best_practices-130",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong><code>Esc</code></strong>: stop Claude mid-action with the <code>Esc</code> key. Context is preserved, so you can redirect.</li>\n<li><strong><code>Esc + Esc</code> or <code>/rewind</code></strong>: press <code>Esc</code> twice or run <code>/rewind</code> to open the rewind menu and restore previous conversation and code state, or summarize from a selected message.</li>\n<li><strong><code>\"Undo that\"</code></strong>: have Claude revert its changes.</li>\n<li><strong><code>/clear</code></strong>: reset context between unrelated tasks. Long sessions with irrelevant context can reduce performance.</li>\n</ul>",
+      "zh": "<ul><li><strong><code>Esc</code>：</strong>按 <code>Esc</code> 在操作中途停止 Claude。上下文会保留，因此你可以调整方向。</li><li><strong><code>Esc + Esc</code> 或 <code>/rewind</code>：</strong>连按两次 <code>Esc</code>，或运行 <code>/rewind</code>，打开回退菜单，恢复之前的对话与代码状态，或从选定消息处开始总结。</li><li><strong><code>\"Undo that\"</code>：</strong>让 Claude 撤销它的修改。</li><li><strong><code>/clear</code>：</strong>在不相关的任务之间重置上下文。包含无关上下文的长会话会降低表现。</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-131",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you’ve corrected Claude more than twice on the same issue in one session, the context is cluttered with failed approaches. Run <code>/clear</code> and start fresh with a more specific prompt that incorporates what you learned. A clean session with a better prompt almost always outperforms a long session with accumulated corrections.</p>",
+      "zh": "<p>如果在同一会话中，你已经针对同一问题纠正 Claude 超过两次，上下文里就充斥着失败方案了。运行 <code>/clear</code>，用一个更具体、融入了已学到经验的提示词重新开始。一个使用更好提示词的干净会话，几乎总比不断累积纠正信息的长会话表现更好。</p>"
+    },
+    {
+      "id": "new09_best_practices-132",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-manage-context-aggressively\"><span>Manage context aggressively</span></h3>",
+      "zh": "<h3>积极管理上下文</h3>"
+    },
+    {
+      "id": "new09_best_practices-133",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run <code>/clear</code> between unrelated tasks to reset context.</p>",
+      "zh": "<p>在不相关的任务之间运行 <code>/clear</code>，重置上下文。</p>"
+    },
+    {
+      "id": "new09_best_practices-134",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code automatically compacts conversation history when you approach context limits, which preserves important code and decisions while freeing space.</p>",
+      "zh": "<p>当接近上下文上限时，Claude Code 会自动压缩对话历史，保留重要代码和决策，同时释放空间。</p>"
+    },
+    {
+      "id": "new09_best_practices-135",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>During long sessions, Claude’s context window can fill with irrelevant conversation, file contents, and commands. This can reduce performance and sometimes distract Claude.</p>",
+      "zh": "<p>在长会话中，Claude 的上下文窗口可能被无关对话、文件内容和命令填满。这会降低表现，有时还会分散 Claude 的注意力。</p>"
+    },
+    {
+      "id": "new09_best_practices-136",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Use <code>/clear</code> frequently between tasks to reset the context window entirely</li>\n<li>When auto compaction triggers, Claude summarizes what matters most, including code patterns, file states, and key decisions</li>\n<li>For more control, run <code>/compact &lt;instructions&gt;</code>, like <code>/compact Focus on the API changes</code></li>\n<li>To compact only part of the conversation, use <code>Esc + Esc</code> or <code>/rewind</code>, select a message checkpoint, and choose <strong>Summarize from here</strong> or <strong>Summarize up to here</strong>. The first condenses messages from that point forward while keeping earlier context intact; the second condenses earlier messages while keeping recent ones in full. See <a href=\"https://code.claude.com/docs/en/checkpointing#rewind-and-summarize\" rel=\"noopener noreferrer\">the rewind menu’s summarize options</a>.</li>\n<li>Customize compaction behavior in CLAUDE.md with instructions like <code>\"When compacting, always preserve the full list of modified files and any test commands\"</code> to ensure critical context survives summarization</li>\n<li>For questions that don’t need to stay in context, use <a href=\"https://code.claude.com/docs/en/interactive-mode#side-questions-with-%2Fbtw\" rel=\"noopener noreferrer\"><code>/btw</code></a>. The answer never enters conversation history, so you can check a detail without growing context.</li>\n</ul>",
+      "zh": "<ul><li>在任务之间经常使用 <code>/clear</code>，彻底重置上下文窗口。</li><li>自动压缩触发时，Claude 会总结最重要的内容，包括代码模式、文件状态和关键决策。</li><li>若要更精细地控制，运行 <code>/compact &lt;instructions&gt;</code>，例如 <code>/compact Focus on the API changes</code>。</li><li>若只想压缩部分对话，使用 <code>Esc + Esc</code> 或 <code>/rewind</code>，选择一个消息检查点，然后选择 <strong>Summarize from here（从此处开始总结）</strong>或 <strong>Summarize up to here（总结到此处）</strong>。前者压缩从该位置开始的后续消息，保留之前的上下文；后者压缩较早的消息，完整保留最近的消息。参阅<a href=\"https://code.claude.com/docs/en/checkpointing#rewind-and-summarize\" rel=\"noopener noreferrer\">回退菜单的总结选项</a>。</li><li>在 CLAUDE.md 中用诸如 <code>\"When compacting, always preserve the full list of modified files and any test commands\"</code> 的指令定制压缩行为，确保关键信息在总结之后仍被保留。</li><li>对于无须保留在上下文中的问题，使用 <a href=\"https://code.claude.com/docs/en/interactive-mode#side-questions-with-%2Fbtw\" rel=\"noopener noreferrer\"><code>/btw</code></a>。答案不会进入对话历史，因此你可以确认细节，而不增加上下文。</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-137",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-use-subagents-for-investigation\"><span>Use subagents for investigation</span></h3>",
+      "zh": "<h3>使用子 Agent 开展调查</h3>"
+    },
+    {
+      "id": "new09_best_practices-138",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Delegate research with <code>\"use subagents to investigate X\"</code>. They explore in a separate context, keeping your main conversation clean for implementation.</p>",
+      "zh": "<p>通过 <code>\"use subagents to investigate X\"</code> 委派研究。子 Agent 在独立上下文中探索，让主对话保持干净，专注实施。</p>"
+    },
+    {
+      "id": "new09_best_practices-139",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Since context is your fundamental constraint, use subagents to keep research out of it. When Claude researches a codebase it reads lots of files, all of which consume your context. Subagents run in separate context windows and report back summaries:</p>",
+      "zh": "<p>既然上下文是根本约束，就用子 Agent 将研究过程移出主上下文。Claude 研究代码库时会读取大量文件，这些都会消耗上下文。子 Agent 在独立的上下文窗口中运行，并汇报摘要：</p>"
+    },
+    {
+      "id": "new09_best_practices-140",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>Use subagents to investigate how our authentication system handles token\nrefresh, and whether we have any existing OAuth utilities I should reuse.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-141",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can also use subagents for verification after Claude implements something. See <a href=\"https://code.claude.com/docs/en/best-practices#add-an-adversarial-review-step\" rel=\"noopener noreferrer\">Add an adversarial review step</a>.</p>",
+      "zh": "<p>你也可以在 Claude 完成实现后，使用子 Agent 进行验证。参阅<a href=\"https://code.claude.com/docs/en/best-practices#add-an-adversarial-review-step\" rel=\"noopener noreferrer\">《添加对抗式审查步骤》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-142",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-rewind-with-checkpoints\"><span>Rewind with checkpoints</span></h3>",
+      "zh": "<h3>利用检查点回退</h3>"
+    },
+    {
+      "id": "new09_best_practices-143",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every prompt you send that starts a turn creates a checkpoint. You can restore conversation, code, or both to any previous checkpoint.</p>",
+      "zh": "<p>你发送的每条开启新一轮交互的提示词，都会创建一个检查点。你可以将对话、代码或二者一起恢复到之前任意检查点。</p>"
+    },
+    {
+      "id": "new09_best_practices-144",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude automatically snapshots files before each change so a checkpoint can restore them. Double-tap <code>Escape</code> or run <code>/rewind</code> to open the rewind menu. You can restore conversation only, restore code only, restore both, or summarize from a selected message. See <a href=\"https://code.claude.com/docs/en/checkpointing\" rel=\"noopener noreferrer\">Checkpointing</a> for details.</p>",
+      "zh": "<p>每次修改之前，Claude 都会自动为文件创建快照，让检查点能够恢复文件。连按两次 <code>Escape</code> 或运行 <code>/rewind</code>，即可打开回退菜单。你可以仅恢复对话、仅恢复代码、同时恢复二者，或从选定消息处开始总结。详情请参阅<a href=\"https://code.claude.com/docs/en/checkpointing\" rel=\"noopener noreferrer\">《检查点》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-145",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Instead of carefully planning every move, you can tell Claude to try something risky. If it doesn’t work, rewind and try a different approach. Checkpoints are saved with the conversation, so you can close your terminal, resume the session later, and still rewind.</p>",
+      "zh": "<p>你不必小心规划每一步，也可以让 Claude 尝试有风险的方案。如果不奏效，就回退并换一种方法。检查点会随对话一起保存，因此你可以关闭终端，之后恢复会话，仍然能够回退。</p>"
+    },
+    {
+      "id": "new09_best_practices-146",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Checkpoints only track changes made through Claude’s file editing tools. Changes made through Bash commands or external processes are not captured. This isn’t a replacement for git.</p>",
+      "zh": "<p>检查点只跟踪通过 Claude 文件编辑工具做出的修改。通过 Bash 命令或外部进程产生的改动不会被记录。它不能替代 git。</p>"
+    },
+    {
+      "id": "new09_best_practices-147",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-resume-conversations\"><span>Resume conversations</span></h3>",
+      "zh": "<h3>恢复对话</h3>"
+    },
+    {
+      "id": "new09_best_practices-148",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Name sessions with <code>/rename</code> and treat them like branches: each workstream gets its own persistent context.</p>",
+      "zh": "<p>使用 <code>/rename</code> 为会话命名，并像对待分支一样管理它们：每条工作线都有自己的持久上下文。</p>"
+    },
+    {
+      "id": "new09_best_practices-149",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code saves conversations locally, so when a task spans multiple sittings you don’t have to re-explain the context. Run <a href=\"https://code.claude.com/docs/en/sessions#resume-a-session\" rel=\"noopener noreferrer\"><code>claude --continue</code></a> to pick up where you left off, or <code>claude --resume</code> to choose from a list. Give sessions descriptive names like <code>oauth-migration</code> so you can find them later. See <a href=\"https://code.claude.com/docs/en/sessions\" rel=\"noopener noreferrer\">Manage sessions</a> for the full set of resume, branch, and naming controls.</p>",
+      "zh": "<p>Claude Code 会在本地保存对话，因此当一个任务需要分多次完成时，你不必重新解释上下文。运行 <a href=\"https://code.claude.com/docs/en/sessions#resume-a-session\" rel=\"noopener noreferrer\"><code>claude --continue</code></a> 从上次停止的地方继续，或用 <code>claude --resume</code> 从列表中选择。给会话起一个有描述性的名称，例如 <code>oauth-migration</code>，方便之后查找。完整的恢复、分支和命名控制，请参阅<a href=\"https://code.claude.com/docs/en/sessions\" rel=\"noopener noreferrer\">《管理会话》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-150",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-151",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-automate-and-scale\"><span>Automate and scale</span></h2>",
+      "zh": "<h2>自动化与规模扩展</h2>"
+    },
+    {
+      "id": "new09_best_practices-152",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once you’re effective with one Claude, multiply your output with parallel sessions, non-interactive mode, and fan-out patterns.</p>",
+      "zh": "<p>当你能高效使用一个 Claude 之后，就可以通过并行会话、非交互模式和扇出模式成倍提升产出。</p>"
+    },
+    {
+      "id": "new09_best_practices-153",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-run-non-interactive-mode\"><span>Run non-interactive mode</span></h3>",
+      "zh": "<h3>运行非交互模式</h3>"
+    },
+    {
+      "id": "new09_best_practices-154",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Use <code>claude -p \"prompt\"</code> in CI, pre-commit hooks, or scripts. Add <code>--output-format stream-json --verbose</code> for streaming JSON output.</p>",
+      "zh": "<p>在 CI、pre-commit 钩子或脚本中使用 <code>claude -p \"prompt\"</code>。添加 <code>--output-format stream-json --verbose</code>，即可获得流式 JSON 输出。</p>"
+    },
+    {
+      "id": "new09_best_practices-155",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With <code>claude -p \"your prompt\"</code>, you can run Claude non-interactively, without an interactive prompt. The run still creates a resumable session unless you pass <code>--no-session-persistence</code>. <a href=\"https://code.claude.com/docs/en/headless\" rel=\"noopener noreferrer\">Non-interactive mode</a> is how you integrate Claude into CI pipelines, pre-commit hooks, or any automated workflow. The output formats let you parse results programmatically: plain text, JSON, or streaming JSON.</p>",
+      "zh": "<p>通过 <code>claude -p \"your prompt\"</code>，你可以以非交互方式运行 Claude，不出现交互式输入提示。除非传入 <code>--no-session-persistence</code>，否则该次运行仍会创建可恢复的会话。<a href=\"https://code.claude.com/docs/en/headless\" rel=\"noopener noreferrer\">非交互模式</a>是将 Claude 集成到 CI 流水线、pre-commit 钩子或任何自动化工作流的方式。输出格式包括纯文本、JSON 和流式 JSON，便于程序化解析结果。</p>"
+    },
+    {
+      "id": "new09_best_practices-156",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code># One-off queries\nclaude -p \"Explain what this project does\"\n\n# Structured output for scripts\nclaude -p \"List all API endpoints\" --output-format json\n\n# Streaming for real-time processing\nclaude -p \"Analyze this log file\" --output-format stream-json --verbose\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-157",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The first command prints plain text. The <code>json</code> format returns a single JSON object with a <code>result</code> field. The <code>stream-json</code> format prints one JSON object per line, starting with an init event.</p>",
+      "zh": "<p>第一条命令输出纯文本。<code>json</code> 格式返回一个含有 <code>result</code> 字段的 JSON 对象。<code>stream-json</code> 格式每行输出一个 JSON 对象，从 init 事件开始。</p>"
+    },
+    {
+      "id": "new09_best_practices-158",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-run-multiple-claude-sessions\"><span>Run multiple Claude sessions</span></h3>",
+      "zh": "<h3>运行多个 Claude 会话</h3>"
+    },
+    {
+      "id": "new09_best_practices-159",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Run multiple Claude sessions in parallel to speed up development, run isolated experiments, or start complex workflows.</p>",
+      "zh": "<p>并行运行多个 Claude 会话，可以加快开发、进行相互隔离的实验，或启动复杂工作流。</p>"
+    },
+    {
+      "id": "new09_best_practices-160",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Pick the parallel approach that fits how much coordination you want to do yourself, and add messaging when the sessions need to pass findings between them:</p>",
+      "zh": "<p>根据你愿意亲自承担多少协调工作，选择合适的并行方式；当会话之间需要交换发现时，再加入消息通信：</p>"
+    },
+    {
+      "id": "new09_best_practices-161",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><a href=\"https://code.claude.com/docs/en/worktrees\" rel=\"noopener noreferrer\">Worktrees</a>: run separate CLI sessions in isolated git checkouts so edits don’t collide</li>\n<li><a href=\"https://code.claude.com/docs/en/cross-session-messaging\" rel=\"noopener noreferrer\">Cross-session messaging</a>: let the sessions you run yourself pass findings to each other</li>\n<li><a href=\"https://code.claude.com/docs/en/desktop#work-in-parallel-with-sessions\" rel=\"noopener noreferrer\">Desktop app</a>: manage multiple local sessions visually, optionally each in its own worktree</li>\n<li><a href=\"https://code.claude.com/docs/en/claude-code-on-the-web\" rel=\"noopener noreferrer\">Use Claude Code in the cloud</a>: run sessions on Anthropic-managed infrastructure by default</li>\n<li><a href=\"https://code.claude.com/docs/en/agent-view\" rel=\"noopener noreferrer\">Agent view</a>: research preview. Run <code>claude agents</code> to dispatch sessions that keep running in the background and watch them from one screen</li>\n<li><a href=\"https://code.claude.com/docs/en/agent-teams\" rel=\"noopener noreferrer\">Agent teams</a>: experimental and disabled by default. Automated coordination of multiple sessions with shared tasks, messaging, and a team lead</li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://code.claude.com/docs/en/worktrees\" rel=\"noopener noreferrer\">Worktrees：</a>在相互隔离的 git 检出目录中运行独立的 CLI 会话，避免编辑冲突。</li><li><a href=\"https://code.claude.com/docs/en/cross-session-messaging\" rel=\"noopener noreferrer\">跨会话消息：</a>让你自行运行的会话相互传递发现。</li><li><a href=\"https://code.claude.com/docs/en/desktop#work-in-parallel-with-sessions\" rel=\"noopener noreferrer\">桌面应用：</a>以可视化方式管理多个本地会话，也可以让每个会话拥有独立的 worktree。</li><li><a href=\"https://code.claude.com/docs/en/claude-code-on-the-web\" rel=\"noopener noreferrer\">在云端使用 Claude Code：</a>默认在 Anthropic 管理的基础设施上运行会话。</li><li><a href=\"https://code.claude.com/docs/en/agent-view\" rel=\"noopener noreferrer\">Agent 视图：</a>研究预览功能。运行 <code>claude agents</code>，派发能够在后台持续运行的会话，并在同一屏幕上查看它们。</li><li><a href=\"https://code.claude.com/docs/en/agent-teams\" rel=\"noopener noreferrer\">Agent 团队：</a>实验性功能，默认关闭。通过共享任务、消息通信和团队负责人，自动协调多个会话。</li></ul>"
+    },
+    {
+      "id": "new09_best_practices-162",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Beyond parallelizing work, multiple sessions enable quality-focused workflows. A fresh context improves code review since Claude won’t be biased toward code it just wrote.</p>",
+      "zh": "<p>除了并行处理工作，多会话也支持以质量为重点的工作流。全新的上下文能改善代码审查，因为 Claude 不会偏向自己刚写出的代码。</p>"
+    },
+    {
+      "id": "new09_best_practices-163",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For example, use a Writer/Reviewer pattern:</p>",
+      "zh": "<p>例如，使用“编写者／审查者”模式：</p>"
+    },
+    {
+      "id": "new09_best_practices-164",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table><thead><tr><th>Session A (Writer)</th><th>Session B (Reviewer)</th></tr></thead><tbody><tr><td><code>Implement a rate limiter for our API endpoints</code></td><td></td></tr><tr><td></td><td><code>Review the rate limiter implementation in @src/middleware/rateLimiter.ts. Look for edge cases, race conditions, and consistency with our existing middleware patterns.</code></td></tr><tr><td><code>Here's the review feedback: [Session B output]. Address these issues.</code></td><td></td></tr></tbody></table>"
+    },
+    {
+      "id": "new09_best_practices-165",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can do something similar with tests: have one Claude write tests, then another write code to pass them.</p>",
+      "zh": "<p>测试也可以采用类似做法：让一个 Claude 编写测试，再让另一个 Claude 编写能够通过测试的代码。</p>"
+    },
+    {
+      "id": "new09_best_practices-166",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-fan-out-across-files\"><span>Fan out across files</span></h3>",
+      "zh": "<h3>跨文件扇出任务</h3>"
+    },
+    {
+      "id": "new09_best_practices-167",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Loop through tasks calling <code>claude -p</code> for each. Use <code>--allowedTools</code> to scope permissions for batch operations.</p>",
+      "zh": "<p>循环遍历任务，为每个任务调用 <code>claude -p</code>。使用 <code>--allowedTools</code> 限定批量操作的权限范围。</p>"
+    },
+    {
+      "id": "new09_best_practices-168",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For large migrations or analyses, you can distribute work across many parallel Claude invocations. Run <a href=\"https://code.claude.com/docs/en/commands#all-commands\" rel=\"noopener noreferrer\"><code>/batch &lt;instruction&gt;</code></a> to have Claude split the change across 5 to 30 subagents. Each subagent works in its own worktree. To drive the fan-out from your own script instead, loop over <code>claude -p</code>:</p>",
+      "zh": "<p>对于大规模迁移或分析，你可以将工作分配给多个并行的 Claude 调用。运行 <a href=\"https://code.claude.com/docs/en/commands#all-commands\" rel=\"noopener noreferrer\"><code>/batch &lt;instruction&gt;</code></a>，让 Claude 将改动拆分给 5 到 30 个子 Agent；每个子 Agent 都在自己的 worktree 中工作。如果希望改为用自己的脚本驱动扇出，则循环调用 <code>claude -p</code>：</p>"
+    },
+    {
+      "id": "new09_best_practices-169",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>1</p>",
+      "zh": "<p>1</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-170",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Generate a task list</p>",
+      "zh": "<p>生成任务列表</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-171",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Have Claude write the list of files that need migrating to a file, so the loop in the next step can read it, with a prompt like <code>list all 2,000 Python files that need migrating and save the list to files.txt</code></p>",
+      "zh": "<p>让 Claude 将需要迁移的文件列表写入一个文件，以供下一步的循环读取，例如使用提示词 <code>list all 2,000 Python files that need migrating and save the list to files.txt</code>。</p>"
+    },
+    {
+      "id": "new09_best_practices-172",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>2</p>",
+      "zh": "<p>2</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-173",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Write a script to loop through the list</p>",
+      "zh": "<p>编写脚本，循环遍历列表</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-174",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>for file in $(cat files.txt); do\n  claude -p \"Migrate $file from Python 2 to Python 3. Return OK or FAIL.\" \\\n    --allowedTools \"Edit,Bash(git commit *)\"\ndone\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-175",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>3</p>",
+      "zh": "<p>3</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-176",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Test on a few files, then run on all of them</p>",
+      "zh": "<p>先在少量文件上测试，再运行全部文件</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new09_best_practices-177",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Refine your prompt based on what goes wrong with the first 2-3 files, then run on the full set. The <code>--allowedTools</code> flag restricts what Claude can do, which matters when you’re running unattended.</p>",
+      "zh": "<p>根据前 2–3 个文件上遇到的问题完善提示词，然后再处理完整集合。<code>--allowedTools</code> 参数限制 Claude 能执行的操作，在无人值守运行时尤为重要。</p>"
+    },
+    {
+      "id": "new09_best_practices-178",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can also integrate Claude into existing data/processing pipelines:</p>",
+      "zh": "<p>你也可以将 Claude 集成到现有的数据或处理流水线中：</p>"
+    },
+    {
+      "id": "new09_best_practices-179",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>claude -p \"&lt;your prompt&gt;\" --output-format json | your_command\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-180",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-run-autonomously-with-auto-mode\"><span>Run autonomously with auto mode</span></h3>",
+      "zh": "<h3>使用 auto 模式自主运行</h3>"
+    },
+    {
+      "id": "new09_best_practices-181",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For uninterrupted execution with background safety checks, use <a href=\"https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode\" rel=\"noopener noreferrer\">auto mode</a>. A classifier model reviews commands before they run, blocking scope escalation, unknown infrastructure, and hostile-content-driven actions while letting routine work proceed without prompts.</p>",
+      "zh": "<p>若希望不中断地执行，同时在后台进行安全检查，使用 <a href=\"https://code.claude.com/docs/en/permission-modes#eliminate-prompts-with-auto-mode\" rel=\"noopener noreferrer\">auto 模式</a>。分类器模型会在命令执行前审查，阻止扩大任务范围、操作未知基础设施，以及受恶意内容驱使的操作，同时允许常规工作不经提示继续进行。</p>"
+    },
+    {
+      "id": "new09_best_practices-182",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>claude --permission-mode auto -p \"fix all lint errors\"\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-183",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When the classifier repeatedly blocks actions in a non-interactive run with the <code>-p</code> flag, Claude Code doesn’t stop the run. See <a href=\"https://code.claude.com/docs/en/permission-modes#when-auto-mode-falls-back\" rel=\"noopener noreferrer\">when auto mode falls back</a> for what happens instead and for the thresholds.</p>",
+      "zh": "<p>在带有 <code>-p</code> 参数的非交互运行中，即使分类器反复阻止操作，Claude Code 也不会停止运行。有关此时会发生什么以及相关阈值，请参阅<a href=\"https://code.claude.com/docs/en/permission-modes#when-auto-mode-falls-back\" rel=\"noopener noreferrer\">《auto 模式何时回退》</a>。</p>"
+    },
+    {
+      "id": "new09_best_practices-184",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-add-an-adversarial-review-step\"><span>Add an adversarial review step</span></h3>",
+      "zh": "<h3>添加对抗式审查步骤</h3>"
+    },
+    {
+      "id": "new09_best_practices-185",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Before treating a task as done, have a subagent review the diff in a fresh context and report gaps.</p>",
+      "zh": "<p>在认定任务完成之前，让一个子 Agent 在全新的上下文中审查 diff，并报告遗漏或不足。</p>"
+    },
+    {
+      "id": "new09_best_practices-186",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The longer Claude works unattended, the more an independent check matters before you count the work as done. A reviewer running in a fresh <a href=\"https://code.claude.com/docs/en/sub-agents\" rel=\"noopener noreferrer\">subagent</a> context sees only the diff and the criteria you give it, not the reasoning that produced the change, so it evaluates the result on its own terms.</p>",
+      "zh": "<p>Claude 无人值守工作的时间越长，在认定工作完成之前进行独立检查就越重要。运行在全新<a href=\"https://code.claude.com/docs/en/sub-agents\" rel=\"noopener noreferrer\">子 Agent</a> 上下文中的审查者，只能看到 diff 和你提供的标准，看不到产生改动的推理过程，因此会独立评估结果。</p>"
+    },
+    {
+      "id": "new09_best_practices-187",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For a correctness check, run the bundled <a href=\"https://code.claude.com/docs/en/commands\" rel=\"noopener noreferrer\"><code>/code-review</code> skill</a>, which reviews the current diff for bugs in a fresh subagent and returns findings to the session. To check the diff against your plan instead, write the review prompt yourself. Name the work to check, the plan to check it against, and what counts as a finding:</p>",
+      "zh": "<p>如果要检查正确性，运行内置的 <a href=\"https://code.claude.com/docs/en/commands\" rel=\"noopener noreferrer\"><code>/code-review</code> Skill</a>。它会在一个新的子 Agent 中检查当前 diff 的缺陷，并将发现返回到会话中。如果想根据计划检查 diff，则自己编写审查提示词，明确要检查的工作、作为依据的计划，以及什么才算需要报告的问题：</p>"
+    },
+    {
+      "id": "new09_best_practices-188",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>Use a subagent to review the rate limiter diff against PLAN.md. Check that\nevery requirement is implemented, the listed edge cases have tests, and\nnothing outside the task's scope changed. Report gaps, not style preferences.\n</code></pre>"
+    },
+    {
+      "id": "new09_best_practices-189",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Because the reviewer runs as a subagent, the implementing session receives the gaps directly and can fix them and re-review without you copying findings between windows.</p>",
+      "zh": "<p>由于审查者作为子 Agent 运行，负责实现的会话会直接收到问题，能够修复后再次审查，无须你在窗口之间复制审查结果。</p>"
+    },
+    {
+      "id": "new09_best_practices-190",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A reviewer prompted to find gaps will usually report some, even when the work is sound, because that is what it was asked to do. Chasing every finding leads to over-engineering: extra abstraction layers, defensive code, and tests for cases that can’t happen. Tell the reviewer to flag only gaps that affect correctness or the stated requirements, and treat the rest as optional.</p>",
+      "zh": "<p>一个被要求寻找缺口的审查者，通常总会报告一些问题，即使工作本身没有问题，因为你给它的任务就是找缺口。追逐每一条发现会导致过度设计：增加抽象层、防御性代码，以及针对不可能发生的情况编写测试。告诉审查者只标记影响正确性或明确需求的问题，其余都视为可选建议。</p>"
+    },
+    {
+      "id": "new09_best_practices-191",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-192",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-avoid-common-failure-patterns\"><span>Avoid common failure patterns</span></h2>",
+      "zh": "<h2>避免常见的失败模式</h2>"
+    },
+    {
+      "id": "new09_best_practices-193",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These are common mistakes. Recognizing them early saves time:</p>",
+      "zh": "<p>下面这些错误很常见。尽早识别它们可以节省时间：</p>"
+    },
+    {
+      "id": "new09_best_practices-194",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong>The kitchen sink session.</strong> You start with one task, then ask Claude something unrelated, then go back to the first task. Context is full of irrelevant information.<blockquote>\n<p><strong>Fix</strong>: <code>/clear</code> between unrelated tasks.</p>\n</blockquote>\n</li>\n<li><strong>Correcting over and over.</strong> Claude does something wrong, you correct it, it’s still wrong, you correct again. Context is polluted with failed approaches.<blockquote>\n<p><strong>Fix</strong>: After two failed corrections, <code>/clear</code> and write a better initial prompt incorporating what you learned.</p>\n</blockquote>\n</li>\n<li><strong>The over-specified CLAUDE.md.</strong> If your CLAUDE.md is too long, Claude ignores half of it because important rules get lost in the noise.<blockquote>\n<p><strong>Fix</strong>: Ruthlessly prune. If Claude already does something correctly without the instruction, delete it or convert it to a hook.</p>\n</blockquote>\n</li>\n<li><strong>The trust-then-verify gap.</strong> Claude produces a plausible-looking implementation that doesn’t handle edge cases.<blockquote>\n<p><strong>Fix</strong>: Always provide verification (tests, scripts, screenshots). If you can’t verify it, don’t ship it.</p>\n</blockquote>\n</li>\n<li><strong>The infinite exploration.</strong> You ask Claude to “investigate” something without scoping it. Claude reads hundreds of files, filling the context.<blockquote>\n<p><strong>Fix</strong>: Scope investigations narrowly or use subagents so the exploration doesn’t consume your main context.</p>\n</blockquote>\n</li>\n</ul>",
+      "zh": "<ul><li><strong>什么都往里塞的会话。</strong>你先开始一项任务，又问 Claude 一个不相关的问题，然后回到最初的任务。上下文因此充满无关信息。<blockquote><p><strong>解决办法：</strong>在不相关的任务之间使用 <code>/clear</code>。</p></blockquote></li><li><strong>反复纠正。</strong>Claude 做错了，你纠正它；仍然错，你再纠正。失败方案污染了上下文。<blockquote><p><strong>解决办法：</strong>两次纠正失败后，使用 <code>/clear</code>，把已经学到的经验融入一个更好的初始提示词。</p></blockquote></li><li><strong>规定过多的 CLAUDE.md。</strong>如果 CLAUDE.md 太长，Claude 会忽略其中一半，因为重要规则被噪声淹没了。<blockquote><p><strong>解决办法：</strong>果断精简。如果没有某条指令，Claude 也已经能正确完成相应操作，就删掉它，或者改成 Hook。</p></blockquote></li><li><strong>信任与验证之间的落差。</strong>Claude 产出了看起来合理的实现，却没有处理边界情况。<blockquote><p><strong>解决办法：</strong>始终提供验证方式，包括测试、脚本、截图。如果无法验证，就不要交付。</p></blockquote></li><li><strong>无止境的探索。</strong>你让 Claude“调查”某件事，却没有限定范围。Claude 读取了数百个文件，填满上下文。<blockquote><p><strong>解决办法：</strong>严格限定调查范围，或使用子 Agent，避免探索消耗主上下文。</p></blockquote></li></ul>"
+    },
+    {
+      "id": "new09_best_practices-195",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new09_best_practices-196",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-develop-your-intuition\"><span>Develop your intuition</span></h2>",
+      "zh": "<h2>培养你的直觉</h2>"
+    },
+    {
+      "id": "new09_best_practices-197",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The patterns in this guide aren’t set in stone. They’re starting points that work well in general, but might not be optimal for every situation.</p>",
+      "zh": "<p>本指南中的模式并非一成不变。它们是通常有效的起点，但未必适用于每一种情况。</p>"
+    },
+    {
+      "id": "new09_best_practices-198",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sometimes you <em>should</em> let context accumulate because you’re deep in one complex problem and the history is valuable. Sometimes you should skip planning and let Claude figure it out because the task is exploratory. Sometimes a vague prompt is exactly right because you want to see how Claude interprets the problem before constraining it.</p>",
+      "zh": "<p>有时你<em>应该</em>让上下文持续累积，因为你正深入解决一个复杂问题，历史信息很有价值。有时应该跳过规划，让 Claude 自己摸索，因为任务本身具有探索性。有时模糊的提示词恰到好处，因为你想在施加约束之前，先看看 Claude 如何理解问题。</p>"
+    },
+    {
+      "id": "new09_best_practices-199",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Pay attention to what works. When Claude produces great output, notice what you did: the prompt structure, the context you provided, the mode you were in. When Claude struggles, ask why. Was the context too noisy? The prompt too vague? The task too big for one pass?</p>",
+      "zh": "<p>关注哪些做法有效。当 Claude 产出出色结果时，留意你做了什么：提示词结构、提供的上下文，以及所处的模式。当 Claude 表现吃力时，追问原因。是上下文噪声太多？提示词太模糊？还是任务太大，无法一次完成？</p>"
+    },
+    {
+      "id": "new09_best_practices-200",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Over time, you’ll develop intuition that no guide can capture. You’ll know when to be specific and when to be open-ended, when to plan and when to explore, when to clear context and when to let it accumulate.</p>",
+      "zh": "<p>随着时间推移，你会形成任何指南都无法完整涵盖的直觉。你会知道何时应该具体明确，何时可以开放探索；何时规划，何时探索；何时清空上下文，何时让它继续累积。</p>"
+    },
+    {
+      "id": "new09_best_practices-201",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-related-resources\"><span>Related resources</span></h2>",
+      "zh": "<h2>相关资源</h2>"
+    },
+    {
+      "id": "new09_best_practices-202",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><a href=\"https://code.claude.com/docs/en/how-claude-code-works\" rel=\"noopener noreferrer\">How Claude Code works</a>: the agentic loop, tools, and context management</li>\n<li><a href=\"https://code.claude.com/docs/en/features-overview\" rel=\"noopener noreferrer\">Extend Claude Code</a>: skills, hooks, MCP, subagents, and plugins</li>\n<li><a href=\"https://code.claude.com/docs/en/common-workflows\" rel=\"noopener noreferrer\">Common workflows</a>: step-by-step recipes for debugging, testing, PRs, and more</li>\n<li><a href=\"https://code.claude.com/docs/en/memory\" rel=\"noopener noreferrer\">CLAUDE.md</a>: store project conventions and persistent context</li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://code.claude.com/docs/en/how-claude-code-works\" rel=\"noopener noreferrer\">Claude Code 如何工作：</a>Agent 循环、工具和上下文管理。</li><li><a href=\"https://code.claude.com/docs/en/features-overview\" rel=\"noopener noreferrer\">扩展 Claude Code：</a>Skills、Hooks、MCP、子 Agent 和插件。</li><li><a href=\"https://code.claude.com/docs/en/common-workflows\" rel=\"noopener noreferrer\">常见工作流：</a>调试、测试、PR 等任务的分步操作方法。</li><li><a href=\"https://code.claude.com/docs/en/memory\" rel=\"noopener noreferrer\">CLAUDE.md：</a>保存项目约定和持久上下文。</li></ul>"
+    }
+  ],
+  "description": "从配置环境到扩展并行会话，本文介绍充分发挥 Claude Code 能力的技巧与模式",
+  "reading_minutes": 27,
+  "downloads": {
+    "zh": "/downloads/best-practices-zh.pdf",
+    "en": "/downloads/best-practices-en.pdf"
+  }
+}

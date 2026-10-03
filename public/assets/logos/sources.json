@@ -1,0 +1,34 @@
+{
+  "Anthropic": {
+    "file": "/assets/logos/anthropic.svg",
+    "source": "https://www.anthropic.com/images/icons/safari-pinned-tab.svg"
+  },
+  "LangChain": {
+    "file": "/assets/logos/langchain.png",
+    "source": "https://cdn.prod.website-files.com/65b8cd72835ceeacd4449a53/69a17e4f0c916c644f4de1cd_webclip%20lg.png"
+  },
+  "OpenAI": {
+    "file": "/assets/logos/openai.svg",
+    "source": "https://openai.com/index/new-tools-for-building-agents/ (wordmark from the supplied article header)"
+  },
+  "Manus": {
+    "file": "/assets/logos/manus.svg",
+    "source": "36 - Manus - Context Engineering for AI Agents Lessons from Building Manus_files/icon.svg"
+  },
+  "Cursor": {
+    "file": "/assets/logos/cursor.svg",
+    "source": "37 - Cursor - Dynamic Context Discovery_files/favicon-light.svg"
+  },
+  "Lilian Weng": {
+    "file": "/assets/logos/lilian-weng.png",
+    "source": "38 - Lilian Weng - LLM Powered Autonomous Agents_files/favicon_wine.ico"
+  },
+  "HumanLayer": {
+    "file": "/assets/logos/humanlayer.png",
+    "source": "39 - HumanLayer - Skill Issue Harness Engineering for Coding Agents_files/icon.png"
+  },
+  "arXiv": {
+    "file": "/assets/logos/arxiv.png",
+    "source": "40 - DeepMind - AutoHarness Improving LLM Agents by Automatically Synthesizing a Code Harness_files/apple-touch-icon.png"
+  }
+}

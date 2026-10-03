@@ -1,0 +1,629 @@
+{
+  "title": "面向 Agent 的上下文工程",
+  "original_title": "Context Engineering",
+  "url": "https://www.langchain.com/blog/context-engineering-for-agents",
+  "date": "2025-07-02",
+  "publisher": "LangChain",
+  "author": "The LangChain Team",
+  "source_order": 34,
+  "slug": "context-agents",
+  "source_id": "new34_context_agents",
+  "category": "上下文工程",
+  "blocks": [
+    {
+      "id": "new34_context_agents-000",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>TL;DR</h2>",
+      "zh": "<h2>内容提要</h2>"
+    },
+    {
+      "id": "new34_context_agents-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents need context to perform tasks. Context engineering is the art and science of filling the context window with just the right information at each step of an agent’s trajectory. In this post, we break down some common strategies — <strong>write, select, compress, and isolate —</strong> for context engineering by reviewing various popular agents and papers. We then explain how LangGraph is designed to support them! </p>",
+      "zh": "<p>Agent 需要上下文来执行任务。上下文工程是一门艺术，也是一门科学：在 Agent 执行轨迹的每一步，将恰到好处的信息填入上下文窗口。本文通过考察多种流行 Agent 和论文，梳理上下文工程的四类常见策略：<strong>写入、选择、压缩与隔离。</strong>随后，我们将解释 LangGraph 在设计上如何支持这些策略！</p>"
+    },
+    {
+      "id": "new34_context_agents-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Also, see our video on context engineering </strong><a href=\"https://youtu.be/4GiqzUHD5AA?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>here</strong></a><strong>.</strong></p>",
+      "zh": "<p><strong>也欢迎观看我们关于上下文工程的</strong><a href=\"https://youtu.be/4GiqzUHD5AA?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>视频</strong></a><strong>。</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-003",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/7c5f2ebda6c0c6306052d74e.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>General categories of context engineering</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Context Engineering</h2>",
+      "zh": "<h2>上下文工程</h2>"
+    },
+    {
+      "id": "new34_context_agents-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As Andrej Karpathy puts it, LLMs are like a <a href=\"https://www.youtube.com/watch?si=-aKY-x57ILAmWTdw&amp;t=620&amp;v=LCEmiRjPEtQ&amp;feature=youtu.be&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">new kind of operating system</a>. The LLM is like the CPU and its <a href=\"https://docs.anthropic.com/en/docs/build-with-claude/context-windows?ref=blog.langchain.com\" rel=\"noopener noreferrer\">context window</a> is like the RAM, serving as the model’s working memory. Just like RAM, the LLM context window has limited <a href=\"https://lilianweng.github.io/posts/2023-06-23-agent/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">capacity</a> to handle various sources of context. And just as an operating system curates what fits into a CPU’s RAM, we can think about “context engineering” playing a similar role. <a href=\"https://x.com/karpathy/status/1937902205765607626?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Karpathy summarizes this well</a>:</p>",
+      "zh": "<p>正如 Andrej Karpathy 所说，大语言模型就像一种<a href=\"https://www.youtube.com/watch?si=-aKY-x57ILAmWTdw&amp;t=620&amp;v=LCEmiRjPEtQ&amp;feature=youtu.be&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">新型操作系统</a>。大语言模型好比 CPU，其<a href=\"https://docs.anthropic.com/en/docs/build-with-claude/context-windows?ref=blog.langchain.com\" rel=\"noopener noreferrer\">上下文窗口</a>好比 RAM，充当模型的工作记忆。与 RAM 一样，上下文窗口用于处理各种上下文来源的<a href=\"https://lilianweng.github.io/posts/2023-06-23-agent/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">容量</a>是有限的。正如操作系统会安排哪些内容进入 CPU 使用的 RAM，我们也可以认为“上下文工程”扮演着类似的角色。<a href=\"https://x.com/karpathy/status/1937902205765607626?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Karpathy 对此有一个很好的概括</a>：</p>"
+    },
+    {
+      "id": "new34_context_agents-006",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>[Context engineering is the] ”…delicate art and science of filling the context window with just the right information for the next step.”</em></blockquote>",
+      "zh": "<blockquote><em>［上下文工程是］“……为下一步向上下文窗口填入恰到好处的信息，这门精细的艺术与科学。”</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-007",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/fc68603b0ecd3fbde4aade13.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>Context types commonly used in LLM applications</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>What are the types of context that we need to manage when building LLM applications? Context engineering as an <a href=\"https://x.com/dexhorthy/status/1933283008863482067?ref=blog.langchain.com\" rel=\"noopener noreferrer\">umbrella</a> that applies across a few different context types:</p>",
+      "zh": "<p>构建大语言模型应用时，我们需要管理哪些类型的上下文？上下文工程是一个<a href=\"https://x.com/dexhorthy/status/1933283008863482067?ref=blog.langchain.com\" rel=\"noopener noreferrer\">统括性概念</a>，涵盖几种不同的上下文类型：</p>"
+    },
+    {
+      "id": "new34_context_agents-009",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Instructions</strong> – prompts, memories, few‑shot examples, tool descriptions, etc</li><li><strong>Knowledge</strong> – facts, memories, etc</li><li><strong>Tools</strong> – feedback from tool calls</li></ul>",
+      "zh": "<ul><li><strong>指令</strong>：提示词、记忆、少样本示例、工具描述等。</li><li><strong>知识</strong>：事实、记忆等。</li><li><strong>工具</strong>：工具调用返回的反馈。</li></ul>"
+    },
+    {
+      "id": "new34_context_agents-010",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Context Engineering for Agents</h2>",
+      "zh": "<h2>面向 Agent 的上下文工程</h2>"
+    },
+    {
+      "id": "new34_context_agents-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This year, interest in <a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">agents</a> has grown tremendously as LLMs get better at <a href=\"https://platform.openai.com/docs/guides/reasoning?api-mode=responses&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">reasoning</a> and <a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">tool calling</a>. <a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Agents</a> interleave <a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LLM invocations and tool calls</a>, often for <a href=\"https://blog.langchain.com/introducing-ambient-agents/\" rel=\"noopener noreferrer\">long-running tasks</a>. Agents interleave <a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LLM calls and tool calls</a>, using tool feedback to decide the next step.</p>",
+      "zh": "<p>随着大语言模型越来越擅长<a href=\"https://platform.openai.com/docs/guides/reasoning?api-mode=responses&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">推理</a>和<a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">工具调用</a>，今年人们对 <a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Agent</a> 的兴趣大幅增长。<a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Agent</a> 交替进行<a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">大语言模型调用与工具调用</a>，通常用于<a href=\"https://blog.langchain.com/introducing-ambient-agents/\" rel=\"noopener noreferrer\">长时间运行的任务</a>。Agent 交替执行<a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">模型调用与工具调用</a>，利用工具反馈决定下一步。</p>"
+    },
+    {
+      "id": "new34_context_agents-012",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/b1bdcf49d868d46e6d35d0e4.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>Agents interleave<a href=\"https://www.anthropic.com/engineering/building-effective-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\"> LLM calls and tool calls</a>, using tool feedback to decide the next step</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>However, long-running tasks and accumulating feedback from tool calls mean that agents often utilize a large number of tokens. This can cause numerous problems: it can <a href=\"https://cognition.ai/blog/kevin-32b?ref=blog.langchain.com\" rel=\"noopener noreferrer\">exceed the size of the context window</a>, balloon cost / latency, or degrade agent performance. Drew Breunig <a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com\" rel=\"noopener noreferrer\">nicely outlined</a> a number of specific ways that longer context can cause perform problems, including:</p>",
+      "zh": "<p>然而，长时间运行的任务和不断累积的工具调用反馈，意味着 Agent 往往会使用大量 token。这会带来许多问题：<a href=\"https://cognition.ai/blog/kevin-32b?ref=blog.langchain.com\" rel=\"noopener noreferrer\">超出上下文窗口容量</a>，使成本和时延急剧增加，或降低 Agent 表现。Drew Breunig <a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com\" rel=\"noopener noreferrer\">清晰地梳理了</a>长上下文导致性能问题的几种具体方式，包括：</p>"
+    },
+    {
+      "id": "new34_context_agents-014",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-poisoning\" rel=\"noopener noreferrer\">Context Poisoning: When a hallucination makes it into the context</a></li><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-distraction\" rel=\"noopener noreferrer\">Context Distraction: When the context overwhelms the training</a></li><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-confusion\" rel=\"noopener noreferrer\">Context Confusion: When superfluous context influences the response</a></li><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-clash\" rel=\"noopener noreferrer\">Context Clash: When parts of the context disagree</a></li></ul>",
+      "zh": "<ul><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-poisoning\" rel=\"noopener noreferrer\">上下文污染：幻觉进入上下文。</a></li><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-distraction\" rel=\"noopener noreferrer\">上下文干扰：上下文压过了模型在训练中学到的能力。</a></li><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-confusion\" rel=\"noopener noreferrer\">上下文混淆：多余上下文影响了回答。</a></li><li><a href=\"https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html?ref=blog.langchain.com#context-clash\" rel=\"noopener noreferrer\">上下文冲突：上下文的不同部分互相矛盾。</a></li></ul>"
+    },
+    {
+      "id": "new34_context_agents-015",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/d680f715146e5d8d547a3f1f.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>Context from tool calls accumulates over multiple agent turns</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With this in mind, <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Cognition</a> called out the importance of context engineering:</p>",
+      "zh": "<p>考虑到这些问题，<a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Cognition</a> 强调了上下文工程的重要性：</p>"
+    },
+    {
+      "id": "new34_context_agents-017",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>“Context engineering” … is effectively the #1 job of engineers building AI agents.</em></blockquote>",
+      "zh": "<blockquote><em>“上下文工程”……实际上是构建 AI Agent 的工程师最重要的工作。</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Anthropic</a> also laid it out clearly:</p>",
+      "zh": "<p><a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Anthropic</a> 也说得很清楚：</p>"
+    },
+    {
+      "id": "new34_context_agents-019",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>Agents often engage in conversations spanning hundreds of turns, requiring careful context management strategies.</em></blockquote>",
+      "zh": "<blockquote><em>Agent 经常参与长达数百轮的对话，需要周密的上下文管理策略。</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>So, how are people tackling this challenge today? We group common strategies for agent context engineering into four buckets — <strong>write, select, compress, and isolate —</strong> and give examples of each from review of some popular agent products and papers. We then explain how LangGraph is designed to support them!</p>",
+      "zh": "<p>那么，现在大家如何应对这个挑战？我们将 Agent 上下文工程的常见策略分成四类：<strong>写入、选择、压缩与隔离。</strong>通过考察一些流行的 Agent 产品和论文，我们为每一类提供实例，然后解释 LangGraph 在设计上如何支持它们！</p>"
+    },
+    {
+      "id": "new34_context_agents-021",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/7c5f2ebda6c0c6306052d74e.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>General categories of context engineering</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-022",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Write Context</h2>",
+      "zh": "<h2>写入上下文</h2>"
+    },
+    {
+      "id": "new34_context_agents-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><em>Writing context means saving it outside the context window to help an agent perform a task.</em></p>",
+      "zh": "<p><em>写入上下文，是将信息保存在上下文窗口之外，帮助 Agent 执行任务。</em></p>"
+    },
+    {
+      "id": "new34_context_agents-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Scratchpads</strong></p>",
+      "zh": "<p><strong>草稿板</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When humans solve tasks, we take notes and remember things for future, related tasks. Agents are also gaining these capabilities! Note-taking via a “<a href=\"https://www.anthropic.com/engineering/claude-think-tool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">scratchpad</a>” is one approach to persist information while an agent is performing a task. The idea is to save information outside of the context window so that it’s available to the agent. <a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Anthropic’s multi-agent researcher</a> illustrates a clear example of this:</p>",
+      "zh": "<p>人类解决任务时，会记笔记、记住一些事情，以便日后处理相关任务。Agent 也正在获得这些能力！通过“<a href=\"https://www.anthropic.com/engineering/claude-think-tool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">草稿板</a>”记笔记，是 Agent 执行任务时持久保存信息的一种方法。其思路是将信息保存在上下文窗口之外，供 Agent 使用。<a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Anthropic 的多 Agent 研究系统</a>提供了一个清晰的例子：</p>"
+    },
+    {
+      "id": "new34_context_agents-026",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>The LeadResearcher begins by thinking through the approach and saving its plan to Memory to persist the context, since if the context window exceeds 200,000 tokens it will be truncated and it is important to retain the plan.</em></blockquote>",
+      "zh": "<blockquote><em>LeadResearcher 首先思考研究方法，并将计划保存到 Memory 中，让上下文持久化；因为上下文窗口一旦超过 200,000 个 token，就会被截断，而保留计划十分重要。</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Scratchpads can be implemented in a few different ways. They can be a <a href=\"https://www.anthropic.com/engineering/claude-think-tool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">tool call</a> that simply <a href=\"https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem?ref=blog.langchain.com\" rel=\"noopener noreferrer\">writes to a file</a>. They can also be a field in a runtime <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">state object</a> that persists during the session. In either case, scratchpads let agents save useful information to help them accomplish a task.</p>",
+      "zh": "<p>草稿板可以有几种不同的实现方式。它可以是一个简单地<a href=\"https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem?ref=blog.langchain.com\" rel=\"noopener noreferrer\">写入文件</a>的<a href=\"https://www.anthropic.com/engineering/claude-think-tool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">工具调用</a>，也可以是运行时<a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">状态对象</a>中的某个字段，在整个会话中持续存在。无论哪种方式，草稿板都让 Agent 能够保存有用信息，帮助其完成任务。</p>"
+    },
+    {
+      "id": "new34_context_agents-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Memories</strong></p>",
+      "zh": "<p><strong>记忆</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Scratchpads help agents solve a task within a given session (or <a href=\"https://langchain-ai.github.io/langgraph/concepts/persistence/?ref=blog.langchain.com#threads\" rel=\"noopener noreferrer\">thread</a>), but sometimes agents benefit from remembering things across <em>many</em> sessions! <a href=\"https://arxiv.org/abs/2303.11366?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Reflexion</a> introduced the idea of reflection following each agent turn and re-using these self-generated memories. <a href=\"https://ar5iv.labs.arxiv.org/html/2304.03442?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Generative Agents</a> created memories synthesized periodically from collections of past agent feedback.</p>",
+      "zh": "<p>草稿板帮助 Agent 在给定会话或<a href=\"https://langchain-ai.github.io/langgraph/concepts/persistence/?ref=blog.langchain.com#threads\" rel=\"noopener noreferrer\">线程</a>中解决任务，但有时，跨越<em>许多</em>会话记住信息也很有帮助！<a href=\"https://arxiv.org/abs/2303.11366?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Reflexion</a> 提出了在每轮 Agent 交互后进行反思，并复用这些自行生成的记忆。<a href=\"https://ar5iv.labs.arxiv.org/html/2304.03442?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Generative Agents</a> 则定期汇总以往 Agent 的反馈集合，生成记忆。</p>"
+    },
+    {
+      "id": "new34_context_agents-030",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/45c69f13f5c4cc3b3139b672.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>An LLM can be used to update or create memories</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These concepts made their way into popular products like <a href=\"https://help.openai.com/en/articles/8590148-memory-faq?ref=blog.langchain.com\" rel=\"noopener noreferrer\">ChatGPT</a>, <a href=\"https://forum.cursor.com/t/0-51-memories-feature/98509?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Cursor</a>, and <a href=\"https://docs.windsurf.com/windsurf/cascade/memories?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Windsurf</a>, which all have mechanisms to auto-generate long-term memories that can persist across sessions based on user-agent interactions.</p>",
+      "zh": "<p>这些概念已经进入 <a href=\"https://help.openai.com/en/articles/8590148-memory-faq?ref=blog.langchain.com\" rel=\"noopener noreferrer\">ChatGPT</a>、<a href=\"https://forum.cursor.com/t/0-51-memories-feature/98509?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Cursor</a> 和 <a href=\"https://docs.windsurf.com/windsurf/cascade/memories?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Windsurf</a> 等流行产品。它们都具备这样的机制：根据用户与 Agent 的交互，自动生成可以跨会话持续保存的长期记忆。</p>"
+    },
+    {
+      "id": "new34_context_agents-032",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Select Context</h2>",
+      "zh": "<h2>选择上下文</h2>"
+    },
+    {
+      "id": "new34_context_agents-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><em>Selecting context means pulling it into the context window to help an agent perform a task.</em></p>",
+      "zh": "<p><em>选择上下文，是将信息取入上下文窗口，帮助 Agent 执行任务。</em></p>"
+    },
+    {
+      "id": "new34_context_agents-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Scratchpad</strong></p>",
+      "zh": "<p><strong>草稿板</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The mechanism for selecting context from a scratchpad depends upon how the scratchpad is implemented. If it’s a <a href=\"https://www.anthropic.com/engineering/claude-think-tool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">tool</a>, then an agent can simply read it by making a tool call. If it’s part of the agent’s runtime state, then the developer can choose what parts of state to expose to an agent each step. This provides a fine-grained level of control for exposing scratchpad context to the LLM at later turns.</p>",
+      "zh": "<p>从草稿板中选择上下文的机制，取决于草稿板的实现方式。如果它是一个<a href=\"https://www.anthropic.com/engineering/claude-think-tool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">工具</a>，Agent 只需调用工具就能读取。如果它属于 Agent 的运行时状态，开发者就可以决定每一步向 Agent 暴露哪些状态内容。这让开发者能够细粒度控制，在后续轮次中向大语言模型提供哪些草稿板上下文。</p>"
+    },
+    {
+      "id": "new34_context_agents-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Memories</strong></p>",
+      "zh": "<p><strong>记忆</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If agents have the ability to save memories, they also need the ability to select memories relevant to the task they are performing. This can be useful for a few reasons. Agents might select few-shot examples (<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">episodic</a> <a href=\"https://arxiv.org/pdf/2309.02427?ref=blog.langchain.com\" rel=\"noopener noreferrer\">memories</a>) for examples of desired behavior, instructions (<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">procedural</a> <a href=\"https://arxiv.org/pdf/2309.02427?ref=blog.langchain.com\" rel=\"noopener noreferrer\">memories</a>) to steer behavior, or facts (<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">semantic</a> <a href=\"https://arxiv.org/pdf/2309.02427?ref=blog.langchain.com\" rel=\"noopener noreferrer\">memories</a>) for task-relevant context.</p>",
+      "zh": "<p>如果 Agent 能够保存记忆，也就需要能够选择与当前任务相关的记忆。这有几方面用途：Agent 可以选择少样本示例，作为预期行为的范例，即<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">情景</a><a href=\"https://arxiv.org/pdf/2309.02427?ref=blog.langchain.com\" rel=\"noopener noreferrer\">记忆</a>；选择指令来引导行为，即<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">程序性</a><a href=\"https://arxiv.org/pdf/2309.02427?ref=blog.langchain.com\" rel=\"noopener noreferrer\">记忆</a>；或选择事实来提供任务相关上下文，即<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">语义</a><a href=\"https://arxiv.org/pdf/2309.02427?ref=blog.langchain.com\" rel=\"noopener noreferrer\">记忆</a>。</p>"
+    },
+    {
+      "id": "new34_context_agents-038",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/dc98a353989f0a975a33ce76.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new34_context_agents-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>One challenge is ensuring that relevant memories are selected. Some popular agents simply use a narrow set of files that are <em>always</em> pulled into context. For example, many code agent use specific files to save instructions (”procedural” memories) or, in some cases, examples (”episodic” memories). Claude Code uses <a href=\"http://claude.md/?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><code>CLAUDE.md</code></a>. <a href=\"https://docs.cursor.com/context/rules?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Cursor</a> and <a href=\"https://windsurf.com/editor/directory?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Windsurf</a> use rules files. </p>",
+      "zh": "<p>其中一个挑战，是确保选中的记忆确实相关。一些流行 Agent 只是使用一小组文件，并<em>始终</em>将它们放入上下文。例如，许多编程 Agent 使用特定文件保存指令，也就是“程序性”记忆；有时也保存示例，也就是“情景”记忆。Claude Code 使用 <a href=\"http://claude.md/?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><code>CLAUDE.md</code></a>。<a href=\"https://docs.cursor.com/context/rules?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Cursor</a> 和 <a href=\"https://windsurf.com/editor/directory?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Windsurf</a> 则使用规则文件。</p>"
+    },
+    {
+      "id": "new34_context_agents-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But, if an agent is storing a larger <a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#collection\" rel=\"noopener noreferrer\">collection</a> of facts and / or relationships (e.g., <a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">semantic</a> memories), selection is harder. <a href=\"https://help.openai.com/en/articles/8590148-memory-faq?ref=blog.langchain.com\" rel=\"noopener noreferrer\">ChatGPT</a> is a good example of a popular product that stores and selects from a large collection of user-specific memories.</p>",
+      "zh": "<p>但如果 Agent 存储的是规模更大的事实或关系<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#collection\" rel=\"noopener noreferrer\">集合</a>，例如<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#memory-types\" rel=\"noopener noreferrer\">语义</a>记忆，选择就会更加困难。<a href=\"https://help.openai.com/en/articles/8590148-memory-faq?ref=blog.langchain.com\" rel=\"noopener noreferrer\">ChatGPT</a> 就是一个典型的流行产品：它存储大量用户专属记忆，并从中选择所需内容。</p>"
+    },
+    {
+      "id": "new34_context_agents-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Embeddings and / or <a href=\"https://arxiv.org/html/2501.13956v1?ref=blog.langchain.com#:~:text=In%20Zep%2C%20memory%20is%20powered,subgraph%2C%20and%20a%20community%20subgraph\" rel=\"noopener noreferrer\">knowledge</a> <a href=\"https://neo4j.com/blog/developer/graphiti-knowledge-graph-memory/?ref=blog.langchain.com#:~:text=changes%20since%20updates%20can%20trigger,and%20holistic%20memory%20for%20agentic\" rel=\"noopener noreferrer\">graphs</a> for memory indexing are commonly used to assist with selection. Still, memory selection is challenging.  At the AIEngineer World’s Fair, <a href=\"https://simonwillison.net/2025/Jun/6/six-months-in-llms/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Simon Willison shared</a> an example of selection gone wrong: ChatGPT fetched his location from memories and unexpectedly injected it into a requested image. This type of unexpected or undesired memory retrieval can make some users feel like the context window “<em>no longer belongs to them</em>”! </p>",
+      "zh": "<p>人们常用嵌入向量或<a href=\"https://arxiv.org/html/2501.13956v1?ref=blog.langchain.com#:~:text=In%20Zep%2C%20memory%20is%20powered,subgraph%2C%20and%20a%20community%20subgraph\" rel=\"noopener noreferrer\">知识</a><a href=\"https://neo4j.com/blog/developer/graphiti-knowledge-graph-memory/?ref=blog.langchain.com#:~:text=changes%20since%20updates%20can%20trigger,and%20holistic%20memory%20for%20agentic\" rel=\"noopener noreferrer\">图谱</a>为记忆建立索引，帮助进行选择。但记忆选择仍然很有挑战。在 AIEngineer World’s Fair 上，<a href=\"https://simonwillison.net/2025/Jun/6/six-months-in-llms/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Simon Willison 分享过</a>一个选择出错的例子：ChatGPT 从记忆中取出了他的位置信息，意外地把它加入了他请求生成的图片。这种出乎意料或不受欢迎的记忆检索，可能让一些用户觉得，上下文窗口“<em>已经不再属于自己</em>”！</p>"
+    },
+    {
+      "id": "new34_context_agents-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Tools</strong></p>",
+      "zh": "<p><strong>工具</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents use tools, but can become overloaded if they are provided with too many. This is often because the tool descriptions overlap, causing model confusion about which tool to use. One approach is<a href=\"https://arxiv.org/abs/2410.14594?ref=blog.langchain.com\" rel=\"noopener noreferrer\"> to apply RAG (retrieval augmented generation) to tool descriptions</a> in order to fetch only the most relevant tools for a task. Some <a href=\"https://arxiv.org/abs/2505.03275?ref=blog.langchain.com\" rel=\"noopener noreferrer\">recent papers</a> have shown that this improve tool selection accuracy by 3-fold.</p>",
+      "zh": "<p>Agent 会使用工具，但如果提供的工具太多，也可能不堪重负。这通常是因为工具描述相互重叠，让模型难以判断应该使用哪个工具。一种方法是<a href=\"https://arxiv.org/abs/2410.14594?ref=blog.langchain.com\" rel=\"noopener noreferrer\">对工具描述应用 RAG（检索增强生成）</a>，只获取与任务最相关的工具。一些<a href=\"https://arxiv.org/abs/2505.03275?ref=blog.langchain.com\" rel=\"noopener noreferrer\">近期论文</a>表明，这种方法能让工具选择准确率达到原来的 3 倍。</p>"
+    },
+    {
+      "id": "new34_context_agents-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Knowledge</strong></p>",
+      "zh": "<p><strong>知识</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://github.com/langchain-ai/rag-from-scratch?ref=blog.langchain.com\" rel=\"noopener noreferrer\">RAG</a> is a rich topic and it<a href=\"https://x.com/_mohansolo/status/1899630246862966837?ref=blog.langchain.com\" rel=\"noopener noreferrer\"> can be a central context engineering challenge</a>. Code agents are some of the best examples of RAG in large-scale production. Varun from Windsurf captures some of these challenges well:</p>",
+      "zh": "<p><a href=\"https://github.com/langchain-ai/rag-from-scratch?ref=blog.langchain.com\" rel=\"noopener noreferrer\">RAG</a> 是一个内容丰富的主题，也<a href=\"https://x.com/_mohansolo/status/1899630246862966837?ref=blog.langchain.com\" rel=\"noopener noreferrer\">可能是上下文工程的核心挑战</a>。编程 Agent 是 RAG 在大规模生产环境中应用的典型案例。Windsurf 的 Varun 很好地概括了其中一些挑战：</p>"
+    },
+    {
+      "id": "new34_context_agents-046",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>Indexing code ≠ context retrieval … [We are doing indexing &amp; embedding search … [with] AST parsing code and chunking along semantically meaningful boundaries … embedding search becomes unreliable as a retrieval heuristic as the size of the codebase grows … we must rely on a combination of techniques like grep/file search, knowledge graph based retrieval, and … a re-ranking step where [context] is ranked in order of relevance.</em></blockquote>",
+      "zh": "<blockquote><em>代码索引 ≠ 上下文检索……［我们正在进行索引与嵌入搜索……［通过］AST 解析代码，并沿着具有语义意义的边界分块……随着代码库规模增长，嵌入搜索作为检索启发式方法会变得不可靠……我们必须结合 grep／文件搜索、基于知识图谱的检索等多种技术，以及……一个按相关性对［上下文］排序的重排序步骤。</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-047",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Compressing Context</h2>",
+      "zh": "<h2>压缩上下文</h2>"
+    },
+    {
+      "id": "new34_context_agents-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><em>Compressing context involves retaining only the tokens required to perform a task.</em></p>",
+      "zh": "<p><em>压缩上下文，是仅保留执行任务所需的 token。</em></p>"
+    },
+    {
+      "id": "new34_context_agents-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Context Summarization</strong></p>",
+      "zh": "<p><strong>上下文摘要</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agent interactions can span <a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">hundreds of turns</a> and use token-heavy tool calls. Summarization is one common way to manage these challenges. If you’ve used Claude Code, you’ve seen this in action. Claude Code runs “<a href=\"https://docs.anthropic.com/en/docs/claude-code/costs?ref=blog.langchain.com\" rel=\"noopener noreferrer\">auto-compact</a>” after you exceed 95% of the context window and it will summarize the full trajectory of user-agent interactions. This type of compression across an <a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#manage-short-term-memory\" rel=\"noopener noreferrer\">agent trajectory</a> can use various strategies such as <a href=\"https://arxiv.org/pdf/2308.15022?ref=blog.langchain.com#:~:text=the%20retrieved%20utterances%20capture%20the,based%203\" rel=\"noopener noreferrer\">recursive</a> or <a href=\"https://alignment.anthropic.com/2025/summarization-for-monitoring/?ref=blog.langchain.com#:~:text=We%20addressed%20these%20issues%20by,of%20our%20computer%20use%20capability\" rel=\"noopener noreferrer\">hierarchical</a> summarization.</p>",
+      "zh": "<p>Agent 交互可能长达<a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">数百轮</a>，还会包含 token 用量很大的工具调用。生成摘要，是应对这些挑战的常见方法。如果使用过 Claude Code，你就见过这个过程。上下文窗口的使用量超过 95% 后，Claude Code 会运行“<a href=\"https://docs.anthropic.com/en/docs/claude-code/costs?ref=blog.langchain.com\" rel=\"noopener noreferrer\">自动压缩</a>”，总结用户与 Agent 交互的完整轨迹。对<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#manage-short-term-memory\" rel=\"noopener noreferrer\">Agent 执行轨迹</a>进行这种压缩，可以采用<a href=\"https://arxiv.org/pdf/2308.15022?ref=blog.langchain.com#:~:text=the%20retrieved%20utterances%20capture%20the,based%203\" rel=\"noopener noreferrer\">递归</a>摘要或<a href=\"https://alignment.anthropic.com/2025/summarization-for-monitoring/?ref=blog.langchain.com#:~:text=We%20addressed%20these%20issues%20by,of%20our%20computer%20use%20capability\" rel=\"noopener noreferrer\">分层</a>摘要等不同策略。</p>"
+    },
+    {
+      "id": "new34_context_agents-051",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/a02c520183031a8dae05da62.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>A few places where summarization can be applied</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It can also be useful to <a href=\"https://github.com/langchain-ai/open_deep_research/blob/e5a5160a398a3699857d00d8569cb7fd0ac48a4f/src/open_deep_research/utils.py?ref=blog.langchain.com#L1407\" rel=\"noopener noreferrer\">add summarization</a> at specific points in an agent’s design. For example, it can be used to post-process certain tool calls (e.g., token-heavy search tools). As a second example, <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com#a-theory-of-building-long-running-agents\" rel=\"noopener noreferrer\">Cognition</a> mentioned summarization at agent-agent boundaries to reduce tokens during knowledge hand-off. Summarization can be a challenge if specific events or decisions need to be captured. <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com#a-theory-of-building-long-running-agents\" rel=\"noopener noreferrer\">Cognition</a> uses a fine-tuned model for this, which underscores how much work can go into this step.</p>",
+      "zh": "<p>在 Agent 设计的特定位置<a href=\"https://github.com/langchain-ai/open_deep_research/blob/e5a5160a398a3699857d00d8569cb7fd0ac48a4f/src/open_deep_research/utils.py?ref=blog.langchain.com#L1407\" rel=\"noopener noreferrer\">加入摘要处理</a>也很有帮助。例如，可以对某些工具调用进行后处理，如 token 用量很大的搜索工具。另一个例子是，<a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com#a-theory-of-building-long-running-agents\" rel=\"noopener noreferrer\">Cognition</a> 提到，可以在 Agent 之间的交接边界生成摘要，减少知识交接时的 token 用量。如果必须保留特定事件或决策，摘要就可能很有挑战。<a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com#a-theory-of-building-long-running-agents\" rel=\"noopener noreferrer\">Cognition</a> 为此使用了微调模型，这也说明了这个步骤可能需要投入多少工作。</p>"
+    },
+    {
+      "id": "new34_context_agents-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Context Trimming</strong></p>",
+      "zh": "<p><strong>上下文裁剪</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Whereas summarization typically uses an LLM to distill the most relevant pieces of context, trimming can often filter or, as Drew Breunig points out, “<a href=\"https://www.dbreunig.com/2025/06/26/how-to-fix-your-context.html?ref=blog.langchain.com\" rel=\"noopener noreferrer\">prune</a>” context. This can use hard-coded heuristics like removing <a href=\"https://python.langchain.com/docs/how_to/trim_messages/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">older messages</a> from a list. Drew also mentions <a href=\"https://arxiv.org/abs/2501.16214?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Provence</a>, a trained context pruner for Question-Answering.</p>",
+      "zh": "<p>摘要通常使用大语言模型提炼上下文中最相关的内容，而裁剪通常可以直接过滤上下文，或如 Drew Breunig 所说，对其进行“<a href=\"https://www.dbreunig.com/2025/06/26/how-to-fix-your-context.html?ref=blog.langchain.com\" rel=\"noopener noreferrer\">剪枝</a>”。它可以使用硬编码的启发式规则，例如从列表中删除<a href=\"https://python.langchain.com/docs/how_to/trim_messages/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">较早的消息</a>。Drew 还提到了 <a href=\"https://arxiv.org/abs/2501.16214?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Provence</a>，这是一个针对问答任务训练的上下文剪枝模型。</p>"
+    },
+    {
+      "id": "new34_context_agents-055",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Isolating Context</h2>",
+      "zh": "<h2>隔离上下文</h2>"
+    },
+    {
+      "id": "new34_context_agents-056",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><em>Isolating context involves splitting it up to help an agent perform a task.</em></p>",
+      "zh": "<p><em>隔离上下文，是将上下文拆开，帮助 Agent 执行任务。</em></p>"
+    },
+    {
+      "id": "new34_context_agents-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Multi-agent</strong></p>",
+      "zh": "<p><strong>多 Agent</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>One of the most popular ways to isolate context is to split it across sub-agents. A motivation for the OpenAI <a href=\"https://github.com/openai/swarm?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Swarm</a> library was <a href=\"https://openai.github.io/openai-agents-python/ref/agent/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">separation of concerns</a>, where a team of agents can handle specific sub-tasks. Each agent has a specific set of tools, instructions, and its own context window.</p>",
+      "zh": "<p>隔离上下文最常见的方法之一，是将其分配给不同子 Agent。OpenAI <a href=\"https://github.com/openai/swarm?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Swarm</a> 库的一个设计动机就是<a href=\"https://openai.github.io/openai-agents-python/ref/agent/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">关注点分离</a>，让一组 Agent 分别处理特定子任务。每个 Agent 都有特定的工具集、指令，以及自己的上下文窗口。</p>"
+    },
+    {
+      "id": "new34_context_agents-059",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/b3b877d87f89171da2519627.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>Split context across multiple agents</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Anthropic’s <a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">multi-agent researcher</a> makes a case for this: many agents with isolated contexts outperformed single-agent, largely because each subagent context window can be allocated to a more narrow sub-task. As the blog said:</p>",
+      "zh": "<p>Anthropic 的<a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">多 Agent 研究系统</a>说明了这种方式的价值：多个上下文相互隔离的 Agent 胜过单个 Agent，很大程度上是因为每个子 Agent 的上下文窗口可以专门用于范围更窄的子任务。正如其博客所说：</p>"
+    },
+    {
+      "id": "new34_context_agents-061",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>[Subagents operate] in parallel with their own context windows, exploring different aspects of the question simultaneously.</em></blockquote>",
+      "zh": "<blockquote><em>［子 Agent］使用各自的上下文窗口并行运行，同时探索问题的不同方面。</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-062",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Of course, the challenges with multi-agent include token use (e.g., up to <a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">15× more tokens</a> than chat as reported by Anthropic), the need for careful <a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">prompt engineering</a> to plan sub-agent work, and coordination of sub-agents.</p>",
+      "zh": "<p>当然，多 Agent 的挑战包括 token 用量，例如 Anthropic 报告称，最多可达聊天的 <a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">15 倍</a>；还需要精心进行<a href=\"https://www.anthropic.com/engineering/built-multi-agent-research-system?ref=blog.langchain.com\" rel=\"noopener noreferrer\">提示词工程</a>，规划子 Agent 的工作，并协调子 Agent。</p>"
+    },
+    {
+      "id": "new34_context_agents-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Context Isolation with Environments</strong></p>",
+      "zh": "<p><strong>通过环境隔离上下文</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>HuggingFace’s <a href=\"https://huggingface.co/blog/open-deep-research?ref=blog.langchain.com#:~:text=From%20building%20,it%20can%20still%20use%20it\" rel=\"noopener noreferrer\">deep researcher</a> shows another interesting example of context isolation. Most agents use <a href=\"https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview?ref=blog.langchain.com\" rel=\"noopener noreferrer\">tool calling APIs</a>, which return JSON objects (tool arguments) that can be passed to tools (e.g., a search API) to get tool feedback (e.g., search results). HuggingFace uses a <a href=\"https://huggingface.co/papers/2402.01030?ref=blog.langchain.com\" rel=\"noopener noreferrer\">CodeAgent</a>, which outputs that contains the desired tool calls. The code then runs in a <a href=\"https://e2b.dev/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">sandbox</a>. Selected context (e.g., return values) from the tool calls is then passed back to the LLM.</p>",
+      "zh": "<p>HuggingFace 的<a href=\"https://huggingface.co/blog/open-deep-research?ref=blog.langchain.com#:~:text=From%20building%20,it%20can%20still%20use%20it\" rel=\"noopener noreferrer\">深度研究 Agent</a>展示了另一种有趣的上下文隔离方式。大多数 Agent 使用<a href=\"https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview?ref=blog.langchain.com\" rel=\"noopener noreferrer\">工具调用 API</a>，返回 JSON 对象作为工具参数，再将其传给工具，例如搜索 API，以获得工具反馈，例如搜索结果。HuggingFace 使用 <a href=\"https://huggingface.co/papers/2402.01030?ref=blog.langchain.com\" rel=\"noopener noreferrer\">CodeAgent</a>，输出包含所需工具调用的代码，然后在<a href=\"https://e2b.dev/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">沙箱</a>中运行代码。最后，只将工具调用中选定的上下文，例如返回值，传回大语言模型。</p>"
+    },
+    {
+      "id": "new34_context_agents-065",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/829d1e852f7052e0c2170603.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>Sandboxes can isolate context from the LLM.</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-066",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This allows context to be isolated from the LLM in the environment. Hugging Face noted that this is a great way to isolate token-heavy objects in particular:</p>",
+      "zh": "<p>这样，上下文可以保留在环境中，与大语言模型隔离。Hugging Face 指出，这尤其适合隔离 token 占用量大的对象：</p>"
+    },
+    {
+      "id": "new34_context_agents-067",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><em>[Code Agents allow for] a better handling of state … Need to store this image / audio / other for later use? No problem, just assign it as a variable </em><a href=\"https://deepwiki.com/search/i-am-wondering-if-state-that-i_0e153539-282a-437c-b2b0-d2d68e51b873?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><em>in your state and you [use it later]</em></a><em>.</em></blockquote>",
+      "zh": "<blockquote><em>［代码 Agent 能够］更好地处理状态……需要保存这张图片、这段音频或其他内容，以供日后使用？没问题，只需把它作为变量赋值</em><a href=\"https://deepwiki.com/search/i-am-wondering-if-state-that-i_0e153539-282a-437c-b2b0-d2d68e51b873?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><em>到状态中，就可以［以后再用］</em></a><em>。</em></blockquote>"
+    },
+    {
+      "id": "new34_context_agents-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>State</strong></p>",
+      "zh": "<p><strong>状态</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-069",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It’s worth calling out that an agent’s runtime <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">state object</a> can also be a great way to isolate context. This can serve the same purpose as sandboxing. A state object can be designed with a <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#schema\" rel=\"noopener noreferrer\">schema</a> that has fields that context can be written to. One field of the schema (e.g., <code>messages</code>) can be exposed to the LLM at each turn of the agent, but the schema can isolate information in other fields for more selective use.</p>",
+      "zh": "<p>Agent 的运行时<a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">状态对象</a>，也是隔离上下文的好方法，可以起到与沙箱类似的作用。你可以为状态对象设计一个 <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#schema\" rel=\"noopener noreferrer\">schema</a>，其中包含用于写入上下文的字段。schema 中的某个字段，例如 <code>messages</code>，可以在 Agent 的每一轮中提供给大语言模型；其他字段则可以将信息隔离起来，只在需要时有选择地使用。</p>"
+    },
+    {
+      "id": "new34_context_agents-070",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Context Engineering with LangSmith / LangGraph</h2>",
+      "zh": "<h2>使用 LangSmith 与 LangGraph 开展上下文工程</h2>"
+    },
+    {
+      "id": "new34_context_agents-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>So, how can you apply these ideas? Before you start, there are two foundational pieces that are helpful. First, ensure that you have a way to <a href=\"https://hamel.dev/blog/posts/evals/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">look at your data</a> and track token-usage across your agent. This helps inform where best to apply effort context engineering. <a href=\"https://docs.smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangSmith</a> is well-suited for agent <a href=\"https://docs.smith.langchain.com/observability?ref=blog.langchain.com\" rel=\"noopener noreferrer\">tracing / observability</a>, and offers a great way to do this. Second,  be sure you have a simple way to test whether context engineering hurts or improve agent performance. LangSmith enables <a href=\"https://docs.smith.langchain.com/evaluation/tutorials/agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">agent evaluation</a> to test the impact of any context engineering effort.</p>",
+      "zh": "<p>那么，如何应用这些想法？开始之前，有两项有用的基础工作。首先，确保有办法<a href=\"https://hamel.dev/blog/posts/evals/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">查看你的数据</a>，并跟踪整个 Agent 的 token 用量。这有助于判断最值得在哪些地方投入上下文工程。<a href=\"https://docs.smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangSmith</a> 很适合 Agent 的<a href=\"https://docs.smith.langchain.com/observability?ref=blog.langchain.com\" rel=\"noopener noreferrer\">执行轨迹记录与可观测性</a>，为此提供了很好的方式。其次，确保能方便地测试上下文工程究竟损害了还是改善了 Agent 的表现。LangSmith 支持 <a href=\"https://docs.smith.langchain.com/evaluation/tutorials/agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Agent 评测</a>，用于检验任何上下文工程工作的影响。</p>"
+    },
+    {
+      "id": "new34_context_agents-072",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Write context</strong></p>",
+      "zh": "<p><strong>写入上下文</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangGraph was designed with both thread-scoped (<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#short-term-memory\" rel=\"noopener noreferrer\">short-term</a>) and <a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#long-term-memory\" rel=\"noopener noreferrer\">long-term memory</a>. Short-term memory uses <a href=\"https://langchain-ai.github.io/langgraph/concepts/persistence/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">checkpointing</a> to persist <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">agent state</a> across all steps of an agent. This is extremely useful as a “scratchpad”, allowing you to write information to state and fetch it at any step in your agent trajectory.</p>",
+      "zh": "<p>LangGraph 在设计上同时支持限定于会话的<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#short-term-memory\" rel=\"noopener noreferrer\">短期记忆</a>和<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#long-term-memory\" rel=\"noopener noreferrer\">长期记忆</a>。短期记忆使用<a href=\"https://langchain-ai.github.io/langgraph/concepts/persistence/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">检查点机制</a>，在 Agent 的所有步骤之间持久保存 <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">Agent 状态</a>。它非常适合充当“草稿板”：你可以将信息写入状态，并在 Agent 执行轨迹的任意步骤取回。</p>"
+    },
+    {
+      "id": "new34_context_agents-074",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangGraph’s long-term memory lets you to persist context <em>across many sessions</em> with your agent. It is flexible, allowing you to save small sets of <a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#profile\" rel=\"noopener noreferrer\">files</a> (e.g., a user profile or rules) or larger <a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#collection\" rel=\"noopener noreferrer\">collections</a> of memories. In addition, <a href=\"https://langchain-ai.github.io/langmem/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangMem</a> provides a broad set of useful abstractions to aid with LangGraph memory management.</p>",
+      "zh": "<p>LangGraph 的长期记忆让你可以在与 Agent 的<em>多次会话之间</em>持久保存上下文。它很灵活，既能保存少量<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#profile\" rel=\"noopener noreferrer\">文件</a>，例如用户档案或规则，也能保存规模更大的记忆<a href=\"https://langchain-ai.github.io/langgraph/concepts/memory/?ref=blog.langchain.com#collection\" rel=\"noopener noreferrer\">集合</a>。此外，<a href=\"https://langchain-ai.github.io/langmem/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangMem</a> 提供了丰富而实用的抽象，帮助管理 LangGraph 记忆。</p>"
+    },
+    {
+      "id": "new34_context_agents-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Select context</strong></p>",
+      "zh": "<p><strong>选择上下文</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Within each node (step) of a LangGraph agent, you can fetch <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">state</a>. This give you fine-grained control over what context you present to the LLM at each agent step. </p>",
+      "zh": "<p>在 LangGraph Agent 的每个节点，也就是每一步中，你都可以获取<a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">状态</a>。因此，可以细粒度控制每一步向大语言模型提供哪些上下文。</p>"
+    },
+    {
+      "id": "new34_context_agents-077",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In addition, LangGraph’s long-term memory is accessible within each node and supports various types of retrieval (e.g., fetching files as well as <a href=\"https://langchain-ai.github.io/langgraph/cloud/reference/cli/?ref=blog.langchain.com#adding-semantic-search-to-the-store\" rel=\"noopener noreferrer\">embedding-based retrieval on a memory collection).</a> For an overview of long-term memory, see <a href=\"https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">our Deeplearning.ai course</a>. And for an entry point to memory applied to a specific agent, see our <a href=\"https://academy.langchain.com/courses/ambient-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ambient Agents</a> course. This shows how to use LangGraph memory in a long-running agent that can manage your email and learn from your feedback.</p>",
+      "zh": "<p>此外，每个节点都能访问 LangGraph 的长期记忆，它支持多种检索方式，例如获取文件，以及<a href=\"https://langchain-ai.github.io/langgraph/cloud/reference/cli/?ref=blog.langchain.com#adding-semantic-search-to-the-store\" rel=\"noopener noreferrer\">对记忆集合进行基于嵌入的检索。</a>关于长期记忆的概览，请参阅<a href=\"https://www.deeplearning.ai/short-courses/long-term-agentic-memory-with-langgraph/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">我们在 Deeplearning.ai 的课程</a>。如果希望从一个具体 Agent 入手学习记忆的应用，请参阅 <a href=\"https://academy.langchain.com/courses/ambient-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ambient Agents</a> 课程。它展示了如何在一个长时间运行的 Agent 中使用 LangGraph 记忆，让 Agent 管理电子邮件，并从你的反馈中学习。</p>"
+    },
+    {
+      "id": "new34_context_agents-078",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/9ff1d67718b3ef14833aebe6.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption>Email agent with user feedback and long-term memory</figcaption></figure>"
+    },
+    {
+      "id": "new34_context_agents-079",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For tool selection, the <a href=\"https://github.com/langchain-ai/langgraph-bigtool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangGraph Bigtool</a> library is a great way to apply semantic search over tool descriptions. This helps select the most relevant tools for a task when working with a large collection of tools. Finally, we have several <a href=\"https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_agentic_rag/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">tutorials and videos</a> that show how to use various types of RAG with LangGraph.</p>",
+      "zh": "<p>在工具选择方面，<a href=\"https://github.com/langchain-ai/langgraph-bigtool?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangGraph Bigtool</a> 库很适合对工具描述进行语义搜索。当工具集合很大时，这有助于选出与任务最相关的工具。最后，我们还提供了多份<a href=\"https://langchain-ai.github.io/langgraph/tutorials/rag/langgraph_agentic_rag/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">教程和视频</a>，展示如何将各种 RAG 方法与 LangGraph 结合使用。</p>"
+    },
+    {
+      "id": "new34_context_agents-080",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Compressing context</strong></p>",
+      "zh": "<p><strong>压缩上下文</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-081",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Because LangGraph <a href=\"https://blog.langchain.com/how-to-think-about-agent-frameworks/\" rel=\"noopener noreferrer\">is a low-level orchestration framework</a>, you <a href=\"https://www.youtube.com/watch?v=aHCDrAbH_go&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">lay out your agent as a set of nodes</a>, <a href=\"https://blog.langchain.com/how-to-think-about-agent-frameworks/\" rel=\"noopener noreferrer\">define</a> the logic within each one, and define an state object that is passed between them. This control offers several ways to compress context.</p>",
+      "zh": "<p>因为 LangGraph <a href=\"https://blog.langchain.com/how-to-think-about-agent-frameworks/\" rel=\"noopener noreferrer\">是一个底层编排框架</a>，你可以<a href=\"https://www.youtube.com/watch?v=aHCDrAbH_go&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">把 Agent 组织成一组节点</a>，<a href=\"https://blog.langchain.com/how-to-think-about-agent-frameworks/\" rel=\"noopener noreferrer\">定义</a>每个节点内部的逻辑，再定义一个在节点之间传递的状态对象。这种控制能力提供了多种压缩上下文的方式。</p>"
+    },
+    {
+      "id": "new34_context_agents-082",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>One common approach is to use a message list as your agent state and <a href=\"https://langchain-ai.github.io/langgraph/how-tos/memory/add-memory/?ref=blog.langchain.com#manage-short-term-memory\" rel=\"noopener noreferrer\">summarize or trim</a> it periodically using <a href=\"https://langchain-ai.github.io/langgraph/how-tos/memory/add-memory/?ref=blog.langchain.com#manage-short-term-memory\" rel=\"noopener noreferrer\">a few built-in utilities</a>. However, you can also add logic to post-process <a href=\"https://github.com/langchain-ai/open_deep_research/blob/e5a5160a398a3699857d00d8569cb7fd0ac48a4f/src/open_deep_research/utils.py?ref=blog.langchain.com#L1407\" rel=\"noopener noreferrer\">tool calls</a> or work phases of your agent in a few different ways. You can add summarization nodes at specific points or also add summarization logic to your tool calling node in order to compress the output of specific tool calls.</p>",
+      "zh": "<p>一种常见方法，是将消息列表作为 Agent 状态，并使用<a href=\"https://langchain-ai.github.io/langgraph/how-tos/memory/add-memory/?ref=blog.langchain.com#manage-short-term-memory\" rel=\"noopener noreferrer\">一些内置工具函数</a>，定期对其<a href=\"https://langchain-ai.github.io/langgraph/how-tos/memory/add-memory/?ref=blog.langchain.com#manage-short-term-memory\" rel=\"noopener noreferrer\">生成摘要或进行裁剪</a>。不过，你也可以用几种不同方式加入逻辑，对 Agent 的<a href=\"https://github.com/langchain-ai/open_deep_research/blob/e5a5160a398a3699857d00d8569cb7fd0ac48a4f/src/open_deep_research/utils.py?ref=blog.langchain.com#L1407\" rel=\"noopener noreferrer\">工具调用</a>或工作阶段进行后处理。你可以在特定位置加入摘要节点，也可以在工具调用节点中加入摘要逻辑，压缩特定工具调用的输出。</p>"
+    },
+    {
+      "id": "new34_context_agents-083",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Isolating context</strong></p>",
+      "zh": "<p><strong>隔离上下文</strong></p>"
+    },
+    {
+      "id": "new34_context_agents-084",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangGraph is designed around a <a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">state</a> object, allowing you to specify a state schema and access state at each agent step. For example, you can store context from tool calls in certain fields in state, isolating them from the LLM until that context is required. In addition to state, LangGraph supports use of sandboxes for context isolation. See this <a href=\"https://github.com/jacoblee93/mini-chat-langchain?tab=readme-ov-file&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">repo</a> for an example LangGraph agent that uses <a href=\"https://e2b.dev/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">an E2B sandbox</a> for tool calls. See this <a href=\"https://www.youtube.com/watch?v=FBnER2sxt0w&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">video</a> for an example of sandboxing using Pyodide where state can be persisted. LangGraph also has a lot of support for building multi-agent architecture, such as the <a href=\"https://github.com/langchain-ai/langgraph-supervisor-py?ref=blog.langchain.com\" rel=\"noopener noreferrer\">supervisor</a> and <a href=\"https://github.com/langchain-ai/langgraph-swarm-py?ref=blog.langchain.com\" rel=\"noopener noreferrer\">swarm</a> libraries. You can <a href=\"https://www.youtube.com/watch?v=4nZl32FwU-o&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">see</a> <a href=\"https://www.youtube.com/watch?v=JeyDrn1dSUQ&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">these</a> <a href=\"https://www.youtube.com/watch?v=B_0TNuYi56w&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">videos</a> for more detail on using multi-agent with LangGraph.</p>",
+      "zh": "<p>LangGraph 围绕<a href=\"https://langchain-ai.github.io/langgraph/concepts/low_level/?ref=blog.langchain.com#state\" rel=\"noopener noreferrer\">状态</a>对象设计，允许你指定状态 schema，并在 Agent 的每一步访问状态。例如，可以把工具调用产生的上下文存入状态中的某些字段，在需要这些上下文之前，始终将其与大语言模型隔离。除了状态，LangGraph 也支持使用沙箱隔离上下文。这个<a href=\"https://github.com/jacoblee93/mini-chat-langchain?tab=readme-ov-file&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">代码仓库</a>展示了一个使用 <a href=\"https://e2b.dev/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">E2B 沙箱</a>执行工具调用的 LangGraph Agent。这个<a href=\"https://www.youtube.com/watch?v=FBnER2sxt0w&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">视频</a>则展示了使用 Pyodide 进行沙箱隔离并持久保存状态的例子。LangGraph 也为多 Agent 架构提供了大量支持，例如 <a href=\"https://github.com/langchain-ai/langgraph-supervisor-py?ref=blog.langchain.com\" rel=\"noopener noreferrer\">supervisor</a> 和 <a href=\"https://github.com/langchain-ai/langgraph-swarm-py?ref=blog.langchain.com\" rel=\"noopener noreferrer\">swarm</a> 库。关于在 LangGraph 中使用多 Agent 的更多细节，可以观看<a href=\"https://www.youtube.com/watch?v=4nZl32FwU-o&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">这个</a>、<a href=\"https://www.youtube.com/watch?v=JeyDrn1dSUQ&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">这个</a>和<a href=\"https://www.youtube.com/watch?v=B_0TNuYi56w&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">这个视频</a>。</p>"
+    },
+    {
+      "id": "new34_context_agents-085",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Conclusion</h2>",
+      "zh": "<h2>结语</h2>"
+    },
+    {
+      "id": "new34_context_agents-086",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Context engineering is becoming a craft that agents builders should aim to master. Here, we covered a few common patterns seen across many popular agents today:</p>",
+      "zh": "<p>上下文工程正在成为 Agent 开发者应当努力掌握的一门技艺。本文介绍了当前许多流行 Agent 中常见的几种模式：</p>"
+    },
+    {
+      "id": "new34_context_agents-087",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><em>Writing context - saving it outside the context window to help an agent perform a task.</em></li><li><em>Selecting context - pulling it into the context window to help an agent perform a task.</em></li><li><em>Compressing context - retaining only the tokens required to perform a task.</em></li><li><em>Isolating context - splitting it up to help an agent perform a task.</em></li></ul>",
+      "zh": "<ul><li><em>写入上下文：将信息保存在上下文窗口之外，帮助 Agent 执行任务。</em></li><li><em>选择上下文：将信息取入上下文窗口，帮助 Agent 执行任务。</em></li><li><em>压缩上下文：仅保留执行任务所需的 token。</em></li><li><em>隔离上下文：将上下文拆开，帮助 Agent 执行任务。</em></li></ul>"
+    },
+    {
+      "id": "new34_context_agents-088",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangGraph makes it easy to implement each of them and LangSmith provides an easy way to test your agent and track context usage. Together, LangGraph and LangGraph enable a virtuous feedback loop for identifying the best opportunity to apply context engineering, implementing it, testing it, and repeating.</p>",
+      "zh": "<p>LangGraph 让这些模式都容易实现，LangSmith 则提供了便捷的 Agent 测试与上下文用量跟踪方式。LangGraph 与 LangGraph 共同形成了一个良性的反馈循环：找出最值得应用上下文工程的地方，实施、测试，然后重复这一过程。</p>"
+    }
+  ],
+  "description": "Agent 需要上下文来执行任务。上下文工程是一门艺术，也是一门科学：在 Agent 执行轨迹的每一步，将恰到好处的信息填入上下文窗口。本文通过考察多种流行 Agent 和论文，梳理上下文工程的四类常见策略：写入、选择、压缩与隔离。随后，我们将解释…",
+  "reading_minutes": 14,
+  "downloads": {}
+}

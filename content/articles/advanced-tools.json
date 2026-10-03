@@ -1,0 +1,954 @@
+{
+  "title": "Claude 开发者平台的高级工具使用能力",
+  "original_title": "Introducing advanced tool use on the Claude Developer Platform",
+  "url": "https://www.anthropic.com/engineering/advanced-tool-use",
+  "date": "2025-11-24",
+  "publisher": "Anthropic",
+  "source_order": 19,
+  "slug": "advanced-tools",
+  "source_id": "new19_advanced_tools",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new19_advanced_tools-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Illustration for advanced tool use article.\" src=\"/media/68c212c284b3eb3da25efc9d.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new19_advanced_tools-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We’ve added three new beta features that let Claude discover, learn, and execute tools dynamically. Here’s how they work.</p>",
+      "zh": "<p>我们新增了三项测试版功能，让 Claude 能够动态发现、学习和执行工具。下面介绍它们的工作方式。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The future of AI agents is one where models work seamlessly across hundreds or thousands of tools. An IDE assistant that integrates git operations, file manipulation, package managers, testing frameworks, and deployment pipelines. An operations coordinator that connects Slack, GitHub, Google Drive, Jira, company databases, and dozens of MCP servers simultaneously.</p>",
+      "zh": "<p>未来的 AI Agent 将能够在数百乃至数千个工具之间无缝协作。例如，一个集成了 git 操作、文件处理、包管理器、测试框架和部署流水线的 IDE 助手；或者，一个同时连接 Slack、GitHub、Google Drive、Jira、公司数据库以及数十个 MCP 服务器的运营协调助手。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To <a href=\"https://www.anthropic.com/research/building-effective-agents\" rel=\"noopener noreferrer\">build effective agents</a>, they need to work with unlimited tool libraries without stuffing every definition into context upfront. Our blog article on using <a href=\"https://www.anthropic.com/engineering/code-execution-with-mcp\" rel=\"noopener noreferrer\">code execution with MCP</a> discussed how tool results and definitions can sometimes consume 50,000+ tokens before an agent reads a request. Agents should discover and load tools on-demand, keeping only what's relevant for the current task.</p>",
+      "zh": "<p>要<a href=\"https://www.anthropic.com/research/building-effective-agents\" rel=\"noopener noreferrer\">构建高效的 Agent</a>，就需要让它们能够使用规模不受限的工具库，而不必预先将每个工具定义都塞进上下文。我们关于<a href=\"https://www.anthropic.com/engineering/code-execution-with-mcp\" rel=\"noopener noreferrer\">结合 MCP 使用代码执行</a>的博客讨论过：有时，Agent 还没读取用户请求，工具结果和工具定义就已消耗超过 50,000 个 token。Agent 应当按需发现和加载工具，只保留与当前任务相关的内容。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents also need the ability to call tools from code. When using natural language tool calling, each invocation requires a full inference pass, and intermediate results pile up in context whether they're useful or not. Code is a natural fit for orchestration logic, such as loops, conditionals, and data transformations. Agents need the flexibility to choose between code execution and inference based on the task at hand.</p>",
+      "zh": "<p>Agent 还需要能够从代码中调用工具。使用自然语言进行工具调用时，每次调用都需要完整运行一轮模型推理，无论中间结果是否有用，它们都会不断堆积在上下文中。代码天然适合表达循环、条件判断和数据转换等编排逻辑。Agent 需要能够根据当前任务，灵活选择代码执行或模型推理。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents also need to learn correct tool usage from examples, not just schema definitions. JSON schemas define what's structurally valid, but can't express usage patterns: when to include optional parameters, which combinations make sense, or what conventions your API expects.</p>",
+      "zh": "<p>Agent 还需要通过示例学习正确使用工具，而不只是依赖 schema 定义。JSON schema 定义了结构上什么是合法的，却无法表达使用模式：何时应该包含可选参数、哪些参数组合有意义，以及你的 API 期望遵循什么约定。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Today, we're releasing three features that make this possible:</p>",
+      "zh": "<p>今天，我们发布了三项使这些能力成为可能的功能：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-007",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Tool Search Tool, </strong>which allows Claude to use search tools to access thousands of tools without consuming its context window</li><li><strong>Programmatic Tool Calling</strong>, which allows Claude to invoke tools in a code execution environment reducing the impact on the model’s context window</li><li><strong>Tool Use Examples</strong>, which provides a universal standard for demonstrating how to effectively use a given tool</li></ul>",
+      "zh": "<ul><li><strong>工具搜索工具（Tool Search Tool），</strong>让 Claude 能够借助搜索工具访问数千个工具，而不占满上下文窗口。</li><li><strong>程序化工具调用（Programmatic Tool Calling），</strong>让 Claude 能够在代码执行环境中调用工具，减少对模型上下文窗口的影响。</li><li><strong>工具使用示例（Tool Use Examples），</strong>提供一种通用标准，用来展示如何有效使用某个工具。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In internal testing, we’ve found these features have helped us build things that wouldn’t have been possible with conventional tool use patterns. For example,<strong> <a href=\"https://www.claude.com/claude-for-excel\" rel=\"noopener noreferrer\">Claude for Excel</a> </strong>uses Programmatic Tool Calling to read and modify spreadsheets with thousands of rows without overloading the model’s context window.</p>",
+      "zh": "<p>在内部测试中，我们发现这些功能帮助我们构建了一些传统工具使用模式无法实现的东西。例如，<strong><a href=\"https://www.claude.com/claude-for-excel\" rel=\"noopener noreferrer\">Claude for Excel</a></strong> 使用程序化工具调用来读取和修改包含数千行数据的电子表格，而不会让模型的上下文窗口过载。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Based on our experience, we believe these features open up new possibilities for what you can build with Claude.</p>",
+      "zh": "<p>根据我们的经验，我们相信，这些功能为你使用 Claude 构建产品开辟了新的可能性。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-010",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><!--$!--><!--/$--></figure>"
+    },
+    {
+      "id": "new19_advanced_tools-011",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-tool-search-tool\">Tool Search Tool</h2>",
+      "zh": "<h2 id=\"zh-source-tool-search-tool\">工具搜索工具</h2>"
+    },
+    {
+      "id": "new19_advanced_tools-012",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-the-challenge\">The challenge</h3>",
+      "zh": "<h3 id=\"zh-source-the-challenge\">面临的挑战</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>MCP tool definitions provide important context, but as more servers connect, those tokens can add up. Consider a five-server setup:</p>",
+      "zh": "<p>MCP 工具定义提供了重要上下文，但连接的服务器越多，相关 token 开销就会不断累积。考虑一个接入五台服务器的配置：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-014",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>GitHub: 35 tools (~26K tokens)</li><li>Slack: 11 tools (~21K tokens)</li><li>Sentry: 5 tools (~3K tokens)</li><li>Grafana: 5 tools (~3K tokens)</li><li>Splunk: 2 tools (~2K tokens)</li></ul>",
+      "zh": "<ul><li>GitHub：35 个工具（约 26K token）</li><li>Slack：11 个工具（约 21K token）</li><li>Sentry：5 个工具（约 3K token）</li><li>Grafana：5 个工具（约 3K token）</li><li>Splunk：2 个工具（约 2K token）</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That's 58 tools consuming approximately 55K tokens before the conversation even starts. Add more servers like Jira (which alone uses ~17K tokens) and you're quickly approaching 100K+ token overhead. At Anthropic, we've seen tool definitions consume 134K tokens before optimization.</p>",
+      "zh": "<p>这意味着，对话还没有开始，58 个工具就消耗了约 55K token。再加上 Jira 等服务器（仅 Jira 就需要约 17K token），开销很快就会达到 100K token 以上。在 Anthropic，我们见过优化前的工具定义消耗 134K token 的情况。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But token cost isn't the only issue. The most common failures are wrong tool selection and incorrect parameters, especially when tools have similar names like <code>notification-send-user</code> vs. <code>notification-send-channel</code>.</p>",
+      "zh": "<p>但 token 成本并不是唯一问题。最常见的失败是选错工具和使用错误参数，尤其当工具名称相似时，例如 <code>notification-send-user</code> 和 <code>notification-send-channel</code>。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-017",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-our-solution\">Our solution</h3>",
+      "zh": "<h3 id=\"zh-source-our-solution\">我们的解决方案</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Instead of loading all tool definitions upfront, the Tool Search Tool discovers tools on-demand. Claude only sees the tools it actually needs for the current task.</p>",
+      "zh": "<p>工具搜索工具不再预先加载所有工具定义，而是按需发现工具。Claude 只会看到当前任务实际需要的工具。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-019",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"Tool Search Tool diagram\" src=\"/media/033dd0ddf52fc658951b821a.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Tool Search Tool preserves 191,300 tokens of context compared to 122,800 with Claude’s traditional approach.</em></figcaption></figure>"
+    },
+    {
+      "id": "new19_advanced_tools-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Traditional approach:</p>",
+      "zh": "<p>传统方式：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-021",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>All tool definitions loaded upfront (~72K tokens for 50+ MCP tools)</li><li>Conversation history and system prompt compete for remaining space</li><li>Total context consumption: ~77K tokens before any work begins</li></ul>",
+      "zh": "<ul><li>预先加载所有工具定义（50 多个 MCP 工具约需 72K token）。</li><li>对话历史和系统提示词争夺剩余空间。</li><li>上下文总消耗：尚未开始任何工作，就已用掉约 77K token。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With the Tool Search Tool:</p>",
+      "zh": "<p>使用工具搜索工具后：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-023",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Only the Tool Search Tool loaded upfront (~500 tokens)</li><li>Tools discovered on-demand as needed (3-5 relevant tools, ~3K tokens)</li><li>Total context consumption: ~8.7K tokens, preserving 95% of context window</li></ul>",
+      "zh": "<ul><li>预先只加载工具搜索工具本身（约 500 token）。</li><li>按需发现工具（3 至 5 个相关工具，约 3K token）。</li><li>上下文总消耗：约 8.7K token，保留了 95% 的上下文窗口。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This represents an 85% reduction in token usage while maintaining access to your full tool library. Internal testing showed significant accuracy improvements on MCP evaluations when working with large tool libraries. Opus 4 improved from 49% to 74%, and Opus 4.5 improved from 79.5% to 88.1% with Tool Search Tool enabled.</p>",
+      "zh": "<p>这样，在仍可访问完整工具库的同时，token 使用量减少了 85%。内部测试表明，在使用大型工具库时，MCP 评测的准确率显著提升。启用工具搜索工具后，Opus 4 从 49% 提高到 74%，Opus 4.5 从 79.5% 提高到 88.1%。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-025",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-how-the-tool-search-tool-works\">How the Tool Search Tool works</h3>",
+      "zh": "<h3 id=\"zh-source-how-the-tool-search-tool-works\">工具搜索工具如何工作</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The Tool Search Tool lets Claude dynamically discover tools instead of loading all definitions upfront. You provide all your tool definitions to the API, but mark tools with <code>defer_loading: true</code> to make them discoverable on-demand. Deferred tools aren't loaded into Claude's context initially. Claude only sees the Tool Search Tool itself plus any tools with <code>defer_loading: false</code> (your most critical, frequently-used tools).</p>",
+      "zh": "<p>工具搜索工具让 Claude 能够动态发现工具，而不是预先加载所有定义。你将全部工具定义提供给 API，但通过 <code>defer_loading: true</code> 标记工具，使其可以按需发现。延迟加载的工具一开始不会进入 Claude 的上下文。Claude 只能看到工具搜索工具本身，以及设置为 <code>defer_loading: false</code> 的工具，也就是最关键、最常用的那些工具。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When Claude needs specific capabilities, it searches for relevant tools. The Tool Search Tool returns references to matching tools, which get expanded into full definitions in Claude's context.</p>",
+      "zh": "<p>当 Claude 需要某项具体能力时，它会搜索相关工具。工具搜索工具返回匹配工具的引用，这些引用随后在 Claude 的上下文中展开为完整定义。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For example, if Claude needs to interact with GitHub, it searches for \"github,\" and only <code>github.createPullRequest</code> and <code>github.listIssues</code> get loaded—not your other 50+ tools from Slack, Jira, and Google Drive.</p>",
+      "zh": "<p>例如，如果 Claude 需要与 GitHub 交互，它会搜索“github”，随后只加载 <code>github.createPullRequest</code> 和 <code>github.listIssues</code>，而不会加载来自 Slack、Jira 和 Google Drive 的其他 50 多个工具。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This way, Claude has access to your full tool library while only paying the token cost for tools it actually needs.</p>",
+      "zh": "<p>这样，Claude 既能访问你的完整工具库，又只需为实际需要的工具承担 token 成本。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Prompt caching note: </strong>Tool Search Tool doesn't break prompt caching because deferred tools are excluded from the initial prompt entirely. They're only added to context after Claude searches for them, so your system prompt and core tool definitions remain cacheable.</p>",
+      "zh": "<p><strong>关于提示缓存：</strong>工具搜索工具不会破坏提示缓存，因为延迟加载的工具完全不包含在初始提示中。只有 Claude 搜索后，它们才会加入上下文，因此你的系统提示词和核心工具定义仍然可以被缓存。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Implementation:</strong></p>",
+      "zh": "<p><strong>实现方式：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-032",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"tools\": [\n    // Include a tool search tool (regex, BM25, or custom)\n    {\"type\": \"tool_search_tool_regex_20251119\", \"name\": \"tool_search_tool_regex\"},\n\n    // Mark tools for on-demand discovery\n    {\n      \"name\": \"github.createPullRequest\",\n      \"description\": \"Create a pull request\",\n      \"input_schema\": {...},\n      \"defer_loading\": true\n    }\n    // ... hundreds more deferred tools with defer_loading: true\n  ]\n}\n</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For MCP servers, you can defer loading entire servers while keeping specific high-use tools loaded:</p>",
+      "zh": "<p>对于 MCP 服务器，你可以对整台服务器启用延迟加载，同时保留特定的高频工具为预加载状态：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-034",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"type\": \"mcp_toolset\",\n  \"mcp_server_name\": \"google-drive\",\n  \"default_config\": {\"defer_loading\": true}, # defer loading the entire server\n  \"configs\": {\n    \"search_files\": {\n\"defer_loading\": false\n    }  // Keep most used tool loaded\n  }\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The Claude Developer Platform provides regex-based and BM25-based search tools out of the box, but you can also implement custom search tools using embeddings or other strategies.</p>",
+      "zh": "<p>Claude 开发者平台提供开箱即用的、基于正则表达式和 BM25 的搜索工具，你也可以使用嵌入向量或其他策略实现自定义搜索工具。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-036",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-when-to-use-the-tool-search-tool\">When to use the Tool Search Tool</h3>",
+      "zh": "<h3 id=\"zh-source-when-to-use-the-tool-search-tool\">何时使用工具搜索工具</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Like any architectural decision, enabling the Tool Search Tool involves trade-offs. The feature adds a search step before tool invocation, so it delivers the best ROI when the context savings and accuracy improvements outweigh additional latency.</p>",
+      "zh": "<p>和任何架构决策一样，启用工具搜索工具也涉及取舍。它会在工具调用前增加一步搜索，因此，当节省的上下文与准确率提升足以抵消额外延迟时，收益最大。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Use it when:</strong></p>",
+      "zh": "<p><strong>适合使用的情况：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-039",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Tool definitions consuming &gt;10K tokens</li><li>Experiencing tool selection accuracy issues</li><li>Building MCP-powered systems with multiple servers</li><li>10+ tools available</li></ul>",
+      "zh": "<ul><li>工具定义消耗超过 10K token。</li><li>遇到工具选择准确率问题。</li><li>构建接入多台服务器、由 MCP 驱动的系统。</li><li>可用工具数量达到 10 个以上。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Less beneficial when:</strong></p>",
+      "zh": "<p><strong>收益较小的情况：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-041",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Small tool library (&lt;10 tools)</li><li>All tools used frequently in every session</li><li>Tool definitions are compact</li></ul>",
+      "zh": "<ul><li>工具库较小，工具少于 10 个。</li><li>每次会话中都会频繁使用全部工具。</li><li>工具定义本身很简短。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-042",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-programmatic-tool-calling\">Programmatic Tool Calling</h2>",
+      "zh": "<h2 id=\"zh-source-programmatic-tool-calling\">程序化工具调用</h2>"
+    },
+    {
+      "id": "new19_advanced_tools-043",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-the-challenge-2\">The challenge</h3>",
+      "zh": "<h3 id=\"zh-source-the-challenge-2\">面临的挑战</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Traditional tool calling creates two fundamental problems as workflows become more complex:</p>",
+      "zh": "<p>随着工作流变得复杂，传统工具调用会带来两个根本问题：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-045",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Context pollution from intermediate results</strong>: When Claude analyzes a 10MB log file for error patterns, the entire file enters its context window, even though Claude only needs a summary of error frequencies. When fetching customer data across multiple tables, every record accumulates in context regardless of relevance. These intermediate results consume massive token budgets and can push important information out of the context window entirely.</li><li><strong>Inference overhead and manual synthesis</strong>: Each tool call requires a full model inference pass. After receiving results, Claude must \"eyeball\" the data to extract relevant information, reason about how pieces fit together, and decide what to do next—all through natural language processing. A five tool workflow means five inference passes plus Claude parsing each result, comparing values, and synthesizing conclusions. This is both slow and error-prone.</li></ul>",
+      "zh": "<ul><li><strong>中间结果污染上下文：</strong>当 Claude 分析一个 10MB 日志文件以寻找错误模式时，整个文件都会进入上下文窗口，尽管 Claude 实际只需要错误频率的摘要。从多个表中获取客户数据时，每条记录都会在上下文中累积，不论是否相关。这些中间结果会消耗大量 token 预算，甚至可能把重要信息彻底挤出上下文窗口。</li><li><strong>推理开销和人工式归纳：</strong>每次工具调用都需要完整运行一轮模型推理。收到结果后，Claude 必须“目测”数据以提取相关信息，推理各部分如何联系，再决定下一步做什么，这一切都通过自然语言处理完成。一个涉及五个工具的工作流，就意味着五轮模型推理，再加上 Claude 逐项解析结果、比较数值和归纳结论的过程。这既慢，也容易出错。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-046",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-our-solution-2\">Our solution</h3>",
+      "zh": "<h3 id=\"zh-source-our-solution-2\">我们的解决方案</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Programmatic Tool Calling enables Claude to orchestrate tools through code rather than through individual API round-trips. Instead of Claude requesting tools one at a time with each result being returned to its context, Claude writes code that calls multiple tools, processes their outputs, and controls what information actually enters its context window.</p>",
+      "zh": "<p>程序化工具调用让 Claude 能够通过代码编排工具，而不是为每个工具单独进行一轮 API 往返。Claude 不必再逐个请求工具，并让每项结果都返回上下文；它可以编写代码，调用多个工具、处理输出，并控制哪些信息真正进入上下文窗口。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude excels at writing code and by letting it express orchestration logic in Python rather than through natural language tool invocations, you get more reliable, precise control flow. Loops, conditionals, data transformations, and error handling are all explicit in code rather than implicit in Claude's reasoning.</p>",
+      "zh": "<p>Claude 擅长编写代码。让它用 Python 表达编排逻辑，而不是通过自然语言逐项调用工具，就能获得更可靠、更精确的控制流。循环、条件判断、数据转换和错误处理，都会明确写在代码中，而不是隐含在 Claude 的推理里。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-049",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-example-budget-compliance-check\">Example: Budget compliance check</h4>",
+      "zh": "<h4 id=\"zh-source-example-budget-compliance-check\">示例：预算合规检查</h4>"
+    },
+    {
+      "id": "new19_advanced_tools-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Consider a common business task: \"Which team members exceeded their Q3 travel budget?\"</p>",
+      "zh": "<p>考虑一个常见业务任务：“哪些团队成员超出了第三季度差旅预算？”</p>"
+    },
+    {
+      "id": "new19_advanced_tools-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You have three tools available:</p>",
+      "zh": "<p>你有三个可用工具：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-052",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><code>get_team_members(department)</code> - Returns team member list with IDs and levels</li><li><code>get_expenses(user_id, quarter)</code> - Returns expense line items for a user</li><li><code>get_budget_by_level(level)</code> - Returns budget limits for an employee level</li></ul>",
+      "zh": "<ul><li><code>get_team_members(department)</code>：返回团队成员列表，包含 ID 和职级。</li><li><code>get_expenses(user_id, quarter)</code>：返回某位用户的费用明细。</li><li><code>get_budget_by_level(level)</code>：返回某个员工职级的预算上限。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Traditional approach</strong>:</p>",
+      "zh": "<p><strong>传统方式</strong>：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-054",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Fetch team members → 20 people</li><li>For each person, fetch their Q3 expenses → 20 tool calls, each returning 50-100 line items (flights, hotels, meals, receipts)</li><li>Fetch budget limits by employee level</li><li>All of this enters Claude's context: 2,000+ expense line items (50 KB+)</li><li>Claude manually sums each person's expenses, looks up their budget, compares expenses against budget limits</li><li>More round-trips to the model, significant context consumption</li></ul>",
+      "zh": "<ul><li>获取团队成员，共 20 人。</li><li>逐人获取第三季度费用，共 20 次工具调用，每次返回 50 至 100 条明细，包括航班、酒店、餐饮和收据。</li><li>按员工职级获取预算上限。</li><li>所有这些内容都进入 Claude 上下文：2,000 多条费用明细，超过 50 KB。</li><li>Claude 以人工式方式汇总每个人的费用、查找其预算，并将费用与预算上限比较。</li><li>需要更多次模型往返，并大量消耗上下文。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>With Programmatic Tool Calling</strong>:</p>",
+      "zh": "<p><strong>使用程序化工具调用后</strong>：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-056",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Instead of each tool result returning to Claude, Claude writes a Python script that orchestrates the entire workflow. The script runs in the Code Execution tool (a sandboxed environment), pausing when it needs results from your tools. When you return tool results via the API, they're processed by the script rather than consumed by the model. The script continues executing, and Claude only sees the final output.</p>",
+      "zh": "<p>Claude 编写一个 Python 脚本，编排整个工作流，而不是让每个工具结果都返回模型。脚本在代码执行工具提供的沙箱环境中运行，需要你的工具结果时便暂停。当你通过 API 返回工具结果后，结果由脚本处理，而不是由模型读取。脚本继续执行，Claude 只会看到最终输出。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-057",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"Programmatic tool calling flow\" src=\"/media/b77b8be7afca365ff2a3f7be.png\" loading=\"lazy\" decoding=\"async\"><figcaption>Programmatic Tool Calling enables Claude to orchestrate tools through code rather than through individual API round-trips, allowing for parallel tool execution.</figcaption></figure>"
+    },
+    {
+      "id": "new19_advanced_tools-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here's what Claude's orchestration code looks like for the budget compliance task:</p>",
+      "zh": "<p>对于预算合规任务，Claude 编写的编排代码如下：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-059",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>team = await get_team_members(\"engineering\")\n\n# Fetch budgets for each unique level\nlevels = list(set(m[\"level\"] for m in team))\nbudget_results = await asyncio.gather(*[\n    get_budget_by_level(level) for level in levels\n])\n\n# Create a lookup dictionary: {\"junior\": budget1, \"senior\": budget2, ...}\nbudgets = {level: budget for level, budget in zip(levels, budget_results)}\n\n# Fetch all expenses in parallel\nexpenses = await asyncio.gather(*[\n    get_expenses(m[\"id\"], \"Q3\") for m in team\n])\n\n# Find employees who exceeded their travel budget\nexceeded = []\nfor member, exp in zip(team, expenses):\n    budget = budgets[member[\"level\"]]\n    total = sum(e[\"amount\"] for e in exp)\n    if total &gt; budget[\"travel_limit\"]:\n        exceeded.append({\n            \"name\": member[\"name\"],\n            \"spent\": total,\n            \"limit\": budget[\"travel_limit\"]\n        })\n\nprint(json.dumps(exceeded))</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude's context receives only the final result: the two to three people who exceeded their budget. The 2,000+ line items, the intermediate sums, and the budget lookups do not affect Claude’s context, reducing consumption from 200KB of raw expense data to just 1KB of results.</p>",
+      "zh": "<p>Claude 的上下文只接收最终结果：超出预算的那两三个人。2,000 多条明细、中间求和结果，以及预算查询结果，都不会影响 Claude 的上下文，输入从 200KB 原始费用数据缩减为仅 1KB 的结果。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-061",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The efficiency gains are substantial:</p>",
+      "zh": "<p>效率提升相当显著：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-062",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Token savings</strong>: By keeping intermediate results out of Claude's context, PTC dramatically reduces token consumption. Average usage dropped from 43,588 to 27,297 tokens, a 37% reduction on complex research tasks.</li><li><strong>Reduced latency</strong>: Each API round-trip requires model inference (hundreds of milliseconds to seconds). When Claude orchestrates 20+ tool calls in a single code block, you eliminate 19+ inference passes. The API handles tool execution without returning to the model each time.</li><li><strong>Improved accuracy</strong>: By writing explicit orchestration logic, Claude makes fewer errors than when juggling multiple tool results in natural language. Internal knowledge retrieval improved from 25.6% to 28.5%; <a href=\"https://arxiv.org/abs/2311.12983\" rel=\"noopener noreferrer\">GIA benchmarks</a> from 46.5% to 51.2%.</li></ul>",
+      "zh": "<ul><li><strong>节省 token：</strong>程序化工具调用（PTC）通过让中间结果留在 Claude 上下文之外，大幅减少 token 消耗。在复杂研究任务中，平均使用量从 43,588 token 降至 27,297 token，减少了 37%。</li><li><strong>降低延迟：</strong>每次 API 往返都需要模型推理，耗时从数百毫秒到数秒不等。当 Claude 在同一个代码块中编排 20 多次工具调用时，就省去了 19 次以上的模型推理。API 负责处理工具执行，无需每次都返回模型。</li><li><strong>提高准确率：</strong>通过编写明确的编排逻辑，Claude 比起用自然语言同时处理多个工具结果，出错更少。内部知识检索表现从 25.6% 提高到 28.5%；<a href=\"https://arxiv.org/abs/2311.12983\" rel=\"noopener noreferrer\">GIA 基准</a>从 46.5% 提高到 51.2%。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Production workflows involve messy data, conditional logic, and operations that need to scale. Programmatic Tool Calling lets Claude handle that complexity programmatically while keeping its focus on actionable results rather than raw data processing.</p>",
+      "zh": "<p>生产工作流涉及杂乱数据、条件逻辑，以及需要扩展规模的操作。程序化工具调用让 Claude 能够通过程序处理这些复杂性，同时将注意力放在可据以行动的结果上，而不是原始数据处理上。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-064",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-how-programmatic-tool-calling-works\">How Programmatic Tool Calling works</h3>",
+      "zh": "<h3 id=\"zh-source-how-programmatic-tool-calling-works\">程序化工具调用如何工作</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-065",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-1-mark-tools-as-callable-from-code\">1. Mark tools as callable from code</h4>",
+      "zh": "<h4 id=\"zh-source-1-mark-tools-as-callable-from-code\">1. 将工具标记为可由代码调用</h4>"
+    },
+    {
+      "id": "new19_advanced_tools-066",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Add code_execution to tools, and set allowed_callers to opt-in tools for programmatic execution:</p>",
+      "zh": "<p>将 code_execution 加入 tools，并设置 allowed_callers，为选定工具启用程序化执行：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-067",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"tools\": [\n    {\n      \"type\": \"code_execution_20250825\",\n      \"name\": \"code_execution\"\n    },\n    {\n      \"name\": \"get_team_members\",\n      \"description\": \"Get all members of a department...\",\n      \"input_schema\": {...},\n      \"allowed_callers\": [\"code_execution_20250825\"] # opt-in to programmatic tool calling\n    },\n    {\n      \"name\": \"get_expenses\",\n \t...\n    },\n    {\n      \"name\": \"get_budget_by_level\",\n\t...\n    }\n  ]\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The API converts these tool definitions into Python functions that Claude can call.</p>",
+      "zh": "<p>API 会将这些工具定义转换成 Claude 可以调用的 Python 函数。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-069",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-2-claude-writes-orchestration-code\">2. Claude writes orchestration code</h4>",
+      "zh": "<h4 id=\"zh-source-2-claude-writes-orchestration-code\">2. Claude 编写编排代码</h4>"
+    },
+    {
+      "id": "new19_advanced_tools-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Instead of requesting tools one at a time, Claude generates Python code:</p>",
+      "zh": "<p>Claude 不再逐个请求工具，而是生成 Python 代码：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-071",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"type\": \"server_tool_use\",\n  \"id\": \"srvtoolu_abc\",\n  \"name\": \"code_execution\",\n  \"input\": {\n    \"code\": \"team = get_team_members('engineering')\\n...\" # the code example above\n  }\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-072",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-3-tools-execute-without-hitting-claudes-context\">3. Tools execute without hitting Claude's context</h4>",
+      "zh": "<h4 id=\"zh-source-3-tools-execute-without-hitting-claudes-context\">3. 工具执行不经过 Claude 上下文</h4>"
+    },
+    {
+      "id": "new19_advanced_tools-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When the code calls get_expenses(), you receive a tool request with a caller field:</p>",
+      "zh": "<p>当代码调用 get_expenses() 时，你会收到一个带有 caller 字段的工具请求：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-074",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"type\": \"tool_use\",\n  \"id\": \"toolu_xyz\",\n  \"name\": \"get_expenses\",\n  \"input\": {\"user_id\": \"emp_123\", \"quarter\": \"Q3\"},\n  \"caller\": {\n    \"type\": \"code_execution_20250825\",\n    \"tool_id\": \"srvtoolu_abc\"\n  }\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You provide the result, which is processed in the Code Execution environment rather than Claude's context. This request-response cycle repeats for each tool call in the code.</p>",
+      "zh": "<p>你提供结果后，结果会在代码执行环境中处理，而不会进入 Claude 的上下文。代码中的每次工具调用，都会重复这个请求—响应循环。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-076",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-4-only-final-output-enters-context\">4. Only final output enters context</h4>",
+      "zh": "<h4 id=\"zh-source-4-only-final-output-enters-context\">4. 只有最终输出进入上下文</h4>"
+    },
+    {
+      "id": "new19_advanced_tools-077",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When the code finishes running, only the results of the code are returned to Claude:</p>",
+      "zh": "<p>代码运行结束时，只将代码的结果返回给 Claude：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-078",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"type\": \"code_execution_tool_result\",\n  \"tool_use_id\": \"srvtoolu_abc\",\n  \"content\": {\n    \"stdout\": \"[{\\\"name\\\": \\\"Alice\\\", \\\"spent\\\": 12500, \\\"limit\\\": 10000}...]\"\n  }\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-079",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is all Claude sees, not the 2000+ expense line items processed along the way.</p>",
+      "zh": "<p>Claude 看到的就只有这些，而不是过程中处理的 2,000 多条费用明细。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-080",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-when-to-use-programmatic-tool-calling\">When to use Programmatic Tool Calling</h3>",
+      "zh": "<h3 id=\"zh-source-when-to-use-programmatic-tool-calling\">何时使用程序化工具调用</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-081",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Programmatic Tool Calling adds a code execution step to your workflow. This extra overhead pays off when the token savings, latency improvements, and accuracy gains are substantial.</p>",
+      "zh": "<p>程序化工具调用会为工作流增加一个代码执行步骤。当 token 节省、延迟改善和准确率提升足够显著时，这份额外开销就是值得的。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-082",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Most beneficial when:</strong></p>",
+      "zh": "<p><strong>收益最大的情况：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-083",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Processing large datasets where you only need aggregates or summaries</li><li>Running multi-step workflows with three or more dependent tool calls</li><li>Filtering, sorting, or transforming tool results before Claude sees them</li><li>Handling tasks where intermediate data shouldn't influence Claude's reasoning</li><li>Running parallel operations across many items (checking 50 endpoints, for example)</li></ul>",
+      "zh": "<ul><li>处理大型数据集，但只需要聚合结果或摘要。</li><li>运行包含三个或更多相互依赖工具调用的多步骤工作流。</li><li>在 Claude 看到工具结果之前，对其进行过滤、排序或转换。</li><li>处理不应让中间数据影响 Claude 推理的任务。</li><li>针对大量对象并行操作，例如检查 50 个端点。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-084",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Less beneficial when:</strong></p>",
+      "zh": "<p><strong>收益较小的情况：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-085",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Making simple single-tool invocations</li><li>Working on tasks where Claude should see and reason about all intermediate results</li><li>Running quick lookups with small responses</li></ul>",
+      "zh": "<ul><li>进行简单的单工具调用。</li><li>任务要求 Claude 查看并推理所有中间结果。</li><li>进行返回内容较少的快速查询。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-086",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-tool-use-examples\">Tool Use Examples</h2>",
+      "zh": "<h2 id=\"zh-source-tool-use-examples\">工具使用示例</h2>"
+    },
+    {
+      "id": "new19_advanced_tools-087",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-the-challenge-3\">The challenge</h3>",
+      "zh": "<h3 id=\"zh-source-the-challenge-3\">面临的挑战</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-088",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>JSON Schema excels at defining structure–types, required fields, allowed enums–but it can't express usage patterns: when to include optional parameters, which combinations make sense, or what conventions your API expects.</p>",
+      "zh": "<p>JSON Schema 擅长定义结构，包括类型、必填字段和允许的枚举值，但无法表达使用模式：何时包含可选参数、哪些组合有意义，以及你的 API 期望什么约定。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-089",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Consider a support ticket API:</p>",
+      "zh": "<p>考虑一个客服工单 API：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-090",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n  \"name\": \"create_ticket\",\n  \"input_schema\": {\n    \"properties\": {\n      \"title\": {\"type\": \"string\"},\n      \"priority\": {\"enum\": [\"low\", \"medium\", \"high\", \"critical\"]},\n      \"labels\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}},\n      \"reporter\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"id\": {\"type\": \"string\"},\n          \"name\": {\"type\": \"string\"},\n          \"contact\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"email\": {\"type\": \"string\"},\n              \"phone\": {\"type\": \"string\"}\n            }\n          }\n        }\n      },\n      \"due_date\": {\"type\": \"string\"},\n      \"escalation\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"level\": {\"type\": \"integer\"},\n          \"notify_manager\": {\"type\": \"boolean\"},\n          \"sla_hours\": {\"type\": \"integer\"}\n        }\n      }\n    },\n    \"required\": [\"title\"]\n  }\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-091",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The schema defines what's valid, but leaves critical questions unanswered:</p>",
+      "zh": "<p>schema 定义了哪些输入合法，却没有回答以下关键问题：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-092",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Format ambiguity: </strong>Should <code>due_date</code> use \"2024-11-06\", \"Nov 6, 2024\", or \"2024-11-06T00:00:00Z\"?</li><li><strong>ID conventions: </strong>Is <code>reporter.id</code> a UUID, \"USR-12345\", or just \"12345\"?</li><li><strong>Nested structure usage: </strong>When should Claude populate <code>reporter.contact</code>?</li><li><strong>Parameter correlations: </strong>How do <code>escalation.level</code> and <code>escalation.sla_hours</code> relate to priority?</li></ul>",
+      "zh": "<ul><li><strong>格式歧义：</strong><code>due_date</code> 应该使用“2024-11-06”、“Nov 6, 2024”，还是“2024-11-06T00:00:00Z”？</li><li><strong>ID 约定：</strong><code>reporter.id</code> 是 UUID、“USR-12345”，还是仅仅“12345”？</li><li><strong>嵌套结构的用法：</strong>Claude 何时应该填写 <code>reporter.contact</code>？</li><li><strong>参数关联：</strong><code>escalation.level</code> 和 <code>escalation.sla_hours</code> 与优先级之间有什么关系？</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-093",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These ambiguities can lead to malformed tool calls and inconsistent parameter usage.</p>",
+      "zh": "<p>这些歧义可能导致格式错误的工具调用，以及不一致的参数使用方式。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-094",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-our-solution-3\">Our solution</h3>",
+      "zh": "<h3 id=\"zh-source-our-solution-3\">我们的解决方案</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-095",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tool Use Examples let you provide sample tool calls directly in your tool definitions. Instead of relying on schema alone, you show Claude concrete usage patterns:</p>",
+      "zh": "<p>工具使用示例允许你直接在工具定义中提供调用样例。你无需仅依赖 schema，而是可以向 Claude 展示具体的使用模式：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-096",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n    \"name\": \"create_ticket\",\n    \"input_schema\": { /* same schema as above */ },\n    \"input_examples\": [\n      {\n        \"title\": \"Login page returns 500 error\",\n        \"priority\": \"critical\",\n        \"labels\": [\"bug\", \"authentication\", \"production\"],\n        \"reporter\": {\n          \"id\": \"USR-12345\",\n          \"name\": \"Jane Smith\",\n          \"contact\": {\n            \"email\": \"jane@acme.com\",\n            \"phone\": \"+1-555-0123\"\n          }\n        },\n        \"due_date\": \"2024-11-06\",\n        \"escalation\": {\n          \"level\": 2,\n          \"notify_manager\": true,\n          \"sla_hours\": 4\n        }\n      },\n      {\n        \"title\": \"Add dark mode support\",\n        \"labels\": [\"feature-request\", \"ui\"],\n        \"reporter\": {\n          \"id\": \"USR-67890\",\n          \"name\": \"Alex Chen\"\n        }\n      },\n      {\n        \"title\": \"Update API documentation\"\n      }\n    ]\n  }</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-097",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>From these three examples, Claude learns:</p>",
+      "zh": "<p>从这三个示例中，Claude 可以学到：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-098",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Format conventions</strong>: Dates use YYYY-MM-DD, user IDs follow USR-XXXXX, labels use kebab-case</li><li><strong>Nested structure patterns</strong>: How to construct the reporter object with its nested contact object</li><li><strong>Optional parameter correlations</strong>: Critical bugs have full contact info + escalation with tight SLAs; feature requests have reporter but no contact/escalation; internal tasks have title only</li></ul>",
+      "zh": "<ul><li><strong>格式约定：</strong>日期使用 YYYY-MM-DD，用户 ID 遵循 USR-XXXXX，标签使用 kebab-case，即以连字符连接单词。</li><li><strong>嵌套结构模式：</strong>如何构造 reporter 对象，以及其中嵌套的 contact 对象。</li><li><strong>可选参数关联：</strong>严重缺陷需要完整联系信息，以及带有严格 SLA 的升级处理设置；功能请求包含 reporter，但不包含 contact/escalation；内部任务则只需要标题。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-099",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In our own internal testing, tool use examples improved accuracy from 72% to 90% on complex parameter handling.</p>",
+      "zh": "<p>在我们自己的内部测试中，工具使用示例将复杂参数处理的准确率从 72% 提升到了 90%。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-100",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-when-to-use-tool-use-examples\">When to use Tool Use Examples</h3>",
+      "zh": "<h3 id=\"zh-source-when-to-use-tool-use-examples\">何时使用工具使用示例</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-101",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tool Use Examples add tokens to your tool definitions, so they’re most valuable when accuracy improvements outweigh the additional cost.</p>",
+      "zh": "<p>工具使用示例会增加工具定义中的 token，因此，当准确率提升超过额外成本时，它最有价值。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-102",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Most beneficial when:</strong></p>",
+      "zh": "<p><strong>收益最大的情况：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-103",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Complex nested structures where valid JSON doesn't imply correct usage</li><li>Tools with many optional parameters and inclusion patterns matter</li><li>APIs with domain-specific conventions not captured in schemas</li><li>Similar tools where examples clarify which one to use (e.g., <code>create_ticket</code> vs <code>create_incident</code>)</li></ul>",
+      "zh": "<ul><li>复杂嵌套结构中，合法 JSON 并不意味着用法正确。</li><li>工具包含许多可选参数，而且何时包含哪些参数十分重要。</li><li>API 存在 schema 未能表达的领域特定约定。</li><li>工具彼此相似，需要通过示例澄清该用哪一个，例如 <code>create_ticket</code> 与 <code>create_incident</code>。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-104",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Less beneficial when:</strong></p>",
+      "zh": "<p><strong>收益较小的情况：</strong></p>"
+    },
+    {
+      "id": "new19_advanced_tools-105",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Simple single-parameter tools with obvious usage</li><li>Standard formats like URLs or emails that Claude already understands</li><li>Validation concerns better handled by JSON Schema constraints</li></ul>",
+      "zh": "<ul><li>用法显而易见的简单单参数工具。</li><li>URL 或电子邮件地址等 Claude 已经理解的标准格式。</li><li>适合通过 JSON Schema 约束来处理的验证问题。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-106",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-best-practices\">Best practices</h2>",
+      "zh": "<h2 id=\"zh-source-best-practices\">最佳实践</h2>"
+    },
+    {
+      "id": "new19_advanced_tools-107",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Building agents that take real-world actions means handling scale, complexity, and precision simultaneously. These three features work together to solve different bottlenecks in tool use workflows. Here's how to combine them effectively.</p>",
+      "zh": "<p>构建能够在现实世界中执行操作的 Agent，意味着必须同时处理规模、复杂性和精确性。这三项功能可以协同解决工具使用工作流中的不同瓶颈。下面介绍如何有效组合它们。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-108",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-layer-features-strategically\">Layer features strategically</h3>",
+      "zh": "<h3 id=\"zh-source-layer-features-strategically\">有策略地叠加功能</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-109",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Not every agent needs to use all three features for a given task. Start with your biggest bottleneck:</p>",
+      "zh": "<p>并非每个 Agent 在执行某项任务时，都需要使用全部三项功能。先从最大的瓶颈入手：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-110",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Context bloat from tool definitions → Tool Search Tool</li><li>Large intermediate results polluting context → Programmatic Tool Calling</li><li>Parameter errors and malformed calls → Tool Use Examples</li></ul>",
+      "zh": "<ul><li>工具定义导致上下文膨胀 → 工具搜索工具。</li><li>庞大中间结果污染上下文 → 程序化工具调用。</li><li>参数错误和格式不正确的调用 → 工具使用示例。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-111",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This focused approach lets you address the specific constraint limiting your agent's performance, rather than adding complexity upfront.</p>",
+      "zh": "<p>这种聚焦的方法，让你能够直接解决限制 Agent 表现的具体约束，而不是一开始就增加复杂度。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-112",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Then layer additional features as needed. They're complementary: Tool Search Tool ensures the right tools are found, Programmatic Tool Calling ensures efficient execution, and Tool Use Examples ensure correct invocation.</p>",
+      "zh": "<p>然后再按需叠加其他功能。它们彼此互补：工具搜索工具确保找到正确工具，程序化工具调用确保高效执行，工具使用示例确保正确调用。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-113",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-set-up-tool-search-tool-for-better-discovery\">Set up Tool Search Tool for better discovery</h3>",
+      "zh": "<h3 id=\"zh-source-set-up-tool-search-tool-for-better-discovery\">配置工具搜索工具，改善工具发现</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-114",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tool search matches against names and descriptions, so clear, descriptive definitions improve discovery accuracy.</p>",
+      "zh": "<p>工具搜索会匹配名称和描述，因此清晰、具有描述性的定义可以提高发现准确率。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-115",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>// Good\n{\n    \"name\": \"search_customer_orders\",\n    \"description\": \"Search for customer orders by date range, status, or total amount. Returns order details including items, shipping, and payment info.\"\n}\n\n// Bad\n{\n    \"name\": \"query_db_orders\",\n    \"description\": \"Execute order query\"\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-116",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Add system prompt guidance so Claude knows what's available:</p>",
+      "zh": "<p>在系统提示词中加入指导，让 Claude 知道有哪些能力可用：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-117",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>You have access to tools for Slack messaging, Google Drive file management, \nJira ticket tracking, and GitHub repository operations. Use the tool search \nto find specific capabilities.</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-118",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Keep your three to five most-used tools always loaded, defer the rest. This balances immediate access for common operations with on-demand discovery for everything else.</p>",
+      "zh": "<p>让最常用的三至五个工具始终保持加载，其他工具延迟加载。这样，可以在常见操作的即时可用性与其余工具的按需发现之间取得平衡。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-119",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-set-up-programmatic-tool-calling-for-correct-execution\">Set up Programmatic Tool Calling for correct execution</h3>",
+      "zh": "<h3 id=\"zh-source-set-up-programmatic-tool-calling-for-correct-execution\">配置程序化工具调用，确保正确执行</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-120",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Since Claude writes code to parse tool outputs, document return formats clearly. This helps Claude write correct parsing logic:</p>",
+      "zh": "<p>由于 Claude 会编写代码来解析工具输出，应清楚记录返回格式。这有助于 Claude 写出正确的解析逻辑：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-121",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>{\n    \"name\": \"get_orders\",\n    \"description\": \"Retrieve orders for a customer.\nReturns:\n    List of order objects, each containing:\n    - id (str): Order identifier\n    - total (float): Order total in USD\n    - status (str): One of 'pending', 'shipped', 'delivered'\n    - items (list): Array of {sku, quantity, price}\n    - created_at (str): ISO 8601 timestamp\"\n}</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-122",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>See below for opt-in tools that benefit from programmatic orchestration:</p>",
+      "zh": "<p>以下是适合选择启用程序化编排、能够从中受益的工具：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-123",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Tools that can run in parallel (independent operations)</li><li>Operations safe to retry (idempotent)</li></ul>",
+      "zh": "<ul><li>可以并行运行的工具，即彼此独立的操作。</li><li>可以安全重试的操作，即幂等操作。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-124",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-set-up-tool-use-examples-for-parameter-accuracy\">Set up Tool Use Examples for parameter accuracy</h3>",
+      "zh": "<h3 id=\"zh-source-set-up-tool-use-examples-for-parameter-accuracy\">配置工具使用示例，提高参数准确率</h3>"
+    },
+    {
+      "id": "new19_advanced_tools-125",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Craft examples for behavioral clarity:</p>",
+      "zh": "<p>设计示例时，应让使用行为清晰明确：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-126",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Use realistic data (real city names, plausible prices, not \"string\" or \"value\")</li><li>Show variety with minimal, partial, and full specification patterns</li><li>Keep it concise: 1-5 examples per tool</li><li>Focus on ambiguity (only add examples where correct usage isn't obvious from schema)</li></ul>",
+      "zh": "<ul><li>使用贴近实际的数据，例如真实城市名称、合理价格，而不是“string”或“value”。</li><li>通过最少参数、部分参数和完整参数的不同写法展示多样性。</li><li>保持简洁：每个工具提供 1 至 5 个示例。</li><li>聚焦歧义：只有在无法从 schema 中明显看出正确用法时，才添加示例。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-127",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-getting-started\">Getting started</h2>",
+      "zh": "<h2 id=\"zh-source-getting-started\">开始使用</h2>"
+    },
+    {
+      "id": "new19_advanced_tools-128",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These features are available in beta. To enable them, add the beta header and include the tools you need:</p>",
+      "zh": "<p>这些功能目前以测试版提供。要启用它们，请添加 beta 请求头，并包含所需工具：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-129",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>client.beta.messages.create(\n    betas=[\"advanced-tool-use-2025-11-20\"],\n    model=\"claude-sonnet-4-5-20250929\",\n    max_tokens=4096,\n    tools=[\n        {\"type\": \"tool_search_tool_regex_20251119\", \"name\": \"tool_search_tool_regex\"},\n        {\"type\": \"code_execution_20250825\", \"name\": \"code_execution\"},\n        # Your tools with defer_loading, allowed_callers, and input_examples\n    ]\n)</code></pre>"
+    },
+    {
+      "id": "new19_advanced_tools-130",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For detailed API documentation and SDK examples, see our:</p>",
+      "zh": "<p>详细 API 文档和 SDK 示例，请参阅：</p>"
+    },
+    {
+      "id": "new19_advanced_tools-131",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool\" rel=\"noopener noreferrer\"><span>D</span>ocumentation</a> and <a href=\"https://github.com/anthropics/claude-cookbooks/blob/main/tool_use/tool_search_with_embeddings.ipynb\" rel=\"noopener noreferrer\">cookbook</a> for Tool Search Tool</li><li><a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling\" rel=\"noopener noreferrer\">Documentation</a> and <a href=\"https://github.com/anthropics/claude-cookbooks/blob/main/tool_use/programmatic_tool_calling_ptc.ipynb\" rel=\"noopener noreferrer\">cookbook</a> for Programmatic Tool Calling</li><li><a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use#providing-tool-use-examples\" rel=\"noopener noreferrer\">Documentation</a> for Tool Use Examples</li></ul>",
+      "zh": "<ul><li>工具搜索工具的<a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool\" rel=\"noopener noreferrer\"><span>文</span>档</a>和<a href=\"https://github.com/anthropics/claude-cookbooks/blob/main/tool_use/tool_search_with_embeddings.ipynb\" rel=\"noopener noreferrer\">实践示例</a>。</li><li>程序化工具调用的<a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/programmatic-tool-calling\" rel=\"noopener noreferrer\">文档</a>和<a href=\"https://github.com/anthropics/claude-cookbooks/blob/main/tool_use/programmatic_tool_calling_ptc.ipynb\" rel=\"noopener noreferrer\">实践示例</a>。</li><li>工具使用示例的<a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/implement-tool-use#providing-tool-use-examples\" rel=\"noopener noreferrer\">文档</a>。</li></ul>"
+    },
+    {
+      "id": "new19_advanced_tools-132",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These features move tool use from simple function calling toward intelligent orchestration. As agents tackle more complex workflows spanning dozens of tools and large datasets, dynamic discovery, efficient execution, and reliable invocation become foundational.</p>",
+      "zh": "<p>这些功能推动工具使用从简单的函数调用走向智能编排。当 Agent 开始应对横跨数十种工具和大型数据集的更复杂工作流时，动态发现、高效执行和可靠调用，就成为基础能力。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-133",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We're excited to see what you build.</p>",
+      "zh": "<p>我们期待看到你用它们构建什么。</p>"
+    },
+    {
+      "id": "new19_advanced_tools-134",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-acknowledgements\">Acknowledgements</h2>",
+      "zh": "<h2 id=\"zh-source-acknowledgements\">致谢</h2>"
+    },
+    {
+      "id": "new19_advanced_tools-135",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Written by Bin Wu, with contributions from Adam Jones, Artur Renault, Henry Tay, Jake Noble, Noah Picard, Sam Jiang, and the Claude Developer Platform team. This work builds on foundational research by Chris Gorgolewski, Daniel Jiang, Jeremy Fox and Mike Lambert. We also drew inspiration from across the AI ecosystem, including <a href=\"https://github.com/9600dev/llmvm\" rel=\"noopener noreferrer\">Joel Pobar's LLMVM</a>, <a href=\"https://blog.cloudflare.com/code-mode/\" rel=\"noopener noreferrer\">Cloudflare's Code Mode</a> and <a href=\"https://www.anthropic.com/engineering/code-execution-with-mcp\" rel=\"noopener noreferrer\">Code Execution as MCP</a>. Special thanks to Andy Schumeister, Hamish Kerr, Keir Bradwell, Matt Bleifer and Molly Vorwerck for their support.<br></p>",
+      "zh": "<p>本文由 Bin Wu 撰写，Adam Jones、Artur Renault、Henry Tay、Jake Noble、Noah Picard、Sam Jiang 和 Claude 开发者平台团队作出贡献。这项工作建立在 Chris Gorgolewski、Daniel Jiang、Jeremy Fox 和 Mike Lambert 的基础研究之上。我们也从整个 AI 生态中汲取了灵感，包括 <a href=\"https://github.com/9600dev/llmvm\" rel=\"noopener noreferrer\">Joel Pobar 的 LLMVM</a>、<a href=\"https://blog.cloudflare.com/code-mode/\" rel=\"noopener noreferrer\">Cloudflare 的 Code Mode</a>，以及<a href=\"https://www.anthropic.com/engineering/code-execution-with-mcp\" rel=\"noopener noreferrer\">以代码执行方式使用 MCP</a>。特别感谢 Andy Schumeister、Hamish Kerr、Keir Bradwell、Matt Bleifer 和 Molly Vorwerck 的支持。<br></p>"
+    }
+  ],
+  "description": "我们新增了三项测试版功能，让 Claude 能够动态发现、学习和执行工具。下面介绍它们的工作方式",
+  "reading_minutes": 17,
+  "downloads": {
+    "zh": "/downloads/advanced-tools-zh.pdf",
+    "en": "/downloads/advanced-tools-en.pdf"
+  }
+}

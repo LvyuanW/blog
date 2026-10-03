@@ -1,0 +1,306 @@
+{
+  "title": "借助 Agent Skills，让 Agent 胜任现实世界的任务",
+  "original_title": "Equipping agents for the real world with Agent Skills",
+  "url": "https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills",
+  "date": "2025-10-16",
+  "publisher": "Anthropic",
+  "source_order": 13,
+  "slug": "skills",
+  "source_id": "new13_skills",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new13_skills-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/5df4445583db58834e88623d.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new13_skills-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude is powerful, but real work requires procedural knowledge and organizational context. Introducing Agent Skills, a new way to build specialized agents using files and folders.</p>",
+      "zh": "<p>Claude 很强大，但真实工作需要操作性知识和组织上下文。我们推出 Agent Skills，让你通过文件和文件夹，以一种新方式构建专门的 Agent。</p>"
+    },
+    {
+      "id": "new13_skills-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><em>Update: We've published</em> <a href=\"https://agentskills.io/\" rel=\"noopener noreferrer\"><em>Agent Skills</em></a> <em>as an open standard for cross-platform portability. (December 18, 2025)</em></p>",
+      "zh": "<p><em>更新：我们已将</em> <a href=\"https://agentskills.io/\" rel=\"noopener noreferrer\"><em>Agent Skills</em></a> <em>发布为开放标准，以支持跨平台移植。（2025 年 12 月 18 日）</em></p>"
+    },
+    {
+      "id": "new13_skills-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As model capabilities improve, we can now build general-purpose agents that interact with full-fledged computing environments. <a href=\"https://claude.com/product/claude-code\" rel=\"noopener noreferrer\">Claude Code</a>, for example, can accomplish complex tasks across domains using local code execution and filesystems. But as these agents become more powerful, we need more composable, scalable, and portable ways to equip them with domain-specific expertise.</p>",
+      "zh": "<p>随着模型能力提升，我们现在可以构建能够与完整计算环境交互的通用 Agent。例如，<a href=\"https://claude.com/product/claude-code\" rel=\"noopener noreferrer\">Claude Code</a> 可以利用本地代码执行和文件系统，完成跨领域的复杂任务。但随着这些 Agent 变得更强大，我们也需要组合性、可扩展性和可移植性更好的方式，为它们提供领域专长。</p>"
+    },
+    {
+      "id": "new13_skills-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This led us to create <a href=\"https://www.anthropic.com/news/skills\" rel=\"noopener noreferrer\"><strong>Agent Skills</strong></a>: organized folders of instructions, scripts, and resources that agents can discover and load dynamically to perform better at specific tasks.<strong> </strong>Skills extend Claude’s capabilities by packaging your expertise into composable resources for Claude, transforming general-purpose agents into specialized agents that fit your needs.</p>",
+      "zh": "<p>因此，我们创建了 <a href=\"https://www.anthropic.com/news/skills\" rel=\"noopener noreferrer\"><strong>Agent Skills</strong></a>：包含指令、脚本和资源的有组织的文件夹，Agent 可以动态发现并加载它们，以便在特定任务上表现得更好。<strong> </strong>Skills 将你的专业知识打包成 Claude 可组合使用的资源，以此扩展 Claude 的能力，把通用 Agent 变成符合你需求的专门 Agent。</p>"
+    },
+    {
+      "id": "new13_skills-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Building a skill for an agent is like putting together an onboarding guide for a new hire. Instead of building fragmented, custom-designed agents for each use case, anyone can now specialize their agents with composable capabilities by capturing and sharing their procedural knowledge. In this article, we explain what Skills are, show how they work, and share best practices for building your own.</p>",
+      "zh": "<p>为 Agent 构建技能，就像为新员工编写入职指南。现在，任何人都可以通过记录并分享自己的操作性知识，用可组合的能力使 Agent 具备专长，而无需为每一种用例单独构建零散、定制的 Agent。本文将解释 Skills 是什么，展示其工作方式，并分享构建技能的最佳实践。</p>"
+    },
+    {
+      "id": "new13_skills-006",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"To activate skills, all you need to do is write a SKILL.md file with custom guidance for your agent.\" src=\"/media/c0414ee2f2b88db3249aa59b.jpg\" loading=\"lazy\" decoding=\"async\"><figcaption>A skill is a directory containing a SKILL.md file that contains organized folders of instructions, scripts, and resources that give agents additional capabilities. </figcaption></figure>"
+    },
+    {
+      "id": "new13_skills-007",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-the-anatomy-of-a-skill\">The anatomy of a skill</h2>",
+      "zh": "<h2 id=\"zh-source-the-anatomy-of-a-skill\">技能的构成</h2>"
+    },
+    {
+      "id": "new13_skills-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To see Skills in action, let’s walk through a real example: one of the skills that powers <a href=\"https://www.anthropic.com/news/create-files\" rel=\"noopener noreferrer\">Claude’s recently launched document editing abilities</a>. Claude already knows a lot about understanding PDFs, but is limited in its ability to manipulate them directly (e.g. to fill out a form). This <a href=\"https://github.com/anthropics/skills/tree/main/document-skills/pdf\" rel=\"noopener noreferrer\">PDF skill</a> lets us give Claude these new abilities.</p>",
+      "zh": "<p>为了了解 Skills 的实际工作方式，我们来看一个真实例子：为 <a href=\"https://www.anthropic.com/news/create-files\" rel=\"noopener noreferrer\">Claude 最近推出的文档编辑能力</a>提供支持的其中一项技能。Claude 已经掌握了大量理解 PDF 的知识，但直接操作 PDF 的能力仍然有限，例如填写表单。这个 <a href=\"https://github.com/anthropics/skills/tree/main/document-skills/pdf\" rel=\"noopener noreferrer\">PDF 技能</a>让我们能够赋予 Claude 这些新能力。</p>"
+    },
+    {
+      "id": "new13_skills-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>At its simplest, a skill is a directory that contains a <code>SKILL.md file</code>. This file must start with YAML frontmatter that contains some required metadata: <code>name</code> and <code>description</code>. At startup, the agent pre-loads the <code>name</code> and <code>description</code> of every installed skill into its system prompt.</p>",
+      "zh": "<p>最简单的技能，就是一个包含 <code>SKILL.md file</code> 的目录。这个文件必须以 YAML 前置元数据开头，其中包含必填的 <code>name</code> 和 <code>description</code>。启动时，Agent 会将所有已安装技能的 <code>name</code> 和 <code>description</code> 预加载进系统提示词。</p>"
+    },
+    {
+      "id": "new13_skills-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This metadata is the <strong>first level</strong> of <em>progressive disclosure</em>: it provides just enough information for Claude to know when each skill should be used without loading all of it into context. The actual body of this file is the <strong>second level</strong> of detail. If Claude thinks the skill is relevant to the current task, it will load the skill by reading its full <code>SKILL.md</code> into context.</p>",
+      "zh": "<p>这些元数据是<em>渐进式披露</em>的<strong>第一层</strong>：它只提供足以让 Claude 判断何时使用各项技能的信息，而不将完整技能加载到上下文中。文件的正文构成<strong>第二层</strong>详细信息。如果 Claude 认为某项技能与当前任务相关，就会读取其完整的 <code>SKILL.md</code>，将技能加载到上下文中。</p>"
+    },
+    {
+      "id": "new13_skills-011",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"Anatomy of a SKILL.md file including the relevant metadata: name, description, and context related to the specific actions the skill should take.\" src=\"/media/b76c7b31492768ff26d46e83.jpg\" loading=\"lazy\" decoding=\"async\"><figcaption>A SKILL.md file must begin with YAML Frontmatter that contains a file name and description, which is loaded into its system prompt at startup.</figcaption></figure>"
+    },
+    {
+      "id": "new13_skills-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As skills grow in complexity, they may contain too much context to fit into a single <code>SKILL.md</code>, or context that’s relevant only in specific scenarios. In these cases, skills can bundle additional files within the skill directory and reference them by name from <code>SKILL.md</code>. These additional linked files are the <strong>third level</strong> (and beyond) of detail, which Claude can choose to navigate and discover only as needed.</p>",
+      "zh": "<p>随着技能变得复杂，其上下文可能多到无法容纳在单个 <code>SKILL.md</code> 中，也可能有些上下文仅适用于特定场景。这时，可以把额外文件放入技能目录，并在 <code>SKILL.md</code> 中按名称引用它们。这些链接到的附加文件构成详细信息的<strong>第三层</strong>及更深层，Claude 可以只在需要时才去浏览和发现它们。</p>"
+    },
+    {
+      "id": "new13_skills-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In the PDF skill shown below, the <code>SKILL.md</code> refers to two additional files (<code>reference.md</code> and <code>forms.md</code>) that the skill author chooses to bundle alongside the core <code>SKILL.md</code>. By moving the form-filling instructions to a separate file (<code>forms.md</code>), the skill author is able to keep the core of the skill lean, trusting that Claude will read <code>forms.md</code> only when filling out a form.</p>",
+      "zh": "<p>在下方的 PDF 技能中，<code>SKILL.md</code> 引用了两个附加文件：<code>reference.md</code> 和 <code>forms.md</code>。技能作者选择将它们与核心的 <code>SKILL.md</code> 一同打包。将表单填写说明移至单独的文件 <code>forms.md</code> 后，技能作者就能让核心内容保持精简，并相信 Claude 只会在填写表单时读取 <code>forms.md</code>。</p>"
+    },
+    {
+      "id": "new13_skills-014",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"How to bundle additional content into a SKILL.md file.\" src=\"/media/8d262e1e749b59dd5de62a18.jpg\" loading=\"lazy\" decoding=\"async\"><figcaption>You can incorporate more context (via additional files) into your skill that can then be triggered by Claude based on the system prompt.</figcaption></figure>"
+    },
+    {
+      "id": "new13_skills-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Progressive disclosure is the core design principle that makes Agent Skills flexible and scalable. Like a well-organized manual that starts with a table of contents, then specific chapters, and finally a detailed appendix, skills let Claude load information only as needed:</p>",
+      "zh": "<p>渐进式披露是使 Agent Skills 灵活且可扩展的核心设计原则。就像一本组织良好的手册，先有目录，再有具体章节，最后附上详细附录，技能让 Claude 仅在需要时加载信息：</p>"
+    },
+    {
+      "id": "new13_skills-016",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"This image depicts how progressive disclosure of context in Skills.\" src=\"/media/faee40302ec85222656cbd01.jpg\" loading=\"lazy\" decoding=\"async\"></figure>"
+    },
+    {
+      "id": "new13_skills-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents with a filesystem and code execution tools don’t need to read the entirety of a skill into their context window when working on a particular task. This means that the amount of context that can be bundled into a skill is effectively unbounded.</p>",
+      "zh": "<p>拥有文件系统和代码执行工具的 Agent，在处理某个具体任务时，不必将整个技能都读入上下文窗口。这意味着，技能中能够打包的上下文量实际上没有上限。</p>"
+    },
+    {
+      "id": "new13_skills-018",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-skills-and-the-context-window\">Skills and the context window</h3>",
+      "zh": "<h3 id=\"zh-source-skills-and-the-context-window\">Skills 与上下文窗口</h3>"
+    },
+    {
+      "id": "new13_skills-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The following diagram shows how the context window changes when a skill is triggered by a user’s message.</p>",
+      "zh": "<p>下图展示了用户消息触发某个技能时，上下文窗口如何变化。</p>"
+    },
+    {
+      "id": "new13_skills-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"This image depicts how skills are triggered in your context window.\" src=\"/media/43b780eaa33473008fdbcc8c.jpg\" loading=\"lazy\" decoding=\"async\"><figcaption>Skills are triggered in the context window via your system prompt. </figcaption></figure>"
+    },
+    {
+      "id": "new13_skills-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The sequence of operations shown:</p>",
+      "zh": "<p>图中的操作顺序如下：</p>"
+    },
+    {
+      "id": "new13_skills-022",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>To start, the context window has the core system prompt and the metadata for each of the installed skills, along with the user’s initial message;</li><li>Claude triggers the PDF skill by invoking a Bash tool to read the contents of <code>pdf/SKILL.md</code>;</li><li>Claude chooses to read the <code>forms.md</code> file bundled with the skill;</li><li>Finally, Claude proceeds with the user’s task now that it has loaded relevant instructions from the PDF skill.</li></ol>",
+      "zh": "<ol><li>起初，上下文窗口中包含核心系统提示词、每个已安装技能的元数据，以及用户的初始消息；</li><li>Claude 调用 Bash 工具读取 <code>pdf/SKILL.md</code> 的内容，从而触发 PDF 技能；</li><li>Claude 选择读取该技能附带的 <code>forms.md</code> 文件；</li><li>最后，在从 PDF 技能中加载相关指令后，Claude 开始推进用户任务。</li></ol>"
+    },
+    {
+      "id": "new13_skills-023",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-skills-and-code-execution\">Skills and code execution</h3>",
+      "zh": "<h3 id=\"zh-source-skills-and-code-execution\">Skills 与代码执行</h3>"
+    },
+    {
+      "id": "new13_skills-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills can also include code for Claude to execute as tools at its discretion.</p>",
+      "zh": "<p>技能还可以包含代码，让 Claude 自行决定何时将其作为工具执行。</p>"
+    },
+    {
+      "id": "new13_skills-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Large language models excel at many tasks, but certain operations are better suited for traditional code execution. For example, sorting a list via token generation is far more expensive than simply running a sorting algorithm. Beyond efficiency concerns, many applications require the deterministic reliability that only code can provide.</p>",
+      "zh": "<p>大语言模型擅长许多任务，但某些操作更适合通过传统代码执行来完成。例如，通过生成 token 来对列表排序，远比直接运行排序算法昂贵。除了效率，许多应用还需要只有代码才能提供的确定性与可靠性。</p>"
+    },
+    {
+      "id": "new13_skills-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In our example, the PDF skill includes a pre-written Python script that reads a PDF and extracts all form fields. Claude can run this script without loading either the script or the PDF into context. And because code is deterministic, this workflow is consistent and repeatable.</p>",
+      "zh": "<p>在我们的例子中，PDF 技能包含一个预先编写好的 Python 脚本，用于读取 PDF 并提取所有表单字段。Claude 可以运行这个脚本，而无需将脚本或 PDF 加载到上下文中。由于代码具有确定性，这套工作流也具有一致性和可重复性。</p>"
+    },
+    {
+      "id": "new13_skills-027",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"This image depicts how code is executed via Skills.\" src=\"/media/ca34c78763b7bab24e3f956d.jpg\" loading=\"lazy\" decoding=\"async\"><figcaption>Skills can also include code for Claude to execute as tools at its discretion based on the nature of the task.</figcaption></figure>"
+    },
+    {
+      "id": "new13_skills-028",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-developing-and-evaluating-skills\">Developing and evaluating skills</h2>",
+      "zh": "<h2 id=\"zh-source-developing-and-evaluating-skills\">开发与评测技能</h2>"
+    },
+    {
+      "id": "new13_skills-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here are some helpful guidelines for getting started with authoring and testing skills:</p>",
+      "zh": "<p>以下建议有助于你开始编写和测试技能：</p>"
+    },
+    {
+      "id": "new13_skills-030",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Start with evaluation:</strong> Identify specific gaps in your agents’ capabilities by running them on representative tasks and observing where they struggle or require additional context. Then build skills incrementally to address these shortcomings.</li><li><strong>Structure for scale: </strong>When the <code>SKILL.md</code> file becomes unwieldy, split its content into separate files and reference them. If certain contexts are mutually exclusive or rarely used together, keeping the paths separate will reduce the token usage. Finally, code can serve as both executable tools and as documentation. It should be clear whether Claude should run scripts directly or read them into context as reference.</li><li><strong>Think from Claude’s perspective:</strong> Monitor how Claude uses your skill in real scenarios and iterate based on observations: watch for unexpected trajectories or overreliance on certain contexts. Pay special attention to the <code>name</code> and <code>description</code> of your skill. Claude will use these when deciding whether to trigger the skill in response to its current task.</li><li><strong>Iterate with Claude:</strong> As you work on a task with Claude, ask Claude to capture its successful approaches and common mistakes into reusable context and code within a skill. If it goes off track when using a skill to complete a task, ask it to self-reflect on what went wrong. This process will help you discover what context Claude actually needs, instead of trying to anticipate it upfront.</li></ul>",
+      "zh": "<ul><li><strong>从评测开始：</strong>让 Agent 执行具有代表性的任务，观察它们在哪些地方遇到困难或需要更多上下文，从而找出具体的能力缺口。然后逐步构建技能，弥补这些不足。</li><li><strong>为扩展规模设计结构：</strong>当 <code>SKILL.md</code> 文件变得臃肿难用时，将内容拆分到不同文件中，再通过引用关联起来。如果某些上下文适用于互斥场景，或很少一起使用，将读取路径分开可以减少 token 用量。最后，代码既可以作为可执行工具，也可以作为文档。应明确说明 Claude 是应当直接运行脚本，还是将其读入上下文作为参考。</li><li><strong>从 Claude 的视角思考：</strong>监测 Claude 在真实场景中如何使用你的技能，并根据观察迭代：留意意外的执行轨迹，以及对某些上下文的过度依赖。尤其要重视技能的 <code>name</code> 和 <code>description</code>。Claude 会据此决定是否为当前任务触发该技能。</li><li><strong>与 Claude 一起迭代：</strong>当你与 Claude 共同处理任务时，请它将成功的方法和常见错误记录为技能中可复用的上下文与代码。如果它在使用技能完成任务时偏离了方向，就请它反思哪里出了问题。这个过程会帮助你发现 Claude 实际需要什么上下文，而不必一开始就试图预判全部需求。</li></ul>"
+    },
+    {
+      "id": "new13_skills-031",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-security-considerations-when-using-skills\">Security considerations when using Skills</h3>",
+      "zh": "<h3 id=\"zh-source-security-considerations-when-using-skills\">使用 Skills 时的安全考量</h3>"
+    },
+    {
+      "id": "new13_skills-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills provide Claude with new capabilities through instructions and code. While this makes them powerful, it also means that malicious skills may introduce vulnerabilities in the environment where they’re used or direct Claude to exfiltrate data and take unintended actions.</p>",
+      "zh": "<p>Skills 通过指令和代码为 Claude 提供新能力。这使它们十分强大，但也意味着，恶意技能可能给使用环境引入漏洞，或指使 Claude 窃取并外传数据、执行非预期操作。</p>"
+    },
+    {
+      "id": "new13_skills-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We recommend installing skills only from trusted sources. When installing a skill from a less-trusted source, thoroughly audit it before use. Start by reading the contents of the files bundled in the skill to understand what it does, paying particular attention to code dependencies and bundled resources like images or scripts. Similarly, pay attention to instructions or code within the skill that instruct Claude to connect to potentially untrusted external network sources.</p>",
+      "zh": "<p>我们建议只从可信来源安装技能。如果要安装来自可信度较低来源的技能，应在使用前进行全面审查。首先阅读技能所附文件的内容，了解它具体做什么，尤其关注代码依赖，以及图片、脚本等附带资源。同样，也要留意技能中要求 Claude 连接可能不可信的外部网络来源的指令或代码。</p>"
+    },
+    {
+      "id": "new13_skills-034",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-the-future-of-skills\">The future of Skills</h2>",
+      "zh": "<h2 id=\"zh-source-the-future-of-skills\">Skills 的未来</h2>"
+    },
+    {
+      "id": "new13_skills-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agent Skills are <a href=\"https://www.anthropic.com/news/skills\" rel=\"noopener noreferrer\">supported today</a> across <a href=\"http://claude.ai/redirect/website.v1.71224a62-c916-4158-bdaf-e5770f82b5a1\" rel=\"noopener noreferrer\">Claude.ai</a>, Claude Code, the Claude Agent SDK, and the Claude Developer Platform.</p>",
+      "zh": "<p>目前，<a href=\"http://claude.ai/redirect/website.v1.71224a62-c916-4158-bdaf-e5770f82b5a1\" rel=\"noopener noreferrer\">Claude.ai</a>、Claude Code、Claude Agent SDK 和 Claude Developer Platform 均已<a href=\"https://www.anthropic.com/news/skills\" rel=\"noopener noreferrer\">支持 Agent Skills</a>。</p>"
+    },
+    {
+      "id": "new13_skills-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In the coming weeks, we’ll continue to add features that support the full lifecycle of creating, editing, discovering, sharing, and using Skills. We’re especially excited about the opportunity for Skills to help organizations and individuals share their context and workflows with Claude. We’ll also explore how Skills can complement <a href=\"https://modelcontextprotocol.io/\" rel=\"noopener noreferrer\">Model Context Protocol</a> (MCP) servers by teaching agents more complex workflows that involve external tools and software.</p>",
+      "zh": "<p>未来几周，我们将继续添加功能，支持 Skills 从创建、编辑、发现、分享，到使用的完整生命周期。我们尤其期待 Skills 帮助组织和个人与 Claude 分享上下文及工作流的机会。我们还将探索 Skills 如何通过教会 Agent 涉及外部工具和软件的更复杂工作流，与<a href=\"https://modelcontextprotocol.io/\" rel=\"noopener noreferrer\">模型上下文协议</a>（MCP）服务器相互补充。</p>"
+    },
+    {
+      "id": "new13_skills-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Looking further ahead, we hope to enable agents to create, edit, and evaluate Skills on their own, letting them codify their own patterns of behavior into reusable capabilities.</p>",
+      "zh": "<p>更长远地看，我们希望让 Agent 能够自行创建、编辑和评测 Skills，将自身的行为模式固化为可复用能力。</p>"
+    },
+    {
+      "id": "new13_skills-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills are a simple concept with a correspondingly simple format. This simplicity makes it easier for organizations, developers, and end users to build customized agents and give them new capabilities. </p>",
+      "zh": "<p>Skills 是一个简单的概念，采用的格式也同样简单。这种简洁性让组织、开发者和最终用户更容易构建定制 Agent，并赋予它们新能力。</p>"
+    },
+    {
+      "id": "new13_skills-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We’re excited to see what people build with Skills. Get started today by checking out our Skills <a href=\"https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">docs</a> and <a href=\"https://github.com/anthropics/claude-cookbooks/tree/main/skills\" rel=\"noopener noreferrer\">cookbook</a>.</p>",
+      "zh": "<p>我们期待看到大家用 Skills 构建出什么。阅读 Skills <a href=\"https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">文档</a>与<a href=\"https://github.com/anthropics/claude-cookbooks/tree/main/skills\" rel=\"noopener noreferrer\">实用示例集</a>，即刻开始。</p>"
+    },
+    {
+      "id": "new13_skills-040",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-acknowledgements\">Acknowledgements</h2>",
+      "zh": "<h2 id=\"zh-source-acknowledgements\">致谢</h2>"
+    },
+    {
+      "id": "new13_skills-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Written by Barry Zhang, Keith Lazuka, and Mahesh Murag, who all really like folders. Special thanks to the many others across Anthropic who championed, supported, and built Skills.</p>",
+      "zh": "<p>本文由 Barry Zhang、Keith Lazuka 和 Mahesh Murag 撰写，他们都非常喜欢文件夹。特别感谢 Anthropic 内部众多推动、支持并构建 Skills 的同事。</p>"
+    }
+  ],
+  "description": "Claude 很强大，但真实工作需要操作性知识和组织上下文。我们推出 Agent Skills，让你通过文件和文件夹，以一种新方式构建专门的 Agent",
+  "reading_minutes": 8,
+  "downloads": {
+    "zh": "/downloads/skills-zh.pdf",
+    "en": "/downloads/skills-en.pdf"
+  }
+}

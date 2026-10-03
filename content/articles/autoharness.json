@@ -1,0 +1,66 @@
+{
+  "title": "AutoHarness：通过自动合成代码运行框架改进 LLM Agent（论文摘要）",
+  "original_title": "AutoHarness: improving LLM agents by automatically synthesizing a code harness",
+  "url": "https://arxiv.org/abs/2603.03329v1",
+  "date": "2026-02-10",
+  "publisher": "arXiv",
+  "author": "Xinghua Lou, Miguel Lázaro-Gredilla, Antoine Dedieu, Carter Wendelken, Wolfgang Lehrach, Kevin P. Murphy",
+  "source_order": 40,
+  "source_note": "本页收录论文摘要与文献信息；论文全文请见原文链接。",
+  "slug": "autoharness",
+  "source_id": "new40_autoharness",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new40_autoharness-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://arxiv.org/pdf/2603.03329\" rel=\"noopener noreferrer\">Read the full paper (PDF)</a></p>",
+      "zh": "<p><a href=\"https://arxiv.org/pdf/2603.03329\" rel=\"noopener noreferrer\">阅读论文全文（PDF）</a></p>"
+    },
+    {
+      "id": "new40_autoharness-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://arxiv.org/html/2603.03329v1\" rel=\"noopener noreferrer\">Read the full paper (HTML)</a></p>",
+      "zh": "<p><a href=\"https://arxiv.org/html/2603.03329v1\" rel=\"noopener noreferrer\">阅读论文全文（HTML）</a></p>"
+    },
+    {
+      "id": "new40_autoharness-003",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Abstract</h2>",
+      "zh": "<h2>摘要</h2>"
+    },
+    {
+      "id": "new40_autoharness-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Despite significant strides in language models in the last few years, when used as agents, such models often try to perform actions that are not just suboptimal for a given state, but are strictly prohibited by the external environment. For example, in the recent Kaggle GameArena chess competition, 78% of Gemini-2.5-Flash losses were attributed to illegal moves. Often people manually write \"harnesses\" around LLMs to prevent such failures. In this paper, we demonstrate that Gemini-2.5-Flash can automatically synthesize such a code harness, using a small number of rounds of iterative code refinement given feedback from the (game) environment. The resulting harness prevents all illegal moves in 145 different TextArena games (both 1-player and 2-player), enabling the smaller Gemini-2.5-Flash model to outperform larger models, such as Gemini-2.5-Pro. Pushing our technique to the limit, we can get Gemini-2.5-Flash to generate the entire policy in code, thus eliminating the need to use the LLM at decision making time. The resulting code-policy receives a higher average reward than Gemini-2.5-Pro and GPT-5.2-High on 16 TextArena 1-player games. Our results show that using a smaller model to synthesize a custom code harness (or entire policy) can outperform a much larger model, while also being more cost effective.</p>",
+      "zh": "<p>尽管语言模型在过去几年取得了显著进步，但在作为 Agent 使用时，这类模型仍经常尝试执行某些行动：这些行动不仅在给定状态下并非最优，甚至是外部环境明确禁止的。例如，在近期的 Kaggle GameArena 国际象棋比赛中，Gemini-2.5-Flash 的败局有 78% 归因于非法走法。人们经常围绕 LLM 手动编写“运行框架”（harness），以防止此类失败。在本文中，我们表明，Gemini-2.5-Flash 能够根据（游戏）环境的反馈，经过少量轮次的迭代代码改进，自动合成这样的代码运行框架。生成的运行框架在 145 种不同的 TextArena 游戏中（包括单人和双人游戏）阻止了所有非法行动，使规模较小的 Gemini-2.5-Flash 模型能够超越 Gemini-2.5-Pro 等更大模型。将这项技术推向极限时，我们可以让 Gemini-2.5-Flash 用代码生成完整策略，从而无需在决策时使用 LLM。在 16 款 TextArena 单人游戏中，生成的代码策略获得的平均奖励高于 Gemini-2.5-Pro 和 GPT-5.2-High。我们的结果表明，使用较小的模型合成定制代码运行框架（或完整策略），可以超越大得多的模型，同时也更具成本效益。</p>"
+    },
+    {
+      "id": "new40_autoharness-005",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Bibliographic information</h2>",
+      "zh": "<h2>文献信息</h2>"
+    },
+    {
+      "id": "new40_autoharness-006",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table> <tr>\n<td>Comments:</td>\n<td>agent harness, code synthesis, self-improvement, code-as-policy, text games</td>\n</tr>\n<tr>\n<td>Subjects:</td>\n<td>\n<span>Computation and Language (cs.CL)</span>; Artificial Intelligence (cs.AI)</td>\n</tr><tr>\n<td>Cite as:</td>\n<td><span><a href=\"https://arxiv.org/abs/2603.03329\" rel=\"noopener noreferrer\">arXiv:2603.03329</a> [cs.CL]</span></td>\n</tr>\n<tr>\n<td> </td>\n<td>(or <span>\n<a href=\"https://arxiv.org/abs/2603.03329v1\" rel=\"noopener noreferrer\">arXiv:2603.03329v1</a> [cs.CL]</span> for this version)\n          </td>\n</tr>\n<tr>\n<td> </td>\n<td> <a href=\"https://doi.org/10.48550/arXiv.2603.03329\" id=\"shared-source-arxiv-doi-link\" rel=\"noopener noreferrer\">https://doi.org/10.48550/arXiv.2603.03329</a><div>\n\n<div id=\"shared-source-more-info-desc-1\">\n<span></span>                  arXiv-issued DOI via DataCite</div>\n</div>\n</td>\n</tr></table>"
+    },
+    {
+      "id": "new40_autoharness-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Submission history From: Xinghua Lou [view email]       [v1]\n        Tue, 10 Feb 2026 14:12:54 UTC (321 KB)</p>",
+      "zh": "<p>提交历史　提交者：Xinghua Lou［查看电子邮件］　[v1] 2026 年 2 月 10 日，星期二，14:12:54 UTC（321 KB）</p>"
+    }
+  ],
+  "description": "尽管语言模型在过去几年取得了显著进步，但在作为 Agent 使用时，这类模型仍经常尝试执行某些行动：这些行动不仅在给定状态下并非最优，甚至是外部环境明确禁止的。例如，在近期的 Kaggle GameArena 国际象棋比赛中，Gemini-2.5-F…",
+  "reading_minutes": 2,
+  "downloads": {}
+}

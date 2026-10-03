@@ -1,0 +1,511 @@
+{
+  "title": "上下文检索",
+  "original_title": "Introducing Contextual Retrieval",
+  "url": "https://www.anthropic.com/engineering/contextual-retrieval",
+  "date": "2024-09-19",
+  "publisher": "Anthropic",
+  "source_order": 35,
+  "slug": "context-retrieval",
+  "source_id": "new35_context_retrieval",
+  "category": "上下文工程",
+  "blocks": [
+    {
+      "id": "new35_context_retrieval-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/ec47a5534f31fba8ad1cc5b9.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new35_context_retrieval-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For an AI model to be useful in specific contexts, it often needs access to background knowledge. </p>",
+      "zh": "<p>AI 模型要在具体场景中发挥作用，往往需要获取背景知识。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For an AI model to be useful in specific contexts, it often needs access to background knowledge. For example, customer support chatbots need knowledge about the specific business they're being used for, and legal analyst bots need to know about a vast array of past cases.</p>",
+      "zh": "<p>AI 模型要在具体场景中发挥作用，往往需要获取背景知识。例如，客服聊天机器人需要了解其服务的具体业务，法律分析机器人则需要了解大量既往案例。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Developers typically enhance an AI model's knowledge using Retrieval-Augmented Generation (RAG). RAG is a method that retrieves relevant information from a knowledge base and appends it to the user's prompt, significantly enhancing the model's response. The problem is that traditional RAG solutions remove context when encoding information, which often results in the system failing to retrieve the relevant information from the knowledge base.</p>",
+      "zh": "<p>开发者通常使用检索增强生成（RAG）来扩充 AI 模型的知识。RAG 从知识库中检索相关信息，并将其附加到用户提示词中，从而显著改善模型的回答。问题在于，传统 RAG 方案在编码信息时会剥离上下文，这往往导致系统无法从知识库中检索到相关信息。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In this post, we outline a method that dramatically improves the retrieval step in RAG. The method is called “Contextual Retrieval” and uses two sub-techniques: Contextual Embeddings and Contextual BM25. This method can reduce the number of failed retrievals by 49% and, when combined with reranking, by 67%. These represent significant improvements in retrieval accuracy, which directly translates to better performance in downstream tasks. </p>",
+      "zh": "<p>本文介绍一种能够显著改善 RAG 检索环节的方法，称为“上下文检索”（Contextual Retrieval）。它由两项子技术组成：上下文嵌入（Contextual Embeddings）和上下文 BM25（Contextual BM25）。该方法可以将检索失败次数减少 49%，与重排序结合后，则可以减少 67%。检索准确性的这些显著提升，会直接转化为下游任务中更好的表现。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can easily deploy your own Contextual Retrieval solution with Claude with <a href=\"https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide\" rel=\"noopener noreferrer\">our cookbook</a>.</p>",
+      "zh": "<p>借助<a href=\"https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide\" rel=\"noopener noreferrer\">我们的实用示例集</a>，你可以轻松使用 Claude 部署自己的上下文检索方案。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-006",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-a-note-on-simply-using-a-longer-prompt\">A note on simply using a longer prompt</h3>",
+      "zh": "<h3 id=\"zh-source-a-note-on-simply-using-a-longer-prompt\">关于直接使用更长提示词的说明</h3>"
+    },
+    {
+      "id": "new35_context_retrieval-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sometimes the simplest solution is the best. If your knowledge base is smaller than 200,000 tokens (about 500 pages of material), you can just include the entire knowledge base in the prompt that you give the model, with no need for RAG or similar methods.</p>",
+      "zh": "<p>有时，最简单的方案就是最好的。如果知识库小于 200,000 个 token，约相当于 500 页资料，你可以直接把整个知识库放进给模型的提示词中，无需使用 RAG 或类似方法。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A few weeks ago, we released <a href=\"https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching\" rel=\"noopener noreferrer\">prompt caching</a> for Claude, which makes this approach significantly faster and more cost-effective. Developers can now cache frequently used prompts between API calls, reducing latency by &gt; 2x and costs by up to 90% (you can see how it works by reading our <a href=\"https://platform.claude.com/cookbook/misc-prompt-caching\" rel=\"noopener noreferrer\">prompt caching cookbook</a>).</p>",
+      "zh": "<p>几周前，我们为 Claude 推出了<a href=\"https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching\" rel=\"noopener noreferrer\">提示词缓存</a>，让这种做法明显更快、更经济。开发者现在可以在多次 API 调用之间缓存经常使用的提示词，将时延降至原来的一半以下，成本最多降低 90%。你可以阅读<a href=\"https://platform.claude.com/cookbook/misc-prompt-caching\" rel=\"noopener noreferrer\">提示词缓存实用示例</a>，了解其工作方式。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>However, as your knowledge base grows, you'll need a more scalable solution. That’s where Contextual Retrieval comes in.</p>",
+      "zh": "<p>不过，随着知识库扩大，你需要一种更具扩展性的方案。这正是上下文检索发挥作用的地方。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-010",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-a-primer-on-rag-scaling-to-larger-knowledge-bases\">A primer on RAG: scaling to larger knowledge bases</h2>",
+      "zh": "<h2 id=\"zh-source-a-primer-on-rag-scaling-to-larger-knowledge-bases\">RAG 入门：扩展到更大的知识库</h2>"
+    },
+    {
+      "id": "new35_context_retrieval-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For larger knowledge bases that don't fit within the context window, RAG is the typical solution. RAG works by preprocessing a knowledge base using the following steps:</p>",
+      "zh": "<p>对于无法容纳在上下文窗口中的大型知识库，RAG 是常见的解决方案。它通过以下步骤预处理知识库：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-012",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Break down the knowledge base (the “corpus” of documents) into smaller chunks of text, usually no more than a few hundred tokens;</li><li>Use an embedding model to convert these chunks into vector embeddings that encode meaning;</li><li>Store these embeddings in a vector database that allows for searching by semantic similarity.</li></ol>",
+      "zh": "<ol><li>将知识库，也就是文档“语料库”，拆分为较小的文本块，每块通常不超过几百个 token；</li><li>使用嵌入模型，将这些文本块转换成编码其含义的向量嵌入；</li><li>将嵌入存入支持语义相似性搜索的向量数据库。</li></ol>"
+    },
+    {
+      "id": "new35_context_retrieval-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>At runtime, when a user inputs a query to the model, the vector database is used to find the most relevant chunks based on semantic similarity to the query. Then, the most relevant chunks are added to the prompt sent to the generative model.</p>",
+      "zh": "<p>运行时，用户向模型输入查询，系统便利用向量数据库，根据文本块与查询的语义相似性找出最相关的块。随后，将这些块加入发送给生成模型的提示词中。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>While embedding models excel at capturing semantic relationships, they can miss crucial exact matches. Fortunately, there’s an older technique that can assist in these situations. BM25 (Best Matching 25) is a ranking function that uses lexical matching to find precise word or phrase matches. It's particularly effective for queries that include unique identifiers or technical terms.</p>",
+      "zh": "<p>嵌入模型虽然擅长捕捉语义关系，却可能漏掉关键的精确匹配。好在，有一种较早的技术能在这些情况下提供帮助。BM25（Best Matching 25）是一种排序函数，通过词汇匹配查找精确的词语或短语匹配。对于包含独特标识符或专业术语的查询，它尤其有效。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>BM25 works by building upon the TF-IDF (Term Frequency-Inverse Document Frequency) concept. TF-IDF measures how important a word is to a document in a collection. BM25 refines this by considering document length and applying a saturation function to term frequency, which helps prevent common words from dominating the results.</p>",
+      "zh": "<p>BM25 建立在 TF-IDF（词频—逆文档频率）的概念之上。TF-IDF 衡量一个词对于文档集合中某篇文档的重要性。BM25 在此基础上考虑文档长度，并对词频应用饱和函数，从而避免常见词主导结果。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here’s how BM25 can succeed where semantic embeddings fail: Suppose a user queries \"Error code TS-999\" in a technical support database. An embedding model might find content about error codes in general, but could miss the exact \"TS-999\" match. BM25 looks for this specific text string to identify the relevant documentation.</p>",
+      "zh": "<p>下面的例子说明，BM25 如何在语义嵌入失败的地方发挥作用：假设用户在技术支持数据库中查询“错误代码 TS-999”。嵌入模型可能找到一般性的错误代码内容，却漏掉与“TS-999”完全匹配的结果。BM25 则会查找这个特定字符串，定位相关文档。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>RAG solutions can more accurately retrieve the most applicable chunks by combining the embeddings and BM25 techniques using the following steps:</p>",
+      "zh": "<p>RAG 方案可以通过以下步骤结合嵌入与 BM25，更准确地检索到最适用的文本块：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-018",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Break down the knowledge base (the \"corpus\" of documents) into smaller chunks of text, usually no more than a few hundred tokens;</li><li>Create TF-IDF encodings and semantic embeddings for these chunks;</li><li>Use BM25 to find top chunks based on exact matches;</li><li>Use embeddings to find top chunks based on semantic similarity;</li><li>Combine and deduplicate results from (3) and (4) using rank fusion techniques;</li><li>Add the top-K chunks to the prompt to generate the response.</li></ol>",
+      "zh": "<ol><li>将知识库，也就是文档“语料库”，拆分成较小的文本块，每块通常不超过几百个 token；</li><li>为这些块生成 TF-IDF 编码和语义嵌入；</li><li>使用 BM25，基于精确匹配找出排名靠前的块；</li><li>使用嵌入，基于语义相似性找出排名靠前的块；</li><li>通过排名融合技术合并步骤（3）和（4）的结果，并去除重复项；</li><li>将排名前 K 的块加入提示词，生成回答。</li></ol>"
+    },
+    {
+      "id": "new35_context_retrieval-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>By leveraging both BM25 and embedding models, traditional RAG systems can provide more comprehensive and accurate results, balancing precise term matching with broader semantic understanding.</p>",
+      "zh": "<p>同时使用 BM25 和嵌入模型，传统 RAG 系统就能在精确词语匹配与更广泛的语义理解之间取得平衡，提供更全面、更准确的结果。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/2ff70794808171f40de38114.png\" loading=\"lazy\" decoding=\"async\"><figcaption>A Standard Retrieval-Augmented Generation (RAG) system that uses both embeddings and Best Match 25 (BM25) to retrieve information. TF-IDF (term frequency-inverse document frequency) measures word importance and forms the basis for BM25.</figcaption></figure>"
+    },
+    {
+      "id": "new35_context_retrieval-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This approach allows you to cost-effectively scale to enormous knowledge bases, far beyond what could fit in a single prompt. But these traditional RAG systems have a significant limitation: they often destroy context.</p>",
+      "zh": "<p>这种方法能够以经济的方式扩展到非常庞大的知识库，远超单条提示词能容纳的范围。但这些传统 RAG 系统有一个重大局限：它们往往会破坏上下文。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-022",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-the-context-conundrum-in-traditional-rag\">The context conundrum in traditional RAG</h3>",
+      "zh": "<h3 id=\"zh-source-the-context-conundrum-in-traditional-rag\">传统 RAG 的上下文难题</h3>"
+    },
+    {
+      "id": "new35_context_retrieval-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional RAG, documents are typically split into smaller chunks for efficient retrieval. While this approach works well for many applications, it can lead to problems when individual chunks lack sufficient context.</p>",
+      "zh": "<p>在传统 RAG 中，文档通常被拆成较小的块，以提高检索效率。虽然这种方法适用于许多应用，但当单个块缺少足够上下文时，就可能出现问题。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For example, imagine you had a collection of financial information (say, U.S. SEC filings) embedded in your knowledge base, and you received the following question: <em>\"What was the revenue growth for ACME Corp in Q2 2023?\"</em></p>",
+      "zh": "<p>例如，假设知识库中嵌入了一批财务信息，如提交给美国证券交易委员会的申报文件，而你收到这样一个问题：<em>“ACME 公司在 2023 年第二季度的营收增长率是多少？”</em></p>"
+    },
+    {
+      "id": "new35_context_retrieval-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A relevant chunk might contain the text: <em>\"The company's revenue grew by 3% over the previous quarter.\"</em> However, this chunk on its own doesn't specify which company it's referring to or the relevant time period, making it difficult to retrieve the right information or use the information effectively.</p>",
+      "zh": "<p>一个相关文本块可能写着：<em>“该公司的营收比上一季度增长了 3%。”</em>但单看这个块，无法知道它指的是哪家公司、哪个时期，因此难以检索到正确信息，也难以有效利用这些信息。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-026",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-introducing-contextual-retrieval\">Introducing Contextual Retrieval</h2>",
+      "zh": "<h2 id=\"zh-source-introducing-contextual-retrieval\">介绍上下文检索</h2>"
+    },
+    {
+      "id": "new35_context_retrieval-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Contextual Retrieval solves this problem by prepending chunk-specific explanatory context to each chunk before embedding (“Contextual Embeddings”) and creating the BM25 index (“Contextual BM25”).</p>",
+      "zh": "<p>上下文检索的解决方式是：在生成嵌入和建立 BM25 索引之前，为每个块前置一段针对该块的解释性上下文，分别形成“上下文嵌入”和“上下文 BM25”。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Let’s return to our SEC filings collection example. Here's an example of how a chunk might be transformed:</p>",
+      "zh": "<p>回到刚才那组 SEC 申报文件的例子。下面展示一个文本块可以如何转换：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-029",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>original_chunk = \"The company's revenue grew by 3% over the previous quarter.\"\n\ncontextualized_chunk = \"This chunk is from an SEC filing on ACME corp's performance in Q2 2023; the previous quarter's revenue was $314 million. The company's revenue grew by 3% over the previous quarter.\"</code></pre>"
+    },
+    {
+      "id": "new35_context_retrieval-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It is worth noting that other approaches to using context to improve retrieval have been proposed in the past. Other proposals include: <a href=\"https://aclanthology.org/W02-0405.pdf\" rel=\"noopener noreferrer\">adding generic document summaries to chunks</a> (we experimented and saw very limited gains), <a href=\"https://arxiv.org/abs/2212.10496\" rel=\"noopener noreferrer\">hypothetical document embedding</a>, and <a href=\"https://www.llamaindex.ai/blog/a-new-document-summary-index-for-llm-powered-qa-systems-9a32ece2f9ec\" rel=\"noopener noreferrer\">summary-based indexing</a> (we evaluated and saw low performance). These methods differ from what is proposed in this post.</p>",
+      "zh": "<p>此前也有人提出过其他利用上下文改善检索的方法，包括<a href=\"https://aclanthology.org/W02-0405.pdf\" rel=\"noopener noreferrer\">向文本块添加通用的文档摘要</a>（我们试验过，收益非常有限）、<a href=\"https://arxiv.org/abs/2212.10496\" rel=\"noopener noreferrer\">假设文档嵌入</a>，以及<a href=\"https://www.llamaindex.ai/blog/a-new-document-summary-index-for-llm-powered-qa-systems-9a32ece2f9ec\" rel=\"noopener noreferrer\">基于摘要的索引</a>（我们评测后发现表现较差）。这些方法与本文提出的方法不同。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-031",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-implementing-contextual-retrieval\">Implementing Contextual Retrieval</h3>",
+      "zh": "<h3 id=\"zh-source-implementing-contextual-retrieval\">实现上下文检索</h3>"
+    },
+    {
+      "id": "new35_context_retrieval-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Of course, it would be far too much work to manually annotate the thousands or even millions of chunks in a knowledge base. To implement Contextual Retrieval, we turn to Claude. We’ve written a prompt that instructs the model to provide concise, chunk-specific context that explains the chunk using the context of the overall document. We used the following Claude 3 Haiku prompt to generate context for each chunk:</p>",
+      "zh": "<p>当然，手动为知识库中成千上万、甚至数百万个文本块添加注释，工作量会大得难以承受。因此，我们借助 Claude 实现上下文检索。我们编写了一段提示词，要求模型依据整篇文档的上下文，为每个块提供简洁且有针对性的背景说明。我们使用以下 Claude 3 Haiku 提示词，为每个块生成上下文：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-033",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>&lt;document&gt; \n{{WHOLE_DOCUMENT}} \n&lt;/document&gt; \nHere is the chunk we want to situate within the whole document \n&lt;chunk&gt; \n{{CHUNK_CONTENT}} \n&lt;/chunk&gt; \nPlease give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else. </code></pre>"
+    },
+    {
+      "id": "new35_context_retrieval-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The resulting contextual text, usually 50-100 tokens, is prepended to the chunk before embedding it and before creating the BM25 index.</p>",
+      "zh": "<p>生成的上下文文本通常为 50—100 个 token，会在生成嵌入和建立 BM25 索引之前，添加到文本块前面。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here’s what the preprocessing flow looks like in practice:</p>",
+      "zh": "<p>实际的预处理流程如下：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-036",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/3ac2dbfbc90d9191d78ac58b.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Contextual Retrieval is a preprocessing technique that improves retrieval accuracy.</em><br></figcaption></figure>"
+    },
+    {
+      "id": "new35_context_retrieval-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you’re interested in using Contextual Retrieval, you can get started with <a href=\"https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide\" rel=\"noopener noreferrer\">our cookbook</a>.</p>",
+      "zh": "<p>如果你有兴趣使用上下文检索，可以从<a href=\"https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide\" rel=\"noopener noreferrer\">我们的实用示例集</a>开始。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-038",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-using-prompt-caching-to-reduce-the-costs-of-contextual-retrieval\">Using Prompt Caching to reduce the costs of Contextual Retrieval</h3>",
+      "zh": "<h3 id=\"zh-source-using-prompt-caching-to-reduce-the-costs-of-contextual-retrieval\">通过提示词缓存降低上下文检索成本</h3>"
+    },
+    {
+      "id": "new35_context_retrieval-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Contextual Retrieval is uniquely possible at low cost with Claude, thanks to the special prompt caching feature we mentioned above. With prompt caching, you don’t need to pass in the reference document for every chunk. You simply load the document into the cache once and then reference the previously cached content. Assuming 800 token chunks, 8k token documents, 50 token context instructions, and 100 tokens of context per chunk, <strong>the one-time cost to generate contextualized chunks is $1.02 per million document tokens</strong>.</p>",
+      "zh": "<p>得益于上面提到的专门提示词缓存功能，Claude 在低成本实现上下文检索方面具有独特优势。使用提示词缓存后，不必为每个块都传入参考文档。你只需将文档加载到缓存一次，之后引用已经缓存的内容即可。假设每块 800 个 token、每篇文档 8,000 个 token、上下文生成指令 50 个 token、每块生成的上下文 100 个 token，<strong>为每百万文档 token 生成带上下文的文本块，一次性成本为 1.02 美元</strong>。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-040",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-methodology\">Methodology</h4>",
+      "zh": "<h4 id=\"zh-source-methodology\">方法</h4>"
+    },
+    {
+      "id": "new35_context_retrieval-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We experimented across various knowledge domains (codebases, fiction, ArXiv papers, Science Papers), embedding models, retrieval strategies, and evaluation metrics. We’ve included a few examples of the questions and answers we used for each domain in <a href=\"https://assets.anthropic.com/m/1632cded0a125333/original/Contextual-Retrieval-Appendix-2.pdf\" rel=\"noopener noreferrer\">Appendix II</a>.</p>",
+      "zh": "<p>我们针对多种知识领域，包括代码库、小说、ArXiv 论文和科学论文，以及不同的嵌入模型、检索策略和评测指标开展了实验。<a href=\"https://assets.anthropic.com/m/1632cded0a125333/original/Contextual-Retrieval-Appendix-2.pdf\" rel=\"noopener noreferrer\">附录 II</a>列出了每个领域所用问题与答案的一些示例。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The graphs below show the average performance across all knowledge domains with the top-performing embedding configuration (Gemini Text 004) and retrieving the top-20-chunks. We use 1 minus recall@20 as our evaluation metric, which measures the percentage of relevant documents that fail to be retrieved within the top 20 chunks. You can see the full results in the appendix - contextualizing improves performance in every embedding-source combination we evaluated.</p>",
+      "zh": "<p>下图展示了采用表现最佳的嵌入配置 Gemini Text 004、检索前 20 个文本块时，在所有知识领域上的平均表现。我们的评测指标是 1 减 recall@20，衡量相关文档未能出现在检索所得前 20 个块中的比例。完整结果见附录：在我们评估的每一种嵌入模型与数据来源组合中，加入上下文都改善了表现。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-043",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-performance-improvements\">Performance improvements</h4>",
+      "zh": "<h4 id=\"zh-source-performance-improvements\">性能提升</h4>"
+    },
+    {
+      "id": "new35_context_retrieval-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our experiments showed that:</p>",
+      "zh": "<p>实验表明：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-045",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Contextual Embeddings reduced the top-20-chunk retrieval failure rate by 35%</strong> (5.7% → 3.7%).</li><li><strong>Combining Contextual Embeddings and Contextual BM25 reduced the top-20-chunk retrieval failure rate by 49%</strong> (5.7% → 2.9%).</li></ul>",
+      "zh": "<ul><li><strong>上下文嵌入将前 20 个文本块的检索失败率降低了 35%</strong>（5.7% → 3.7%）。</li><li><strong>结合上下文嵌入与上下文 BM25，将前 20 个文本块的检索失败率降低了 49%</strong>（5.7% → 2.9%）。</li></ul>"
+    },
+    {
+      "id": "new35_context_retrieval-046",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/722f8ede3cb4ad9422bf5fa7.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Combining Contextual Embedding and Contextual BM25 reduce the top-20-chunk retrieval failure rate by 49%.</em></figcaption></figure>"
+    },
+    {
+      "id": "new35_context_retrieval-047",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-implementation-considerations\">Implementation considerations</h4>",
+      "zh": "<h4 id=\"zh-source-implementation-considerations\">实现时的注意事项</h4>"
+    },
+    {
+      "id": "new35_context_retrieval-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When implementing Contextual Retrieval, there are a few considerations to keep in mind:</p>",
+      "zh": "<p>实现上下文检索时，需要考虑以下几个方面：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-049",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Chunk boundaries:</strong> Consider how you split your documents into chunks. The choice of chunk size, chunk boundary, and chunk overlap can affect retrieval performance<sup>1</sup>.</li><li><strong>Embedding model:</strong> Whereas Contextual Retrieval improves performance across all embedding models we tested, some models may benefit more than others. We found <a href=\"https://ai.google.dev/gemini-api/docs/embeddings\" rel=\"noopener noreferrer\">Gemini</a> and <a href=\"https://www.voyageai.com/\" rel=\"noopener noreferrer\">Voyage</a> embeddings to be particularly effective.</li><li><strong>Custom contextualizer prompts:</strong> While the generic prompt we provided works well, you may be able to achieve even better results with prompts tailored to your specific domain or use case (for example, including a glossary of key terms that might only be defined in other documents in the knowledge base).</li><li><strong>Number of chunks:</strong> Adding more chunks into the context window increases the chances that you include the relevant information. However, more information can be distracting for models so there's a limit to this. We tried delivering 5, 10, and 20 chunks, and found using 20 to be the most performant of these options (see appendix for comparisons) but it’s worth experimenting on your use case.</li></ol>",
+      "zh": "<ol><li><strong>分块边界：</strong>考虑如何将文档拆分成块。块大小、边界以及块间重叠部分的选择，都会影响检索表现<sup>1</sup>。</li><li><strong>嵌入模型：</strong>上下文检索改善了我们测试的所有嵌入模型的表现，但不同模型的受益程度可能不同。我们发现，<a href=\"https://ai.google.dev/gemini-api/docs/embeddings\" rel=\"noopener noreferrer\">Gemini</a> 和 <a href=\"https://www.voyageai.com/\" rel=\"noopener noreferrer\">Voyage</a> 的嵌入尤其有效。</li><li><strong>定制上下文生成提示词：</strong>虽然我们提供的通用提示词效果很好，但针对具体领域或用例定制提示词，可能取得更好的结果。例如，可以加入关键术语表，其中一些术语可能只在知识库的其他文档中有定义。</li><li><strong>文本块数量：</strong>向上下文窗口加入更多块，会增加覆盖相关信息的机会。但信息过多也可能分散模型注意力，因此存在上限。我们尝试了提供 5、10 和 20 个块，发现这几种方案中 20 个块的表现最好，比较结果见附录。不过，仍值得针对你的具体用例开展实验。</li></ol>"
+    },
+    {
+      "id": "new35_context_retrieval-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Always run evals: </strong>Response generation may be improved by passing it the contextualized chunk and distinguishing between what is context and what is the chunk.</p>",
+      "zh": "<p><strong>始终运行评测：</strong>向模型提供带上下文的文本块，并区分哪些是补充上下文、哪些是块本身，可能改善回答生成效果。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-051",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-further-boosting-performance-with-reranking\">Further boosting performance with Reranking</h2>",
+      "zh": "<h2 id=\"zh-source-further-boosting-performance-with-reranking\">通过重排序进一步提升性能</h2>"
+    },
+    {
+      "id": "new35_context_retrieval-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In a final step, we can combine Contextual Retrieval with another technique to give even more performance improvements. In traditional RAG, the AI system searches its knowledge base to find the potentially relevant information chunks. With large knowledge bases, this initial retrieval often returns a lot of chunks—sometimes hundreds—of varying relevance and importance.</p>",
+      "zh": "<p>最后，我们还可以把上下文检索与另一项技术结合，进一步提升性能。在传统 RAG 中，AI 系统搜索知识库，查找可能相关的信息块。面对大型知识库，初次检索往往会返回许多块，有时甚至数百个，而它们的相关性和重要程度并不一致。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Reranking is a commonly used filtering technique to ensure that only the most relevant chunks are passed to the model. Reranking provides better responses and reduces cost and latency because the model is processing less information. The key steps are:</p>",
+      "zh": "<p>重排序是一种常见的过滤技术，用来确保只有最相关的文本块被传给模型。由于模型需要处理的信息更少，重排序既能改善回答，也能降低成本和时延。关键步骤如下：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-054",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Perform initial retrieval to get the top potentially relevant chunks (we used the top 150);</li><li>Pass the top-N chunks, along with the user's query, through the reranking model;</li><li>Using a reranking model, give each chunk a score based on its relevance and importance to the prompt, then select the top-K chunks (we used the top 20);</li><li>Pass the top-K chunks into the model as context to generate the final result.</li></ol>",
+      "zh": "<ol><li>进行初次检索，获取排名靠前、可能相关的块，我们使用前 150 个；</li><li>将前 N 个块与用户查询一起传入重排序模型；</li><li>使用重排序模型，根据每个块对提示词的相关性和重要性评分，再选出前 K 个块，我们使用前 20 个；</li><li>将前 K 个块作为上下文传给模型，生成最终结果。</li></ol>"
+    },
+    {
+      "id": "new35_context_retrieval-055",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/5d517051eb606dde04e2af60.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Combine Contextual Retrieva and Reranking to maximize retrieval accuracy.</em></figcaption></figure>"
+    },
+    {
+      "id": "new35_context_retrieval-056",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-performance-improvements-2\">Performance improvements</h3>",
+      "zh": "<h3 id=\"zh-source-performance-improvements-2\">性能提升</h3>"
+    },
+    {
+      "id": "new35_context_retrieval-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are several reranking models on the market. We ran our tests with the <a href=\"https://cohere.com/rerank\" rel=\"noopener noreferrer\">Cohere reranker</a>. Voyage<a href=\"https://docs.voyageai.com/docs/reranker\" rel=\"noopener noreferrer\"> also offers a reranker</a>, though we did not have time to test it. Our experiments showed that, across various domains, adding a reranking step further optimizes retrieval.</p>",
+      "zh": "<p>市面上有多种重排序模型。我们的测试使用了 <a href=\"https://cohere.com/rerank\" rel=\"noopener noreferrer\">Cohere 重排序模型</a>。Voyage <a href=\"https://docs.voyageai.com/docs/reranker\" rel=\"noopener noreferrer\">也提供了重排序模型</a>，不过我们没有时间测试。实验表明，在不同领域中，增加重排序步骤都能进一步优化检索。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Specifically, we found that Reranked Contextual Embedding and Contextual BM25 reduced the top-20-chunk retrieval failure rate by 67% (5.7% → 1.9%).</p>",
+      "zh": "<p>具体而言，我们发现，对上下文嵌入与上下文 BM25 的检索结果进行重排序，可将前 20 个块的检索失败率降低 67%（5.7% → 1.9%）。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-059",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/697479548db7ca0ca83afa6b.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Reranked Contextual Embedding and Contextual BM25 reduces the top-20-chunk retrieval failure rate by 67%.</em></figcaption></figure>"
+    },
+    {
+      "id": "new35_context_retrieval-060",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-cost-and-latency-considerations\">Cost and latency considerations</h4>",
+      "zh": "<h4 id=\"zh-source-cost-and-latency-considerations\">成本与时延考量</h4>"
+    },
+    {
+      "id": "new35_context_retrieval-061",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>One important consideration with reranking is the impact on latency and cost, especially when reranking a large number of chunks. Because reranking adds an extra step at runtime, it inevitably adds a small amount of latency, even though the reranker scores all the chunks in parallel. There is an inherent trade-off between reranking more chunks for better performance vs. reranking fewer for lower latency and cost. We recommend experimenting with different settings on your specific use case to find the right balance.</p>",
+      "zh": "<p>使用重排序时，一个重要考量是它对时延与成本的影响，尤其是在对大量文本块重排序时。由于运行时增加了一个步骤，即使重排序模型并行为所有块评分，也不可避免地会引入少量延迟。对更多块进行重排序以获得更好表现，与对更少块重排序以降低时延和成本之间，存在固有的取舍。我们建议针对具体用例尝试不同设置，找到恰当的平衡。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-062",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-conclusion\">Conclusion</h2>",
+      "zh": "<h2 id=\"zh-source-conclusion\">结语</h2>"
+    },
+    {
+      "id": "new35_context_retrieval-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We ran a large number of tests, comparing different combinations of all the techniques described above (embedding model, use of BM25, use of contextual retrieval, use of a reranker, and total # of top-K results retrieved), all across a variety of different dataset types. Here’s a summary of what we found:</p>",
+      "zh": "<p>我们在多种不同类型的数据集上进行了大量测试，比较了上述各种技术的不同组合，包括嵌入模型、是否使用 BM25、是否使用上下文检索、是否使用重排序模型，以及检索结果的 top-K 数量。主要发现如下：</p>"
+    },
+    {
+      "id": "new35_context_retrieval-064",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Embeddings+BM25 is better than embeddings on their own;</li><li>Voyage and Gemini have the best embeddings of the ones we tested;</li><li>Passing the top-20 chunks to the model is more effective than just the top-10 or top-5;</li><li>Adding context to chunks improves retrieval accuracy a lot;</li><li>Reranking is better than no reranking;</li><li><strong>All these benefits stack</strong>: to maximize performance improvements, we can combine contextual embeddings (from Voyage or Gemini) with contextual BM25, plus a reranking step, and adding the 20 chunks to the prompt.</li></ol>",
+      "zh": "<ol><li>嵌入与 BM25 结合，优于单独使用嵌入；</li><li>在我们测试的模型中，Voyage 和 Gemini 的嵌入表现最好；</li><li>向模型提供前 20 个文本块，比只提供前 10 个或前 5 个更有效；</li><li>为文本块添加上下文，可以大幅提高检索准确性；</li><li>进行重排序，优于不进行重排序；</li><li><strong>这些收益可以叠加</strong>：要最大化性能提升，可以结合 Voyage 或 Gemini 的上下文嵌入与上下文 BM25，再加入重排序步骤，最后把 20 个块放入提示词。</li></ol>"
+    },
+    {
+      "id": "new35_context_retrieval-065",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We encourage all developers working with knowledge bases to use <a href=\"https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide\" rel=\"noopener noreferrer\">our cookbook</a> to experiment with these approaches to unlock new levels of performance.</p>",
+      "zh": "<p>我们鼓励所有使用知识库的开发者，借助<a href=\"https://platform.claude.com/cookbook/capabilities-contextual-embeddings-guide\" rel=\"noopener noreferrer\">我们的实用示例集</a>尝试这些方法，实现更高水平的性能。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-066",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-appendix-i\">Appendix I</h2>",
+      "zh": "<h2 id=\"zh-source-appendix-i\">附录 I</h2>"
+    },
+    {
+      "id": "new35_context_retrieval-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Below is a breakdown of results across datasets, embedding providers, use of BM25 in addition to embeddings, use of contextual retrieval, and use of reranking for Retrievals @ 20.</p>",
+      "zh": "<p>下表细分列出了 Retrievals @ 20 的结果，比较不同数据集、嵌入供应商、是否在嵌入之外使用 BM25、是否使用上下文检索，以及是否使用重排序。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>See <a href=\"https://assets.anthropic.com/m/1632cded0a125333/original/Contextual-Retrieval-Appendix-2.pdf\" rel=\"noopener noreferrer\">Appendix II</a> for the breakdowns for Retrievals @ 10 and @ 5 as well as example questions and answers for each dataset.</p>",
+      "zh": "<p>Retrievals @ 10 和 @ 5 的细分结果，以及各数据集的问题与答案示例，请参见<a href=\"https://assets.anthropic.com/m/1632cded0a125333/original/Contextual-Retrieval-Appendix-2.pdf\" rel=\"noopener noreferrer\">附录 II</a>。</p>"
+    },
+    {
+      "id": "new35_context_retrieval-069",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/587585fe2f311abdf30ec41f.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>1 minus recall @ 20 results across data sets and embedding providers.</em></figcaption></figure>"
+    },
+    {
+      "id": "new35_context_retrieval-070",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-acknowledgements-\">Acknowledgements </h2>",
+      "zh": "<h2 id=\"zh-source-acknowledgements-\">致谢</h2>"
+    },
+    {
+      "id": "new35_context_retrieval-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Research and writing by Daniel Ford. Thanks to Orowa Sikder, Gautam Mittal, and Kenneth Lien for critical feedback, Samuel Flamini for implementing the cookbooks, Lauren Polansky for project coordination and Alex Albert, Susan Payne, Stuart Ritchie, and Brad Abrams for shaping this blog post.</p>",
+      "zh": "<p>研究与撰写由 Daniel Ford 完成。感谢 Orowa Sikder、Gautam Mittal 和 Kenneth Lien 提供关键反馈，Samuel Flamini 实现实用示例，Lauren Polansky 协调项目，以及 Alex Albert、Susan Payne、Stuart Ritchie 和 Brad Abrams 对本文的打磨。</p>"
+    }
+  ],
+  "description": "AI 模型要在具体场景中发挥作用，往往需要获取背景知识。例如，客服聊天机器人需要了解其服务的具体业务，法律分析机器人则需要了解大量既往案例",
+  "reading_minutes": 11,
+  "downloads": {}
+}

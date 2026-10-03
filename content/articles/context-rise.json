@@ -1,0 +1,317 @@
+{
+  "title": "上下文工程的兴起",
+  "original_title": "The rise of \"context engineering\"",
+  "url": "https://www.langchain.com/blog/the-rise-of-context-engineering",
+  "date": "2025-06-23",
+  "publisher": "LangChain",
+  "author": "Harrison Chase",
+  "source_order": 33,
+  "slug": "context-rise",
+  "source_id": "new33_context_rise",
+  "category": "上下文工程",
+  "blocks": [
+    {
+      "id": "new33_context_rise-000",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img src=\"/media/e2498b3890c498c02c92a958.jpg\" alt=\"\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Header image from </em><a href=\"https://x.com/dexhorthy/status/1933283008863482067?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><em>Dex Horthy on Twitter</em></a><em>.</em></figcaption></figure>"
+    },
+    {
+      "id": "new33_context_rise-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Context engineering is building dynamic systems to provide the right information and tools in the right format such that the LLM can plausibly accomplish the task.</p>",
+      "zh": "<p>上下文工程，是构建动态系统，以恰当的格式提供正确的信息和工具，让大语言模型有条件完成任务。</p>"
+    },
+    {
+      "id": "new33_context_rise-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Most of the time when an agent is not performing reliably the underlying cause is that the appropriate context, instructions and tools have not been communicated to the model.</p>",
+      "zh": "<p>当 Agent 表现不可靠时，大多数情况下，根本原因是没有把恰当的上下文、指令和工具传达给模型。</p>"
+    },
+    {
+      "id": "new33_context_rise-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LLM applications are evolving from single prompts to more complex, dynamic agentic systems. As such, context engineering is becoming the <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com#a-theory-of-building-long-running-agents\" rel=\"noopener noreferrer\">most important skill an AI engineer can develop</a>.</p>",
+      "zh": "<p>大语言模型应用正从单条提示词，演进为更复杂、动态的 Agent 系统。因此，上下文工程正在成为 <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com#a-theory-of-building-long-running-agents\" rel=\"noopener noreferrer\">AI 工程师最值得培养的技能</a>。</p>"
+    },
+    {
+      "id": "new33_context_rise-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What is context engineering?</h2>",
+      "zh": "<h2>什么是上下文工程？</h2>"
+    },
+    {
+      "id": "new33_context_rise-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Context engineering is building dynamic systems to provide the right information and tools in the right format such that the LLM can plausibly accomplish the task.</p>",
+      "zh": "<p>上下文工程，是构建动态系统，以恰当的格式提供正确的信息和工具，让大语言模型有条件完成任务。</p>"
+    },
+    {
+      "id": "new33_context_rise-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is the definition that I like, which builds upon recent takes on this from <a href=\"https://x.com/tobi/status/1935533422589399127?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Tobi Lutke</a>, <a href=\"https://x.com/ankrgyl/status/1913766591910842619?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ankur Goyal</a>, and <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Walden Yan</a>. Let’s break it down.</p>",
+      "zh": "<p>这是我喜欢的定义，它建立在 <a href=\"https://x.com/tobi/status/1935533422589399127?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Tobi Lutke</a>、<a href=\"https://x.com/ankrgyl/status/1913766591910842619?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ankur Goyal</a> 和 <a href=\"https://cognition.ai/blog/dont-build-multi-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Walden Yan</a> 最近的相关观点之上。我们来逐一拆解。</p>"
+    },
+    {
+      "id": "new33_context_rise-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Context engineering is a system</strong></p>",
+      "zh": "<p><strong>上下文工程构建的是一个系统</strong></p>"
+    },
+    {
+      "id": "new33_context_rise-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Complex agents likely get context from many sources. Context can come from the developer of the application, the user, previous interactions, tool calls, or other external data. Pulling these all together involves a complex system.</p>",
+      "zh": "<p>复杂 Agent 的上下文很可能来自许多来源，包括应用开发者、用户、此前的交互、工具调用或其他外部数据。把这些内容整合起来，需要一个复杂的系统。</p>"
+    },
+    {
+      "id": "new33_context_rise-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>This system is dynamic</strong></p>",
+      "zh": "<p><strong>这个系统是动态的</strong></p>"
+    },
+    {
+      "id": "new33_context_rise-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Many of these pieces of context can come in dynamically. As such, the logic for constructing the final prompt needs to be dynamic as well. It is not just a static prompt.</p>",
+      "zh": "<p>其中很多上下文都可能动态到来。因此，构建最终提示词的逻辑也必须是动态的，而不只是一条静态提示词。</p>"
+    },
+    {
+      "id": "new33_context_rise-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>You need the right information</strong></p>",
+      "zh": "<p><strong>你需要正确的信息</strong></p>"
+    },
+    {
+      "id": "new33_context_rise-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A common reason agentic systems don’t perform is they just don’t have the right context. LLMs cannot read minds - you need to give them the right information. Garbage in, garbage out.</p>",
+      "zh": "<p>Agent 系统表现不佳的一个常见原因，就是没有获得正确的上下文。大语言模型不会读心，你需要提供正确的信息。垃圾进，垃圾出。</p>"
+    },
+    {
+      "id": "new33_context_rise-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>You need the right tools</strong></p>",
+      "zh": "<p><strong>你需要正确的工具</strong></p>"
+    },
+    {
+      "id": "new33_context_rise-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It may not always be the case that the LLM will be able to solve the task just based solely on the inputs. In these situations, if you want to empower the LLM to do so, you will want to make sure that it has the right tools. These could be tools to look up more information, take actions, or anything in between. Giving the LLM the right tools is just as important as giving it the right information.</p>",
+      "zh": "<p>大语言模型并不总能仅凭输入完成任务。在这种情况下，如果希望赋予模型完成任务的能力，就必须确保它拥有正确的工具。这些工具可以用于查找更多信息、采取行动，或介于两者之间的各种操作。给模型正确的工具，与给它正确的信息同样重要。</p>"
+    },
+    {
+      "id": "new33_context_rise-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The format matters</strong></p>",
+      "zh": "<p><strong>格式很重要</strong></p>"
+    },
+    {
+      "id": "new33_context_rise-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Just like communicating with humans, how you communicate with LLMs matters. A short but descriptive error message will go a lot further a large JSON blob. This also applies to tools. What the input parameters to your tools are matters a lot when making sure that LLMs can use them.</p>",
+      "zh": "<p>就像与人沟通一样，如何向大语言模型传达信息也很重要。一条简短但描述清楚的错误消息，远比一大块 JSON 更有效。工具也是如此。为了确保模型能够使用工具，工具的输入参数如何设计至关重要。</p>"
+    },
+    {
+      "id": "new33_context_rise-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Can it plausibly accomplish the task?</strong></p>",
+      "zh": "<p><strong>它是否具备完成任务的合理条件？</strong></p>"
+    },
+    {
+      "id": "new33_context_rise-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is a great question to be asking as you think about context engineering. It reinforces that LLMs are not mind readers - you need to set them up for success. It also helps separate the failure modes. Is it failing because you haven’t given it the right information or tools? Or does it have all the right information and it just messed up? These failure modes have very different ways to fix them.</p>",
+      "zh": "<p>思考上下文工程时，这是一个很值得提出的问题。它再次提醒我们，大语言模型不会读心，你需要为它创造成功的条件。这个问题也有助于区分不同的失败模式：失败是因为你没有提供正确的信息或工具，还是它已经拥有所有正确信息，却仍然做错了？这两类失败的解决方法截然不同。</p>"
+    },
+    {
+      "id": "new33_context_rise-019",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Why is context engineering important</h2>",
+      "zh": "<h2>为什么上下文工程很重要</h2>"
+    },
+    {
+      "id": "new33_context_rise-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When agentic systems mess up, it’s largely because an LLM messes. Thinking from first principles, LLMs can mess up for two reasons:</p>",
+      "zh": "<p>Agent 系统出错，很大程度上是因为大语言模型出了错。从第一性原理来看，模型出错可能有两种原因：</p>"
+    },
+    {
+      "id": "new33_context_rise-021",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>The underlying model just messed up, it isn’t good enough</li><li>The underlying model was not passed the appropriate context to make a good output</li></ol>",
+      "zh": "<ol><li>底层模型本身做错了，它的能力还不够好。</li><li>底层模型没有获得生成良好输出所需的恰当上下文。</li></ol>"
+    },
+    {
+      "id": "new33_context_rise-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>More often than not (especially as the models get better) model mistakes are caused more by the second reason. The context passed to the model may be bad for a few reasons:</p>",
+      "zh": "<p>更多时候，尤其是随着模型能力不断增强，模型错误主要由第二个原因造成。传给模型的上下文质量不佳，可能有以下几个原因：</p>"
+    },
+    {
+      "id": "new33_context_rise-023",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>There is just missing context that the model would need to make the right decision. Models are not mind readers. If you do not give them the right context, they won’t know it exists.</li><li>The context is formatted poorly. Just like humans, communication is important! How you format data when passing into a model absolutely affects how it responds</li></ul>",
+      "zh": "<ul><li>缺少模型作出正确决策所必需的上下文。模型不会读心。如果你没有提供正确的上下文，它们就不会知道这些信息的存在。</li><li>上下文的格式不好。就像人与人之间一样，沟通很重要！传入模型的数据采用什么格式，绝对会影响模型如何回应。</li></ul>"
+    },
+    {
+      "id": "new33_context_rise-024",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>How is context engineering different from prompt engineering?</h2>",
+      "zh": "<h2>上下文工程与提示词工程有什么不同？</h2>"
+    },
+    {
+      "id": "new33_context_rise-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Why the shift from “prompts” to “context”? Early on, developers focused on phrasing prompts cleverly to coax better answers. But as applications grow more complex, it’s becoming clear that <strong>providing complete and structured context</strong> to the AI is far more important than any magic wording.</p>",
+      "zh": "<p>为什么关注点从“提示词”转向“上下文”？早期，开发者着重巧妙地组织提示词措辞，以引导模型给出更好的答案。但随着应用变得复杂，人们越来越清楚：向 AI <strong>提供完整且结构化的上下文</strong>，远比任何神奇措辞都更重要。</p>"
+    },
+    {
+      "id": "new33_context_rise-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>I would also argue that prompt engineering is a subset of context engineering. Even if you have all the context, how you assemble it in the prompt still absolutely matters. The difference is that you are not architecting your prompt to work well with a single set of input data, but rather to take a set of dynamic data and format it properly.</p>",
+      "zh": "<p>我也认为，提示词工程是上下文工程的子集。即使拥有所有上下文，如何在提示词中组织它们，仍然非常重要。区别在于，你设计提示词不再是为了让它与某一组固定输入数据配合良好，而是为了接收一组动态数据，并将其恰当地格式化。</p>"
+    },
+    {
+      "id": "new33_context_rise-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>I would also highlight that a key part of context is often core instructions for how the LLM should behave. This is often a key part of prompt engineering. Would you say that providing clear and detailed instructions for how the agent should behave is context engineering or prompt engineering? I think it’s a bit of both.</p>",
+      "zh": "<p>我还想强调，上下文中一个关键部分，往往是规定大语言模型应当如何行动的核心指令。这通常也是提示词工程的关键内容。为 Agent 应当如何行动提供清晰、详细的指令，你会把它归为上下文工程，还是提示词工程？我认为两者都有。</p>"
+    },
+    {
+      "id": "new33_context_rise-028",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Examples of context engineering</h2>",
+      "zh": "<h2>上下文工程的例子</h2>"
+    },
+    {
+      "id": "new33_context_rise-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Some basic examples of good context engineering include:</p>",
+      "zh": "<p>良好上下文工程的一些基本例子包括：</p>"
+    },
+    {
+      "id": "new33_context_rise-030",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Tool use: Making sure that if an agent needs access to external information, it has tools that can access it. When tools return information, they are formatted in a way that is maximally digestable for LLMs</li><li>Short term memory: If a conversation is going on for a while, creating a summary of the conversation and using that in the future.</li><li>Long term memory: If a user has expressed preferences in a previous conversation, being able to fetch that information.</li><li>Prompt Engineering: Instructions for how an agent should behave are clearly enumerated in the prompt.</li><li>Retrieval: Fetching information dynamically and inserting it into the prompt before calling the LLM.</li></ul>",
+      "zh": "<ul><li>工具使用：确保当 Agent 需要访问外部信息时，拥有能够访问这些信息的工具。工具返回信息时，应采用尽可能便于大语言模型理解的格式。</li><li>短期记忆：当对话持续了一段时间后，生成对话摘要，并在后续使用。</li><li>长期记忆：如果用户曾在此前的对话中表达偏好，系统能够取回这些信息。</li><li>提示词工程：在提示词中清楚列出关于 Agent 应当如何行动的指令。</li><li>检索：在调用大语言模型之前，动态获取信息并将其插入提示词。</li></ul>"
+    },
+    {
+      "id": "new33_context_rise-031",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>How LangGraph enables context engineering</h2>",
+      "zh": "<h2>LangGraph 如何支持上下文工程</h2>"
+    },
+    {
+      "id": "new33_context_rise-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When we built <a href=\"https://github.com/langchain-ai/langgraph?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangGraph</a>, we built it with the goal of making it the most controllable agent framework. This also allows it to perfectly enable context engineering.</p>",
+      "zh": "<p>我们构建 <a href=\"https://github.com/langchain-ai/langgraph?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangGraph</a> 时，目标是让它成为可控性最强的 Agent 框架。这也让它能够非常契合地支持上下文工程。</p>"
+    },
+    {
+      "id": "new33_context_rise-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With LangGraph, you can control everything. You decide what steps are run. You decide <strong>exactly</strong> what goes into your LLM. You decide where you store the outputs. You control everything.</p>",
+      "zh": "<p>借助 LangGraph，你可以控制一切。你决定执行哪些步骤，<strong>精确</strong>决定哪些内容进入大语言模型，决定将输出存储在哪里。一切都由你控制。</p>"
+    },
+    {
+      "id": "new33_context_rise-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This allows you do all the context engineering you desire. One of the downsides of agent abstractions (which most other agent frameworks emphasize) is that they restrict context engineering. There may be places where you cannot change exactly what goes into the LLM, or exactly what steps are run beforehand.</p>",
+      "zh": "<p>这使你能够开展任何需要的上下文工程。大多数其他 Agent 框架所强调的 Agent 抽象，有一个缺点：它们会限制上下文工程。在某些地方，你可能无法精确修改进入大语言模型的内容，也无法精确修改模型调用之前执行的步骤。</p>"
+    },
+    {
+      "id": "new33_context_rise-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Side note: a very good read is Dex Horthy's <a href=\"https://github.com/humanlayer/12-factor-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">\"12 Factor Agents\"</a>. A lot of the points there relate to context engineering (\"own your prompts\", \"own your context building\", etc). The header image for this blog is also taken from Dex. We really enjoy the way he communicates about what is important in the space.</p>",
+      "zh": "<p>顺便推荐一篇很值得读的文章：Dex Horthy 的 <a href=\"https://github.com/humanlayer/12-factor-agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">《12 Factor Agents》</a>。其中许多观点都与上下文工程相关，例如“掌控你的提示词”“掌控你的上下文构建”等。本文的头图也取自 Dex。我们很欣赏他阐述这一领域中重要问题的方式。</p>"
+    },
+    {
+      "id": "new33_context_rise-036",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>How LangSmith helps with context engineering</h2>",
+      "zh": "<h2>LangSmith 如何帮助开展上下文工程</h2>"
+    },
+    {
+      "id": "new33_context_rise-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangSmith</a> is our LLM application observability and evals solution. One of the key features in LangSmith is the ability to <a href=\"https://docs.langchain.com/langsmith/observability-llm-tutorial\" rel=\"noopener noreferrer\">trace your agent calls</a>. Although the term \"context engineering\" didn't exist when we built LangSmith, it aptly describes what this tracing helps with.</p>",
+      "zh": "<p><a href=\"https://smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangSmith</a> 是我们面向大语言模型应用的可观测性与评测解决方案。它的一项关键功能，是<a href=\"https://docs.langchain.com/langsmith/observability-llm-tutorial\" rel=\"noopener noreferrer\">追踪 Agent 调用</a>。虽然我们构建 LangSmith 时还没有“上下文工程”这个词，但它恰好描述了执行轨迹记录所能帮助完成的工作。</p>"
+    },
+    {
+      "id": "new33_context_rise-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangSmith lets you see all the steps that happen in your agent. This lets you see what steps were run to gather the data that was sent into the LLM.</p>",
+      "zh": "<p>LangSmith 让你看到 Agent 中发生的所有步骤。因此，你可以知道，为了收集传入大语言模型的数据，系统究竟执行了哪些步骤。</p>"
+    },
+    {
+      "id": "new33_context_rise-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangSmith lets you see the exact inputs and outputs to the LLM. This lets you see exactly what went into the LLM - the data it had and how it was formatted. You can then debug whether that contains all the relevant information that is needed for the task. This includes what tools the LLM has access to - so you can debug whether it's been given the appropriate tools to help with the task at hand</p>",
+      "zh": "<p>LangSmith 让你看到大语言模型确切的输入与输出。你可以精确了解哪些内容进入了模型：它拥有哪些数据，以及这些数据采用什么格式。随后，你就能调试其中是否包含完成任务所需的全部相关信息。这也包括模型能够使用哪些工具，因此你可以检查，它是否获得了有助于完成当前任务的恰当工具。</p>"
+    },
+    {
+      "id": "new33_context_rise-040",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Communication is all you need</h2>",
+      "zh": "<h2>沟通就是你所需要的一切</h2>"
+    },
+    {
+      "id": "new33_context_rise-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A few months ago I wrote a blog called <a href=\"https://blog.langchain.com/communication-is-all-you-need/\" rel=\"noopener noreferrer\">\"Communication is all you need\"</a>. The main point was that communicating to the LLM is hard, and not appreciated enough, and often the root cause of a lot of agent errors. Many of these points have to do with context engineering!</p>",
+      "zh": "<p>几个月前，我写了一篇题为<a href=\"https://blog.langchain.com/communication-is-all-you-need/\" rel=\"noopener noreferrer\">《沟通就是你所需要的一切》</a>的博客文章。核心观点是：向大语言模型传达信息很难，却没有得到足够重视，而且沟通问题往往是许多 Agent 错误的根本原因。其中很多观点都与上下文工程有关！</p>"
+    },
+    {
+      "id": "new33_context_rise-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Context engineering isn't a new idea - agent builders have been doing it for the past year or two. It's a new term that aptly describes an increasingly important skill. We'll be writing and sharing more on this topic. We think a lot of the tools we've built (LangGraph, LangSmith) are perfectly built to enable context engineering, and so we're excited to see the emphasis on this take off.</p>",
+      "zh": "<p>上下文工程并不是一个新想法，Agent 开发者在过去一两年中一直在做这件事。它是一个新术语，恰当地描述了一项日益重要的技能。我们会继续撰写并分享相关内容。我们认为，已经构建的许多工具，包括 LangGraph 和 LangSmith，都十分适合支持上下文工程，因此很高兴看到这一方向开始受到重视。</p>"
+    }
+  ],
+  "description": "上下文工程，是构建动态系统，以恰当的格式提供正确的信息和工具，让大语言模型有条件完成任务",
+  "reading_minutes": 6,
+  "downloads": {}
+}

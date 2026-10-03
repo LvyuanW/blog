@@ -1,0 +1,563 @@
+{
+  "title": "剖析 Agent 运行框架",
+  "original_title": "The Anatomy of an Agent Harness",
+  "url": "https://www.langchain.com/blog/the-anatomy-of-an-agent-harness",
+  "date": "2026-03-11",
+  "publisher": "LangChain",
+  "author": "Vivek Trivedy",
+  "source_order": 20,
+  "slug": "harness-anatomy",
+  "source_id": "new20_harness_anatomy",
+  "category": "基础与架构",
+  "blocks": [
+    {
+      "id": "new20_harness_anatomy-000",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Key Takeaways</h2>",
+      "zh": "<h2>核心要点</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-001",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Break down complex objectives:</strong> Planning tools let agents decompose tasks, track progress, and adapt as they learn</li><li><strong>Delegate work in parallel:</strong> Spawn subagents for independent subtasks, each with isolated context</li></ul>",
+      "zh": "<ul><li><strong>拆解复杂目标：</strong>规划工具让 Agent 能够分解任务、跟踪进度，并随着新认识的积累调整行动。</li><li><strong>并行委派工作：</strong>为独立子任务启动子 Agent，每个子 Agent 都有隔离的上下文。</li></ul>"
+    },
+    {
+      "id": "new20_harness_anatomy-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>TLDR:</strong> Agent = Model + Harness.  Harness engineering is how we build systems around models to turn them into work engines.  The model contains the intelligence and the harness makes that intelligence useful.<strong> </strong>We define what a harness is and derive the core components today's and tomorrow's agents need.</p>",
+      "zh": "<p><strong>简而言之：</strong>Agent = 模型 + 运行框架。运行框架工程，就是围绕模型构建系统，让模型成为能够完成工作的引擎。模型承载智能，运行框架让这种智能发挥作用。<strong> </strong>本文将定义什么是运行框架，并推导出当今和未来的 Agent 所需的核心组件。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-003",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Can Someone Please Define a \"Harness\"?</h2>",
+      "zh": "<h2>谁能给“运行框架”下个定义？</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agent = Model + Harness</p>",
+      "zh": "<p>Agent = 模型 + 运行框架</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>If you're not the model, you're the harness.</strong></p>",
+      "zh": "<p><strong>只要不是模型本身，就属于运行框架。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A harness is every piece of code, configuration, and execution logic that isn't the model itself.  A raw model is not an agent. But it becomes one when a harness gives it things like state, tool execution, feedback loops, and enforceable constraints.</p>",
+      "zh": "<p>运行框架，是模型本身之外的所有代码、配置和执行逻辑。裸模型并不是 Agent。但当运行框架为它提供状态、工具执行、反馈循环以及可强制落实的约束等能力后，它就成为了 Agent。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Concretely, a harness includes things like:</p>",
+      "zh": "<p>具体来说，运行框架包含以下内容：</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-008",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>System Prompts</li><li>Tools, Skills, MCPs + and their descriptions</li><li>Bundled Infrastructure (filesystem, sandbox, browser)</li><li>Orchestration Logic (subagent spawning, handoffs, model routing)</li><li>Hooks/Middleware for deterministic execution (compaction, continuation, lint checks)</li></ul>",
+      "zh": "<ul><li>系统提示词</li><li>工具、Skills、MCP 及其描述</li><li>配套基础设施（文件系统、沙箱、浏览器）</li><li>编排逻辑（启动子 Agent、任务交接、模型路由）</li><li>用于确定性执行的钩子／中间件（上下文压缩、继续执行、静态代码检查）</li></ul>"
+    },
+    {
+      "id": "new20_harness_anatomy-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are many messy ways to split the boundaries of an agent system between the model and the harness. But in my opinion, this is the cleanest definition because it forces us to think about <strong>designing systems around model intelligence.</strong></p>",
+      "zh": "<p>Agent 系统中，模型与运行框架的边界可以有很多种划分方式，而且往往很混乱。但在我看来，上面的定义最清晰，因为它迫使我们思考<strong>如何围绕模型的智能设计系统。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The rest of this post walks through core harness components and derives <em>why</em> each piece exists working backwards from the core primitive of a model.</p>",
+      "zh": "<p>接下来，本文将从模型这一核心基础单元出发，逐一介绍运行框架的核心组件，并反向推导每个部分<em>为什么</em>存在。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-011",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/1adcb3fea0eed70d923d092a.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new20_harness_anatomy-012",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Why Do We Need Harnesses. From a Model's Perspective</h2>",
+      "zh": "<h2>从模型的视角看：为什么需要运行框架</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>There are things we want an agent to do that a model cannot do out of the box. This is where a harness comes in.</strong>Models (mostly) take in data like text, images, audio, video and they output text. That's it. Out of the box they cannot:</p>",
+      "zh": "<p><strong>我们希望 Agent 完成的一些事情，模型并不能开箱即用地做到。这就是运行框架发挥作用的地方。</strong>模型（大多）接收文本、图像、音频、视频等数据，然后输出文本。仅此而已。模型本身无法直接做到：</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-014",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Maintain durable state across interactions</li><li>Execute code</li><li>Access realtime knowledge</li><li>Setup environments and install packages to complete work</li></ul>",
+      "zh": "<ul><li>在多次交互之间维持持久状态</li><li>执行代码</li><li>获取实时知识</li><li>为完成工作而搭建环境、安装软件包</li></ul>"
+    },
+    {
+      "id": "new20_harness_anatomy-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These are all <strong>harness level features</strong>. The structure of LLMs requires some sort of machinery that wraps them to do useful work.For example, to get a product UX like \"chatting\", we wrap the model in a while loop to track previous messages and append new user messages. Everyone reading this has already used this kind of harness.  The main idea is that we want to convert a desired agent behavior into an actual feature in the harness.</p>",
+      "zh": "<p>这些都是<strong>运行框架层面的功能</strong>。LLM 的结构决定了，要让它们完成有用的工作，就需要某种包裹在外部的机制。例如，要实现“聊天”这样的产品体验，我们就把模型放进一个 while 循环，记录之前的消息，再追加用户的新消息。读到这里的每个人都已经使用过这类运行框架。核心思路是：将我们期望的 Agent 行为，转化为运行框架中实际存在的功能。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-016",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Working Backwards from Desired Agent Behavior to Harness Engineering</h2>",
+      "zh": "<h2>从期望的 Agent 行为反推运行框架工程</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harness Engineering helps humans inject useful priors to guide agent behavior. And as models have gotten more capable, harnesses have been used to surgically extend and correct models to complete previously impossible tasks.</p>",
+      "zh": "<p>运行框架工程让人类能够注入有用的先验知识，引导 Agent 的行为。随着模型能力增强，人们通过运行框架有针对性地扩展和修正模型，让其完成过去无法完成的任务。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We won’t go over an exhaustive list of every harness feature.  The goal is to derive a set of features from the starting point of helping models do useful work.  We’ll follow a pattern like this:</p>",
+      "zh": "<p>我们不会穷举运行框架的所有功能。我们的目标是以“帮助模型完成有用的工作”为出发点，推导出一组功能。我们将遵循这样的模式：</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Behavior we want (or want to fix) → Harness Design to help the model achieve this.</strong></p>",
+      "zh": "<p><strong>期望实现（或修正）的行为 → 帮助模型实现这种行为的运行框架设计。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/e32637a85704e76070585533.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new20_harness_anatomy-021",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Filesystems for Durable Storage and Context Management</h2>",
+      "zh": "<h2>用文件系统实现持久存储与上下文管理</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>We want agents to have durable storage to interface with real data, offload information that doesn't fit in context, and persist work across sessions.</strong></p>",
+      "zh": "<p><strong>我们希望 Agent 拥有持久存储，以便与真实数据交互，将上下文容纳不下的信息移出，并在不同会话之间保存工作成果。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Models can only directly operate on knowledge within their context window. Before filesystems, users had to copy/paste content directly to the model, that’s clunky UX and doesn't work for autonomous agents. The world was already using filesystems to do work so models were naturally trained on billions of tokens of how to use them. The natural solution became:</p>",
+      "zh": "<p>模型只能直接处理上下文窗口中的知识。没有文件系统时，用户必须把内容直接复制粘贴给模型。这种用户体验很笨拙，也不适用于自主 Agent。现实世界早已使用文件系统开展工作，因此模型自然也在数十亿 token 的相关使用资料上接受过训练。顺理成章的解决方案是：</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Harnesses ship with filesystem abstractions and tools for fs-ops.</strong></p>",
+      "zh": "<p><strong>运行框架内置文件系统抽象，以及执行文件系统操作的工具。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The filesystem is arguably the most foundational harness primitive because of what it unlocks:</p>",
+      "zh": "<p>文件系统可以说是运行框架最基础的构件，因为它带来了以下能力：</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-026",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Agents get a workspace to read data, code, and documentation.</li><li>Work can be incrementally added and offloaded instead of holding everything in context. Agents can store intermediate outputs and maintain state that outlasts a single session.</li><li><strong>The filesystem is a natural collaboration surface.</strong> Multiple agents and humans can coordinate through shared files.  Architectures like Agent Teams rely on this.</li></ul>",
+      "zh": "<ul><li>Agent 拥有一个工作区，可以读取数据、代码和文档。</li><li>工作内容可以逐步增添并移出上下文，不必把一切都放在上下文中。Agent 可以存储中间输出，并维持超越单次会话的状态。</li><li><strong>文件系统天然适合协作。</strong>多个 Agent 与人类可以通过共享文件协调工作。Agent Teams 等架构就依赖这一点。</li></ul>"
+    },
+    {
+      "id": "new20_harness_anatomy-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Git adds versioning to the filesystem so agents can track work, rollback errors, and branch experiments.  We revisit the filesystem more below, because it turns out to be a key harness primitive for other features we need.</p>",
+      "zh": "<p>Git 为文件系统增加了版本管理，使 Agent 能够跟踪工作、回滚错误，并通过分支进行实验。下文还会再次谈到文件系统，因为它也是实现其他所需功能的重要基础构件。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-028",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Bash + Code as a General Purpose Tool</h2>",
+      "zh": "<h2>将 Bash 与代码作为通用工具</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>We want agents to autonomously solve problems without humans needing to pre-design every tool.</strong></p>",
+      "zh": "<p><strong>我们希望 Agent 自主解决问题，而不需要人类预先设计每一种工具。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The main agent execution pattern today is a <a href=\"https://docs.langchain.com/oss/python/langchain/agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">ReAct loop</a>, where a model reasons, takes an action via a tool call, observes the result, and repeats in a while loop. But harnesses can only execute the tools they have logic for.  Instead of forcing users to build tools for every possible action, a better solution is to give agents a general purpose tool like bash.</p>",
+      "zh": "<p>目前 Agent 的主要执行模式是 <a href=\"https://docs.langchain.com/oss/python/langchain/agents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">ReAct 循环</a>：模型进行推理，通过工具调用采取行动，观察结果，然后在 while 循环中重复这一过程。但运行框架只能执行它已具备相应逻辑的工具。与其要求用户为每一种可能的行动构建工具，更好的办法是给 Agent 提供 Bash 这样的通用工具。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Harnesses ship with a bash tool so models can solve problems autonomously by writing &amp; executing code.</strong></p>",
+      "zh": "<p><strong>运行框架内置 Bash 工具，让模型能够通过编写和执行代码来自主解决问题。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Bash + code exec is a big step towards <strong>giving models a computer</strong> and letting them figure out the rest autonomously. The model can design its own tools on the fly via code instead of being constrained to a fixed set of pre-configured tools.</p>",
+      "zh": "<p>Bash 加上代码执行能力，是朝着<strong>给模型一台计算机</strong>、让它自主弄清其余事情迈出的一大步。模型可以通过代码即时设计自己的工具，而不再受限于一组预先配置好的固定工具。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harnesses still ship with other tools, but code execution has become the default general-purpose strategy for autonomous problem solving.</p>",
+      "zh": "<p>运行框架仍然会内置其他工具，但代码执行已经成为自主解决问题时默认采用的通用策略。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-034",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Sandboxes and Tools to Execute &amp; Verify Work</h2>",
+      "zh": "<h2>用沙箱和工具执行、验证工作</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Agents need an environment with the right defaults so they can safely act, observe results, and make progress.</strong></p>",
+      "zh": "<p><strong>Agent 需要一个默认配置合理的环境，才能安全地采取行动、观察结果并推进工作。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We've given models storage and the ability to execute code, but all of that needs to happen somewhere.  Running agent-generated code locally is risky and a single local environment doesn’t scale to large agent workloads.</p>",
+      "zh": "<p>我们给了模型存储和执行代码的能力，但这些操作总得在某个地方进行。在本地运行 Agent 生成的代码存在风险，而且单一本地环境无法扩展到大规模的 Agent 工作负载。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Sandboxes give agents safe operating environments.</strong> Instead of executing locally, the harness can connect to a sandbox to run code, inspect files, install dependencies, and complete tasks. This creates secure, isolated execution of code.  For more security, harnesses can allow-list commands and enforce network isolation.  Sandboxes also unlock scale because environments can be created on demand, fanned out across many tasks, and torn down when the work is done.</p>",
+      "zh": "<p><strong>沙箱为 Agent 提供安全的操作环境。</strong>运行框架可以连接到沙箱，在其中运行代码、检查文件、安装依赖并完成任务，而不是在本地执行。这实现了安全、隔离的代码执行。为了进一步提高安全性，运行框架可以设置命令允许列表，并强制实施网络隔离。沙箱也带来了扩展能力：环境可以按需创建，为大量任务分别分配，并在工作完成后销毁。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Good environments come with good default tooling.</strong> Harnesses are responsible for configuring tooling so agents can do useful work. This includes pre-installing language runtimes and packages, CLIs for git and testing, <a href=\"https://github.com/vercel-labs/agent-browser?ref=blog.langchain.com\" rel=\"noopener noreferrer\">browsers</a> for web interaction and verification.</p>",
+      "zh": "<p><strong>好的环境具备良好的默认工具配置。</strong>运行框架负责配置工具，使 Agent 能够完成有用的工作。这包括预装语言运行时和软件包、用于 Git 与测试的命令行工具，以及用于网页交互和验证的<a href=\"https://github.com/vercel-labs/agent-browser?ref=blog.langchain.com\" rel=\"noopener noreferrer\">浏览器</a>。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tools like browsers, logs, screenshots, and test runners give agents a way to observe and analyze their work. This helps them create <strong>self-verification loops where</strong> they can <strong>write application code,</strong> run tests, inspect logs, and fix errors.</p>",
+      "zh": "<p>浏览器、日志、截图和测试运行器等工具，为 Agent 提供了观察与分析自身工作的手段。这有助于它们建立<strong>自我验证循环，在其中</strong><strong>编写应用代码</strong>、运行测试、检查日志并修复错误。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The model doesn’t configure its own execution environment out of the box. Deciding where the agent runs, what tools are available, what it can access, and how it verifies its work are all harness-level design decisions.</p>",
+      "zh": "<p>模型本身并不会自动配置执行环境。Agent 在哪里运行、有哪些工具可用、能访问什么，以及如何验证自己的工作，都是运行框架层面的设计决策。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-041",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Memory &amp; Search for Continual Learning</h2>",
+      "zh": "<h2>通过记忆与搜索实现持续学习</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Agents should remember what they've seen and access information that didn't exist when they were trained.</strong></p>",
+      "zh": "<p><strong>Agent 应当记住已经见过的内容，并能够获取训练时尚不存在的信息。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Models have no additional knowledge beyond their weights and what's in their current context. Without access to edit model weights, the only way to \"add knowledge\" is via <strong>context injection.</strong></p>",
+      "zh": "<p>除了权重中蕴含的知识，以及当前上下文中的内容，模型没有其他知识。在无法修改模型权重的情况下，“增加知识”的唯一方式就是<strong>注入上下文。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For memory, the filesystem is again a core primitive. Harnesses support memory file standards like <a href=\"http://agents.md/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">AGENTS.md</a> which get injected into context on agent start.  As agents add and edit this file, harnesses load the updated file into context.  This is a form of <a href=\"https://www.ibm.com/think/topics/continual-learning?ref=blog.langchain.com\" rel=\"noopener noreferrer\">continual learning</a> where agents durably store knowledge from one session and inject that knowledge into future sessions.</p>",
+      "zh": "<p>在记忆方面，文件系统再次成为核心构件。运行框架支持 <a href=\"http://agents.md/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">AGENTS.md</a> 等记忆文件规范，并在 Agent 启动时将其注入上下文。当 Agent 增添和编辑这些文件后，运行框架会把更新后的文件加载到上下文中。这是一种<a href=\"https://www.ibm.com/think/topics/continual-learning?ref=blog.langchain.com\" rel=\"noopener noreferrer\">持续学习</a>：Agent 持久保存某次会话中获得的知识，并将其注入后续会话。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Knowledge cutoffs mean that models can't directly access new data like updated library versions without the user providing them directly. For up-to-date knowledge, Web Search and MCP tools like <a href=\"https://context7.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Context7</a> help agents access information beyond the knowledge cutoff like new library versions or current data that didn't exist when training stopped.</p>",
+      "zh": "<p>知识截止日期意味着，如果用户不直接提供新数据，模型就无法直接获取新版软件库等信息。为了获得最新知识，网页搜索以及 <a href=\"https://context7.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Context7</a> 等 MCP 工具，可以帮助 Agent 访问知识截止日期之后的信息，例如新版软件库，或者训练结束时尚不存在的当前数据。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Web Search and tools for querying up-to-date context are useful primitives to bake into a harness.</p>",
+      "zh": "<p>网页搜索以及用于查询最新上下文的工具，是值得内置到运行框架中的基础能力。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-047",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Battling Context Rot</h2>",
+      "zh": "<h2>应对上下文退化</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Agent performance shouldn’t degrade over the course of work.</strong></p>",
+      "zh": "<p><strong>Agent 的表现不应随着工作推进而恶化。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://research.trychroma.com/context-rot?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Context Rot</a> describes how models become worse at reasoning and completing tasks as their context window fills up.  Context is a precious and scarce resource, so harnesses need strategies to manage it.</p>",
+      "zh": "<p><a href=\"https://research.trychroma.com/context-rot?ref=blog.langchain.com\" rel=\"noopener noreferrer\">上下文退化（Context Rot）</a>描述的是：随着上下文窗口逐渐填满，模型的推理和任务完成能力会变差。上下文是宝贵而稀缺的资源，因此运行框架需要相应的管理策略。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Harnesses today are largely delivery mechanisms for good context engineering.</strong></p>",
+      "zh": "<p><strong>如今，运行框架在很大程度上是落实良好上下文工程的机制。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Compaction</strong> addresses what to do when the context window is close to filling up.  Without compaction, what happens when a conversation exceeds the context window?  One option is that the API errors, that’s not good. The harness has to use some strategy for this case.  So compaction intelligently offloads and summarizes the existing context window so the agent can continue working.</p>",
+      "zh": "<p><strong>上下文压缩</strong>解决的是上下文窗口接近填满时该怎么办的问题。如果没有压缩，当对话超过上下文窗口容量时会发生什么？一种情况是 API 报错，这显然不理想。运行框架必须采取某种策略处理这一情形。因此，压缩会智能地将现有上下文中的内容移出并加以总结，让 Agent 能够继续工作。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Tool call offloading</strong> helps reduce the impact of large tool outputs that can noisily clutter the context window without providing useful information. The harness keeps the head and tail tokens of tool outputs above a threshold number of tokens and offloads the full output to the filesystem so the model can access it if needed.</p>",
+      "zh": "<p><strong>工具调用输出卸载</strong>有助于减轻大型工具输出的影响：它们可能给上下文窗口塞入大量噪声，却没有提供有用信息。当工具输出超过某个 token 数量阈值时，运行框架只保留开头和结尾的 token，把完整输出移到文件系统中，供模型在需要时访问。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Skills</strong> address the issue of too many tools or MCP servers loaded into context on agent start which degrades performance before the agent can start working. Skills are a harness level primitive that solve this via <strong>progressive disclosure.</strong>  The model didn't choose to have Skill front-matter loaded into context on start but the harness can support this to protect the model against context rot.</p>",
+      "zh": "<p><strong>Skills</strong>解决的是 Agent 启动时加载到上下文中的工具或 MCP 服务器过多的问题。这会导致 Agent 还没开始工作，表现就已经下降。Skills 是运行框架层面的基础构件，通过<strong>渐进式披露</strong>解决这个问题。模型并没有选择在启动时将 Skill 的前置信息加载到上下文中，但运行框架可以支持这种做法，保护模型免受上下文退化的影响。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-054",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Long Horizon Autonomous Execution</h2>",
+      "zh": "<h2>长时间跨度的自主执行</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>We want agents to complete complex work, autonomously, correctly, over long time horizons.</strong></p>",
+      "zh": "<p><strong>我们希望 Agent 能够在很长的时间跨度内，自主、正确地完成复杂工作。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-056",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Autonomous software creation is the holy grail for coding agents. But today's models suffer from early stopping, issues decomposing complex problems, and incoherence as work stretches across multiple context windows.  A good harness has to design around all of this.</p>",
+      "zh": "<p>自主创建软件，是编程 Agent 追求的终极目标。但今天的模型仍会过早停止，难以分解复杂问题，而且当工作跨越多个上下文窗口时，表现会不连贯。优秀的运行框架必须针对这些问题进行设计。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is where the earlier harness primitives start to compound. Long-horizon work requires durable state, planning, observation, and verification to keep working across multiple context windows.</p>",
+      "zh": "<p>前面介绍的运行框架基础能力，在这里开始相互叠加。长时间跨度的工作需要持久状态、规划、观察和验证，才能跨越多个上下文窗口持续推进。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Filesystems and git for tracking work across sessions.</strong> Agents produce millions of tokens over a long task so the filesystem durably captures work to track progress over time.  Adding git allows new agents to quickly get up to speed on the latest work and history of the project.  For multiple agents working together, the filesystem also acts as a shared ledger of work where agents can collaborate.</p>",
+      "zh": "<p><strong>通过文件系统和 Git 跨会话跟踪工作。</strong>Agent 在长期任务中会产生数百万 token，因此文件系统需要持久保存工作成果，以便持续跟踪进度。加入 Git 后，新的 Agent 可以迅速了解项目的最新进展与历史。多个 Agent 一起工作时，文件系统也充当共享工作记录，让它们能够相互协作。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-059",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Ralph Loops for continuing work.</strong> <a href=\"https://ghuntley.com/loop/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">The Ralph Loop</a> is a harness pattern that intercepts the model's exit attempt via a hook and reinjects the original prompt in a clean context window, forcing the agent to continue its work against a completion goal. The filesystem makes this possible because each iteration starts with fresh context but reads state from the previous iteration.</p>",
+      "zh": "<p><strong>通过 Ralph 循环继续工作。</strong><a href=\"https://ghuntley.com/loop/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ralph 循环</a>是一种运行框架模式：它通过钩子拦截模型尝试退出的行为，并在一个干净的上下文窗口中重新注入原始提示词，迫使 Agent 继续朝完成目标推进。文件系统让这一机制成为可能，因为每次迭代都从全新的上下文开始，却会读取上一次迭代留下的状态。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Planning and self-verification to stay on track.</strong>  Planning is when a model decomposes a goal into a series of steps.  Harnesses support this via good prompting and injecting reminders how to use a plan file in the filesystem.  After completing each step, agents benefit from the checking correctness of their work via <strong>self-verification.</strong>  Hooks in harnesses can run a pre-defined test suite and loop back to the model on failure with the error message or models can be prompted to self-evaluate their code independently.  Verification grounds solution in tests and creates a feedback signal for self-improvement.</p>",
+      "zh": "<p><strong>通过规划和自我验证保持方向。</strong>规划就是模型将目标分解为一系列步骤。运行框架通过良好的提示词，以及注入有关如何使用文件系统中计划文件的提醒来支持这一过程。完成每一步后，Agent 都可以通过<strong>自我验证</strong>检查工作的正确性。运行框架中的钩子可以运行预先定义的测试套件，并在失败时把错误消息反馈给模型；也可以提示模型独立评估自己的代码。验证通过测试为解决方案提供依据，并产生用于自我改进的反馈信号。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-061",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>The Future of Harnesses</h2>",
+      "zh": "<h2>运行框架的未来</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-062",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>The Coupling of Model Training and Harness Design</h3>",
+      "zh": "<h3>模型训练与运行框架设计的耦合</h3>"
+    },
+    {
+      "id": "new20_harness_anatomy-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Today's agent products like Claude Code and Codex are post-trained with models and harnesses in the loop. This helps models improve at actions that the harness designers think they should be natively good at like filesystem operations, bash execution, planning, or parallelizing work with subagents.</p>",
+      "zh": "<p>如今，Claude Code、Codex 等 Agent 产品的后训练过程将模型和运行框架一起纳入循环。这有助于模型改进运行框架设计者认为它们应当原生擅长的操作，例如文件系统操作、执行 Bash、规划，或者通过子 Agent 并行开展工作。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This creates a feedback loop.  Useful primitives are discovered, added to the harness, and then used when training the next generation of models. As this cycle repeats, models become more capable within the harness they were trained in.</p>",
+      "zh": "<p>这形成了一个反馈循环：人们发现有用的基础能力，将其加入运行框架，再在训练下一代模型时使用它们。随着这个循环不断重复，模型在其受训所用的运行框架中会变得更有能力。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-065",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But this co-evolution has interesting side effects for generalization. It shows up in ways like how changing tool logic leads to worse model performance. A good example is described <a href=\"https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide/?ref=blog.langchain.com#apply_patch\" rel=\"noopener noreferrer\">here in the Codex-5.3 prompting guide</a> with the apply_patch tool logic for editing files.  A truly intelligent model should have little trouble switching between patch methods, but training with a harness in the loop creates this overfitting.</p>",
+      "zh": "<p>但这种共同演化也会对泛化产生有趣的副作用。例如，改变工具逻辑可能导致模型表现变差。<a href=\"https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide/?ref=blog.langchain.com#apply_patch\" rel=\"noopener noreferrer\">Codex-5.3 提示词指南中的这个例子</a>就描述了用于编辑文件的 apply_patch 工具逻辑。真正智能的模型，在不同补丁方法之间切换时本应几乎不会遇到困难，但将运行框架纳入训练循环，会造成这种过拟合。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-066",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>But this doesn't mean that the best harness for your task is the one a model was post-trained with.</strong> <a href=\"https://www.tbench.ai/leaderboard/terminal-bench/2.0?ref=blog.langchain.com\" rel=\"noopener noreferrer\">The Terminal Bench 2.0 Leaderboard</a> is a good example. Opus 4.6 in Claude Code scores far below Opus 4.6 in other harnesses.  <a href=\"https://x.com/Vtrivedy10/status/2023805578561060992?s=20&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">In a previous blog</a>, we showed how we improved our coding agent Top 30 to Top 5 on Terminal Bench 2.0 by only changing the harness.  There's a lot of juice to be squeezed out of optimizing the harness for your task.</p>",
+      "zh": "<p><strong>但这并不意味着，最适合你所做任务的运行框架，就是模型后训练时使用的那一个。</strong><a href=\"https://www.tbench.ai/leaderboard/terminal-bench/2.0?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Terminal Bench 2.0 排行榜</a>就是一个很好的例子。Claude Code 中的 Opus 4.6 得分，远低于其他运行框架中的 Opus 4.6。<a href=\"https://x.com/Vtrivedy10/status/2023805578561060992?s=20&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">我们此前的一篇博客</a>展示过：仅仅改变运行框架，就把编程 Agent 在 Terminal Bench 2.0 上的名次从前 30 提升到了前 5。针对你的任务优化运行框架，仍有很大的潜力可以挖掘。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-067",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/b80f93977429722fb8d797ec.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new20_harness_anatomy-068",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Where Harness Engineering is Going</h2>",
+      "zh": "<h2>运行框架工程将走向何方</h2>"
+    },
+    {
+      "id": "new20_harness_anatomy-069",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As models get more capable, some of what lives in the harness today will get absorbed into the model. Models will get better at planning, self-verification, and long horizon coherence natively, thus requiring less context injection for example.</p>",
+      "zh": "<p>随着模型能力增强，今天由运行框架承担的一部分能力会被模型吸收。例如，模型会原生地更擅长规划、自我验证，以及在长时间跨度上保持连贯，从而减少对上下文注入的需求。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That suggests harnesses should matter less over time.  But just as prompt engineering continues to be valuable today, it’s likely that harness engineering will continue to be useful for building good agents.</p>",
+      "zh": "<p>这似乎意味着，运行框架的重要性会逐渐下降。但正如提示词工程至今仍有价值一样，运行框架工程很可能也会继续在构建优秀 Agent 时发挥作用。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It’s true that harnesses today patch over model deficiencies, but they also engineer systems around model intelligence to make them more effective.  A well-configured environment, the right tools, durable state, and verification loops make any model more efficient regardless of its base intelligence.</p>",
+      "zh": "<p>运行框架如今确实会弥补模型的不足，但它也围绕模型智能构建系统，使其更加有效。无论模型基础智能水平如何，配置良好的环境、合适的工具、持久状态与验证循环，都能提高模型的效率。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-072",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harness engineering is a very active area of research that we use to improve our harness building library <a href=\"https://docs.langchain.com/oss/python/deepagents/overview?ref=blog.langchain.com\" rel=\"noopener noreferrer\">deepagents</a> at LangChain. Here are a few open and interesting problems we’re exploring today:</p>",
+      "zh": "<p>运行框架工程是一个十分活跃的研究领域。在 LangChain，我们用这些研究来改进运行框架构建库 <a href=\"https://docs.langchain.com/oss/python/deepagents/overview?ref=blog.langchain.com\" rel=\"noopener noreferrer\">deepagents</a>。以下是我们目前正在探索的几个尚未解决、又很有趣的问题：</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-073",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>orchestrating hundreds of agents working in parallel on a shared codebase</li><li>agents that analyze their own traces to identify and fix harness-level failure modes</li><li>harnesses that dynamically assemble the right tools and context just-in-time for a given task instead of being pre-configured</li></ul>",
+      "zh": "<ul><li>编排数百个 Agent，在同一个共享代码库中并行工作</li><li>让 Agent 分析自身的执行轨迹，识别并修复运行框架层面的失败模式</li><li>让运行框架针对具体任务，按需及时、动态地组装合适的工具和上下文，而非预先固定配置</li></ul>"
+    },
+    {
+      "id": "new20_harness_anatomy-074",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This blog was an exercise in defining what a harness is and how it’s shaped by the work we want models to do.</p>",
+      "zh": "<p>本文尝试定义什么是运行框架，以及我们希望模型完成的工作如何塑造运行框架。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The model contains the intelligence and the harness is the system that makes that intelligence useful.</strong></p>",
+      "zh": "<p><strong>模型承载智能，运行框架则是让这种智能发挥作用的系统。</strong></p>"
+    },
+    {
+      "id": "new20_harness_anatomy-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To more harness building, better systems, and better agents.</p>",
+      "zh": "<p>愿我们构建更多运行框架、更好的系统，以及更好的 Agent。</p>"
+    },
+    {
+      "id": "new20_harness_anatomy-077",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote><strong>Deploy Deep Agents in 1-click with </strong><a href=\"https://www.langchain.com/langsmith/deployment\" rel=\"noopener noreferrer\"><strong>LangSmith Deployment</strong></a><strong>. </strong><a href=\"https://www.langchain.com/contact-sales\" rel=\"noopener noreferrer\"><strong>Speak with an expert</strong></a><strong> from our team.</strong></blockquote>",
+      "zh": "<blockquote><strong>通过 </strong><a href=\"https://www.langchain.com/langsmith/deployment\" rel=\"noopener noreferrer\"><strong>LangSmith Deployment</strong></a><strong> 一键部署 Deep Agents。</strong><a href=\"https://www.langchain.com/contact-sales\" rel=\"noopener noreferrer\"><strong>与我们团队的专家交流</strong></a><strong>。</strong></blockquote>"
+    }
+  ],
+  "description": "简而言之：Agent = 模型 + 运行框架。运行框架工程，就是围绕模型构建系统，让模型成为能够完成工作的引擎。模型承载智能，运行框架让这种智能发挥作用。 本文将定义什么是运行框架，并推导出当今和未来的 Agent 所需的核心组件",
+  "reading_minutes": 13,
+  "downloads": {
+    "zh": "/downloads/harness-anatomy-zh.pdf",
+    "en": "/downloads/harness-anatomy-en.pdf"
+  }
+}

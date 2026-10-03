@@ -1,0 +1,453 @@
+{
+  "title": "通过 MCP 执行代码：构建更高效的 Agent",
+  "original_title": "Code execution with MCP: Building more efficient agents",
+  "url": "https://www.anthropic.com/engineering/code-execution-with-mcp",
+  "date": "2025-11-04",
+  "publisher": "Anthropic",
+  "source_order": 12,
+  "slug": "mcp-code",
+  "source_id": "new12_mcp_code",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new12_mcp_code-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/545649669be2e361e7074535.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new12_mcp_code-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Direct tool calls consume context for each definition and result. Agents scale better by writing code to call tools instead. Here's how it works with MCP.</p>",
+      "zh": "<p>直接调用工具时，每个工具定义和返回结果都会占用上下文。让 Agent 编写代码来调用工具，则更有利于扩展规模。下面介绍这种方式如何与 MCP 配合。</p>"
+    },
+    {
+      "id": "new12_mcp_code-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://modelcontextprotocol.io/\" rel=\"noopener noreferrer\">The Model Context Protocol (MCP)</a> is an open standard for connecting AI agents to external systems. Connecting agents to tools and data traditionally requires a custom integration for each pairing, creating fragmentation and duplicated effort that makes it difficult to scale truly connected systems. MCP provides a universal protocol—developers implement MCP once in their agent and it unlocks an entire ecosystem of integrations.</p>",
+      "zh": "<p><a href=\"https://modelcontextprotocol.io/\" rel=\"noopener noreferrer\">模型上下文协议（MCP）</a>是一项将 AI Agent 连接到外部系统的开放标准。传统上，每一种 Agent 与工具或数据的配对都需要定制集成，由此产生的碎片化和重复劳动，使真正互联的系统难以扩展。MCP 提供了一种通用协议：开发者只需在 Agent 中实现一次 MCP，就能接入整个集成生态。</p>"
+    },
+    {
+      "id": "new12_mcp_code-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Since launching MCP in November 2024, adoption has been rapid: the community has built thousands of <a href=\"https://github.com/modelcontextprotocol/servers\" rel=\"noopener noreferrer\">MCP servers</a>, <a href=\"https://modelcontextprotocol.io/docs/sdk\" rel=\"noopener noreferrer\">SDKs</a> are available for all major programming languages, and the industry has adopted MCP as the de-facto standard for connecting agents to tools and data.</p>",
+      "zh": "<p>自 2024 年 11 月发布以来，MCP 迅速得到采用：社区已构建了数千个 <a href=\"https://github.com/modelcontextprotocol/servers\" rel=\"noopener noreferrer\">MCP 服务器</a>，所有主流编程语言都有可用的 <a href=\"https://modelcontextprotocol.io/docs/sdk\" rel=\"noopener noreferrer\">SDK</a>，行业也已将 MCP 作为连接 Agent、工具和数据的事实标准。</p>"
+    },
+    {
+      "id": "new12_mcp_code-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Today developers routinely build agents with access to hundreds or thousands of tools across dozens of MCP servers. However, as the number of connected tools grows, loading all tool definitions upfront and passing intermediate results through the context window slows down agents and increases costs.</p>",
+      "zh": "<p>如今，开发者经常构建能够通过数十个 MCP 服务器访问数百乃至数千个工具的 Agent。然而，随着连接的工具增多，一开始就加载所有工具定义，以及让中间结果经过上下文窗口，都会拖慢 Agent 的运行速度并增加成本。</p>"
+    },
+    {
+      "id": "new12_mcp_code-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In this blog we'll explore how code execution can enable agents to interact with MCP servers more efficiently, handling more tools while using fewer tokens.</p>",
+      "zh": "<p>本文将探讨如何借助代码执行，让 Agent 更高效地与 MCP 服务器交互，在使用更少 token 的同时处理更多工具。</p>"
+    },
+    {
+      "id": "new12_mcp_code-006",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-excessive-token-consumption-from-tools-makes-agents-less-efficient\"><strong>Excessive token consumption from tools makes agents less efficient</strong></h2>",
+      "zh": "<h2 id=\"zh-source-excessive-token-consumption-from-tools-makes-agents-less-efficient\"><strong>工具消耗过多 token，会降低 Agent 的效率</strong></h2>"
+    },
+    {
+      "id": "new12_mcp_code-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As MCP usage scales, there are two common patterns that can increase agent cost and latency:</p>",
+      "zh": "<p>随着 MCP 使用规模扩大，两种常见模式会增加 Agent 的成本和时延：</p>"
+    },
+    {
+      "id": "new12_mcp_code-008",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Tool definitions overload the context window;</li><li>Intermediate tool results consume additional tokens.</li></ol>",
+      "zh": "<ol><li>工具定义使上下文窗口不堪重负；</li><li>工具中间结果消耗额外的 token。</li></ol>"
+    },
+    {
+      "id": "new12_mcp_code-009",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-1-tool-definitions-overload-the-context-window\"><strong>1. Tool definitions overload the context window</strong></h3>",
+      "zh": "<h3 id=\"zh-source-1-tool-definitions-overload-the-context-window\"><strong>1. 工具定义使上下文窗口不堪重负</strong></h3>"
+    },
+    {
+      "id": "new12_mcp_code-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Most MCP clients load all tool definitions upfront directly into context, exposing them to the model using a direct tool-calling syntax. These tool definitions might look like: </p>",
+      "zh": "<p>大多数 MCP 客户端会预先将全部工具定义直接加载进上下文，通过直接工具调用的语法将其提供给模型。这些工具定义可能如下所示：</p>"
+    },
+    {
+      "id": "new12_mcp_code-011",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>gdrive.getDocument\n     Description: Retrieves a document from Google Drive\n     Parameters:\n                documentId (required, string): The ID of the document to retrieve\n                fields (optional, string): Specific fields to return\n     Returns: Document object with title, body content, metadata, permissions, etc.</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-012",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>salesforce.updateRecord\n    Description: Updates a record in Salesforce\n    Parameters:\n               objectType (required, string): Type of Salesforce object (Lead, Contact,      Account, etc.)\n               recordId (required, string): The ID of the record to update\n               data (required, object): Fields to update with their new values\n     Returns: Updated record object with confirmation</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tool descriptions occupy more context window space, increasing response time and costs. In cases where agents are connected to thousands of tools, they’ll need to process hundreds of thousands of tokens before reading a request.</p>",
+      "zh": "<p>工具描述会占用更多上下文窗口空间，增加响应时间与成本。当 Agent 连接了数千个工具时，它甚至还没读到用户请求，就需要先处理数十万个 token。</p>"
+    },
+    {
+      "id": "new12_mcp_code-014",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-2-intermediate-tool-results-consume-additional-tokens\"><strong>2. Intermediate tool results consume additional tokens</strong></h3>",
+      "zh": "<h3 id=\"zh-source-2-intermediate-tool-results-consume-additional-tokens\"><strong>2. 工具中间结果消耗额外的 token</strong></h3>"
+    },
+    {
+      "id": "new12_mcp_code-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Most MCP clients allow models to directly call MCP tools. For example, you might ask your agent: \"Download my meeting transcript from Google Drive and attach it to the Salesforce lead.\"</p>",
+      "zh": "<p>大多数 MCP 客户端允许模型直接调用 MCP 工具。例如，你可能要求 Agent：“从 Google Drive 下载我的会议转录，并将它附加到 Salesforce 的销售线索上。”</p>"
+    },
+    {
+      "id": "new12_mcp_code-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The model will make calls like:</p>",
+      "zh": "<p>模型会进行类似下面的调用：</p>"
+    },
+    {
+      "id": "new12_mcp_code-017",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>TOOL CALL: gdrive.getDocument(documentId: \"abc123\")\n        → returns \"Discussed Q4 goals...\\n[full transcript text]\"\n           (loaded into model context)\n\nTOOL CALL: salesforce.updateRecord(\n\t\t\tobjectType: \"SalesMeeting\",\n\t\t\trecordId: \"00Q5f000001abcXYZ\",\n  \t\t\tdata: { \"Notes\": \"Discussed Q4 goals...\\n[full transcript text written out]\" }\n\t\t)\n\t\t(model needs to write entire transcript into context again)</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every intermediate result must pass through the model. In this example, the full call transcript flows through twice. For a 2-hour sales meeting, that could mean processing an additional 50,000 tokens. Even larger documents may exceed context window limits, breaking the workflow.</p>",
+      "zh": "<p>每个中间结果都必须经过模型。在这个例子中，完整的通话转录会流经模型两次。对于一场两小时的销售会议，这可能意味着需要额外处理 50,000 个 token。更大的文档甚至可能超出上下文窗口限制，导致工作流中断。</p>"
+    },
+    {
+      "id": "new12_mcp_code-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With large documents or complex data structures, models may be more likely to make mistakes when copying data between tool calls.</p>",
+      "zh": "<p>面对大型文档或复杂数据结构时，模型在不同工具调用之间复制数据，也更容易出错。</p>"
+    },
+    {
+      "id": "new12_mcp_code-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"Image of how the MCP client works with the MCP server and LLM.\" src=\"/media/5dd7eb88fdda19e9da0cda18.png\" loading=\"lazy\" decoding=\"async\"><figcaption>The MCP client loads tool definitions into the model's context window and orchestrates a message loop where each tool call and result passes through the model between operations.</figcaption></figure>"
+    },
+    {
+      "id": "new12_mcp_code-021",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-code-execution-with-mcp-improves-context-efficiency\"><strong>Code execution with MCP improves context efficiency</strong></h2>",
+      "zh": "<h2 id=\"zh-source-code-execution-with-mcp-improves-context-efficiency\"><strong>通过代码执行使用 MCP，提高上下文利用效率</strong></h2>"
+    },
+    {
+      "id": "new12_mcp_code-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With code execution environments becoming more common for agents, a solution is to present MCP servers as code APIs rather than direct tool calls. The agent can then write code to interact with MCP servers. This approach addresses both challenges: agents can load only the tools they need and process data in the execution environment before passing results back to the model.</p>",
+      "zh": "<p>随着代码执行环境在 Agent 中越来越常见，一种解决方案是将 MCP 服务器呈现为代码 API，而非直接工具调用。这样，Agent 就可以编写代码与 MCP 服务器交互。这个方法同时解决了上述两个挑战：Agent 可以只加载自己需要的工具，并在执行环境中处理数据，然后再把结果返回给模型。</p>"
+    },
+    {
+      "id": "new12_mcp_code-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are a number of ways to do this. One approach is to generate a file tree of all available tools from connected MCP servers. Here's an implementation using TypeScript:</p>",
+      "zh": "<p>实现方式有很多。一种方法是为已连接的 MCP 服务器中的所有可用工具生成文件树。下面是一个 TypeScript 实现：</p>"
+    },
+    {
+      "id": "new12_mcp_code-024",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>servers\n├── google-drive\n│   ├── getDocument.ts\n│   ├── ... (other tools)\n│   └── index.ts\n├── salesforce\n│   ├── updateRecord.ts\n│   ├── ... (other tools)\n│   └── index.ts\n└── ... (other servers)</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Then each tool corresponds to a file, something like:</p>",
+      "zh": "<p>然后，每个工具对应一个文件，大致如下：</p>"
+    },
+    {
+      "id": "new12_mcp_code-026",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>// ./servers/google-drive/getDocument.ts\nimport { callMCPTool } from \"../../../client.js\";\n\ninterface GetDocumentInput {\n  documentId: string;\n}\n\ninterface GetDocumentResponse {\n  content: string;\n}\n\n/* Read a document from Google Drive */\nexport async function getDocument(input: GetDocumentInput): Promise&lt;GetDocumentResponse&gt; {\n  return callMCPTool&lt;GetDocumentResponse&gt;('google_drive__get_document', input);\n}\n</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our Google Drive to Salesforce example above becomes the code:</p>",
+      "zh": "<p>上面将数据从 Google Drive 传到 Salesforce 的例子，就变成了这样的代码：</p>"
+    },
+    {
+      "id": "new12_mcp_code-028",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>// Read transcript from Google Docs and add to Salesforce prospect\nimport * as gdrive from './servers/google-drive';\nimport * as salesforce from './servers/salesforce';\n\nconst transcript = (await gdrive.getDocument({ documentId: 'abc123' })).content;\nawait salesforce.updateRecord({\n  objectType: 'SalesMeeting',\n  recordId: '00Q5f000001abcXYZ',\n  data: { Notes: transcript }\n});\n</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The agent discovers tools by exploring the filesystem: listing the <code>./servers/ </code>directory to find available servers (like <code>google-drive</code> and <code>salesforce</code>), then reading the specific tool files it needs (like <code>getDocument.ts</code> and <code>updateRecord.ts</code>) to understand each tool's interface. This lets the agent load only the definitions it needs for the current task. This reduces the token usage from 150,000 tokens to 2,000 tokens—a time and cost saving of 98.7%<strong>.</strong></p>",
+      "zh": "<p>Agent 通过探索文件系统来发现工具：列出 <code>./servers/ </code>目录，找到可用服务器，例如 <code>google-drive</code> 和 <code>salesforce</code>；再读取所需的具体工具文件，例如 <code>getDocument.ts</code> 和 <code>updateRecord.ts</code>，了解各个工具的接口。这样，Agent 只需加载当前任务所需的定义。这将 token 用量从 150,000 降到了 2,000，节省了 98.7% 的时间与成本<strong>。</strong></p>"
+    },
+    {
+      "id": "new12_mcp_code-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Cloudflare <a href=\"https://blog.cloudflare.com/code-mode/\" rel=\"noopener noreferrer\">published similar findings</a>, referring to code execution with MCP as “Code Mode.\" The core insight is the same: LLMs are adept at writing code and developers should take advantage of this strength to build agents that interact with MCP servers more efficiently.</p>",
+      "zh": "<p>Cloudflare 也<a href=\"https://blog.cloudflare.com/code-mode/\" rel=\"noopener noreferrer\">发布了类似发现</a>，将通过代码执行使用 MCP 称为“Code Mode”。核心观点是一样的：大语言模型擅长编写代码，开发者应该利用这一优势，构建能更高效地与 MCP 服务器交互的 Agent。</p>"
+    },
+    {
+      "id": "new12_mcp_code-031",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-benefits-of-code-execution-with-mcp\"><strong>Benefits of code execution with MCP</strong></h2>",
+      "zh": "<h2 id=\"zh-source-benefits-of-code-execution-with-mcp\"><strong>通过代码执行使用 MCP 的优势</strong></h2>"
+    },
+    {
+      "id": "new12_mcp_code-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Code execution with MCP enables agents to use context more efficiently by loading tools on demand, filtering data before it reaches the model, and executing complex logic in a single step. There are also security and state management benefits to using this approach.</p>",
+      "zh": "<p>通过代码执行使用 MCP，可以按需加载工具，在数据到达模型前先行过滤，并一次执行复杂逻辑，从而让 Agent 更高效地利用上下文。这种方法在安全性和状态管理方面也有优势。</p>"
+    },
+    {
+      "id": "new12_mcp_code-033",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-progressive-disclosure\">Progressive disclosure</h3>",
+      "zh": "<h3 id=\"zh-source-progressive-disclosure\">渐进式披露</h3>"
+    },
+    {
+      "id": "new12_mcp_code-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Models are great at navigating filesystems. Presenting tools as code on a filesystem allows models to read tool definitions on-demand, rather than reading them all up-front.</p>",
+      "zh": "<p>模型很擅长浏览文件系统。将工具以代码形式放在文件系统中，可以让模型按需读取工具定义，而不必一开始就全部读入。</p>"
+    },
+    {
+      "id": "new12_mcp_code-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Alternatively, a <code>search_tools</code> tool can be added to the server to find relevant definitions. For example, when working with the hypothetical Salesforce server used above, the agent searches for \"salesforce\" and loads only those tools that it needs for the current task. Including a detail level parameter in the <code>search_tools</code> tool that allows the agent to select the level of detail required (such as name only, name and description, or the full definition with schemas) also helps the agent conserve context and find tools efficiently.</p>",
+      "zh": "<p>另一种方式是在服务器中添加一个 <code>search_tools</code> 工具，用来查找相关定义。例如，使用上文假设的 Salesforce 服务器时，Agent 可以搜索“salesforce”，然后只加载当前任务所需的工具。还可以为 <code>search_tools</code> 工具加入一个详细程度参数，让 Agent 选择需要的信息层次，例如仅名称、名称加描述，或包含 schema 的完整定义。这也有助于节约上下文，并高效查找工具。</p>"
+    },
+    {
+      "id": "new12_mcp_code-036",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-context-efficient-tool-results\">Context efficient tool results</h3>",
+      "zh": "<h3 id=\"zh-source-context-efficient-tool-results\">节省上下文的工具结果</h3>"
+    },
+    {
+      "id": "new12_mcp_code-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When working with large datasets, agents can filter and transform results in code before returning them. Consider fetching a 10,000-row spreadsheet:</p>",
+      "zh": "<p>处理大型数据集时，Agent 可以在代码中先过滤和转换结果，再将其返回。以获取一张 10,000 行的电子表格为例：</p>"
+    },
+    {
+      "id": "new12_mcp_code-038",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>// Without code execution - all rows flow through context\nTOOL CALL: gdrive.getSheet(sheetId: 'abc123')\n        → returns 10,000 rows in context to filter manually\n\n// With code execution - filter in the execution environment\nconst allRows = await gdrive.getSheet({ sheetId: 'abc123' });\nconst pendingOrders = allRows.filter(row =&gt; \n  row[\"Status\"] === 'pending'\n);\nconsole.log(`Found ${pendingOrders.length} pending orders`);\nconsole.log(pendingOrders.slice(0, 5)); // Only log first 5 for review</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The agent sees five rows instead of 10,000. Similar patterns work for aggregations, joins across multiple data sources, or extracting specific fields—all without bloating the context window.</p>",
+      "zh": "<p>Agent 看到的是 5 行，而非 10,000 行。类似模式也适用于聚合、跨多个数据源的连接，或提取特定字段，而且都不会使上下文窗口膨胀。</p>"
+    },
+    {
+      "id": "new12_mcp_code-040",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-more-powerful-and-context-efficient-control-flow\"><strong>More powerful and context-efficient control flow</strong></h4>",
+      "zh": "<h4 id=\"zh-source-more-powerful-and-context-efficient-control-flow\"><strong>更强大、更节省上下文的控制流</strong></h4>"
+    },
+    {
+      "id": "new12_mcp_code-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Loops, conditionals, and error handling can be done with familiar code patterns rather than chaining individual tool calls. For example, if you need a deployment notification in Slack, the agent can write:</p>",
+      "zh": "<p>循环、条件判断和错误处理，都可以使用熟悉的代码模式来实现，而无需串接单独的工具调用。例如，如果你需要在 Slack 中收到部署通知，Agent 可以编写：</p>"
+    },
+    {
+      "id": "new12_mcp_code-042",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>let found = false;\nwhile (!found) {\n  const messages = await slack.getChannelHistory({ channel: 'C123456' });\n  found = messages.some(m =&gt; m.text.includes('deployment complete'));\n  if (!found) await new Promise(r =&gt; setTimeout(r, 5000));\n}\nconsole.log('Deployment notification received');</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This approach is more efficient than alternating between MCP tool calls and sleep commands through the agent loop.</p>",
+      "zh": "<p>这种方法比在 Agent 循环中交替调用 MCP 工具和 sleep 命令更高效。</p>"
+    },
+    {
+      "id": "new12_mcp_code-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Additionally, being able to write out a conditional tree that gets executed also saves on “time to first token” latency: rather than having to wait for a model to evaluate an if-statement, the agent can let the code execution environment do this.</p>",
+      "zh": "<p>此外，直接写出可执行的条件分支树，还能减少“首 token 时间”带来的延迟：无需等待模型判断 if 语句，Agent 可以让代码执行环境来完成这一步。</p>"
+    },
+    {
+      "id": "new12_mcp_code-045",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-privacy-preserving-operations\">Privacy-preserving operations</h3>",
+      "zh": "<h3 id=\"zh-source-privacy-preserving-operations\">保护隐私的操作</h3>"
+    },
+    {
+      "id": "new12_mcp_code-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When agents use code execution with MCP, intermediate results stay in the execution environment by default. This way, the agent only sees what you explicitly log or return, meaning data you don’t wish to share with the model can flow through your workflow without ever entering the model's context.</p>",
+      "zh": "<p>Agent 通过代码执行使用 MCP 时，中间结果默认保留在执行环境中。这样，Agent 只会看到你明确记录或返回的内容。这意味着，不希望与模型共享的数据，可以在工作流中流转，而始终不进入模型的上下文。</p>"
+    },
+    {
+      "id": "new12_mcp_code-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For even more sensitive workloads, the agent harness can tokenize sensitive data automatically. For example, imagine you need to import customer contact details from a spreadsheet into Salesforce. The agent writes:</p>",
+      "zh": "<p>对于更加敏感的工作负载，Agent 运行框架可以自动用代号替换敏感数据。例如，假设你需要把电子表格中的客户联系方式导入 Salesforce。Agent 会编写：</p>"
+    },
+    {
+      "id": "new12_mcp_code-048",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>const sheet = await gdrive.getSheet({ sheetId: 'abc123' });\nfor (const row of sheet.rows) {\n  await salesforce.updateRecord({\n    objectType: 'Lead',\n    recordId: row.salesforceId,\n    data: { \n      Email: row.email,\n      Phone: row.phone,\n      Name: row.name\n    }\n  });\n}\nconsole.log(`Updated ${sheet.rows.length} leads`);</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The MCP client intercepts the data and tokenizes PII before it reaches the model:</p>",
+      "zh": "<p>MCP 客户端会截获数据，在其到达模型之前，将个人身份信息（PII）替换为代号：</p>"
+    },
+    {
+      "id": "new12_mcp_code-050",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>// What the agent would see, if it logged the sheet.rows:\n[\n  { salesforceId: '00Q...', email: '[EMAIL_1]', phone: '[PHONE_1]', name: '[NAME_1]' },\n  { salesforceId: '00Q...', email: '[EMAIL_2]', phone: '[PHONE_2]', name: '[NAME_2]' },\n  ...\n]</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Then, when the data is shared in another MCP tool call, it is untokenized via a lookup in the MCP client. The real email addresses, phone numbers, and names flow from Google Sheets to Salesforce, but never through the model. This prevents the agent from accidentally logging or processing sensitive data. You can also use this to define deterministic security rules, choosing where data can flow to and from.</p>",
+      "zh": "<p>随后，当这些数据通过另一个 MCP 工具调用传递时，MCP 客户端会通过查表，把代号还原成原始数据。真实的电子邮件地址、电话号码和姓名会从 Google Sheets 流向 Salesforce，但不会经过模型。这可以防止 Agent 意外记录或处理敏感数据。你也可以用这种方式定义确定性的安全规则，选择允许数据从哪里流出、流向哪里。</p>"
+    },
+    {
+      "id": "new12_mcp_code-052",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-state-persistence-and-skills\">State persistence and skills</h3>",
+      "zh": "<h3 id=\"zh-source-state-persistence-and-skills\">状态持久化与 Skills</h3>"
+    },
+    {
+      "id": "new12_mcp_code-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Code execution with filesystem access allows agents to maintain state across operations. Agents can write intermediate results to files, enabling them to resume work and track progress:</p>",
+      "zh": "<p>带有文件系统访问能力的代码执行，让 Agent 能够在不同操作之间维持状态。Agent 可以将中间结果写入文件，以便恢复工作并跟踪进展：</p>"
+    },
+    {
+      "id": "new12_mcp_code-054",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>const leads = await salesforce.query({ \n  query: 'SELECT Id, Email FROM Lead LIMIT 1000' \n});\nconst csvData = leads.map(l =&gt; `${l.Id},${l.Email}`).join('\\n');\nawait fs.writeFile('./workspace/leads.csv', csvData);\n\n// Later execution picks up where it left off\nconst saved = await fs.readFile('./workspace/leads.csv', 'utf-8');</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents can also persist their own code as reusable functions. Once an agent develops working code for a task, it can save that implementation for future use:</p>",
+      "zh": "<p>Agent 还可以把自己编写的代码持久保存为可复用函数。为某个任务开发出可运行的代码后，它就能保存这个实现，供未来使用：</p>"
+    },
+    {
+      "id": "new12_mcp_code-056",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>// In ./skills/save-sheet-as-csv.ts\nimport * as gdrive from './servers/google-drive';\nexport async function saveSheetAsCsv(sheetId: string) {\n  const data = await gdrive.getSheet({ sheetId });\n  const csv = data.map(row =&gt; row.join(',')).join('\\n');\n  await fs.writeFile(`./workspace/sheet-${sheetId}.csv`, csv);\n  return `./workspace/sheet-${sheetId}.csv`;\n}\n\n// Later, in any agent execution:\nimport { saveSheetAsCsv } from './skills/save-sheet-as-csv';\nconst csvPath = await saveSheetAsCsv('abc123');</code></pre>"
+    },
+    {
+      "id": "new12_mcp_code-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This ties in closely to the concept of <a href=\"https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">Skills</a>, folders of reusable instructions, scripts, and resources for models to improve performance on specialized tasks. Adding a SKILL.md file to these saved functions creates a structured skill that models can reference and use. Over time, this allows your agent to build a toolbox of higher-level capabilities, evolving the scaffolding that it needs to work most effectively.</p>",
+      "zh": "<p>这与 <a href=\"https://docs.claude.com/en/docs/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">Skills</a> 的概念紧密相关。Skills 是包含可复用指令、脚本和资源的文件夹，用于提高模型在专门任务上的表现。为这些已保存的函数添加一个 SKILL.md 文件，就能形成结构化的技能，供模型查阅和使用。随着时间推移，Agent 可以由此积累一套更高层次能力的工具箱，不断演进出让自己最高效工作的支撑结构。</p>"
+    },
+    {
+      "id": "new12_mcp_code-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Note that code execution introduces its own complexity. Running agent-generated code requires a secure execution environment with appropriate <a href=\"https://www.anthropic.com/engineering/claude-code-sandboxing\" rel=\"noopener noreferrer\">sandboxing</a>, resource limits, and monitoring. These infrastructure requirements add operational overhead and security considerations that direct tool calls avoid. The benefits of code execution—reduced token costs, lower latency, and improved tool composition—should be weighed against these implementation costs.</p>",
+      "zh": "<p>需要注意，代码执行也会带来额外复杂性。运行 Agent 生成的代码，需要一个安全的执行环境，具备适当的<a href=\"https://www.anthropic.com/engineering/claude-code-sandboxing\" rel=\"noopener noreferrer\">沙箱隔离</a>、资源限制和监测能力。这些基础设施要求会增加运维开销和安全方面的考量，而直接工具调用则不需要承担这些负担。代码执行带来的好处，包括降低 token 成本、减少时延和改善工具组合能力，应当与这些实现成本一并权衡。</p>"
+    },
+    {
+      "id": "new12_mcp_code-059",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-summary\"><strong>Summary</strong></h2>",
+      "zh": "<h2 id=\"zh-source-summary\"><strong>总结</strong></h2>"
+    },
+    {
+      "id": "new12_mcp_code-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>MCP provides a foundational protocol for agents to connect to many tools and systems. However, once too many servers are connected, tool definitions and results can consume excessive tokens, reducing agent efficiency.</p>",
+      "zh": "<p>MCP 为 Agent 连接众多工具和系统提供了基础协议。然而，一旦连接的服务器过多，工具定义和结果就可能消耗过量 token，降低 Agent 效率。</p>"
+    },
+    {
+      "id": "new12_mcp_code-061",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Although many of the problems here feel novel—context management, tool composition, state persistence—they have known solutions from software engineering. Code execution applies these established patterns to agents, letting them use familiar programming constructs to interact with MCP servers more efficiently. If you implement this approach, we encourage you to share your findings with the <a href=\"https://modelcontextprotocol.io/community/communication\" rel=\"noopener noreferrer\">MCP community</a>.</p>",
+      "zh": "<p>虽然这里的许多问题，如上下文管理、工具组合和状态持久化，看起来很新，但软件工程中已经存在成熟的解决方案。代码执行将这些既有模式应用到 Agent 中，使其能利用熟悉的编程结构，更高效地与 MCP 服务器交互。如果你实现了这种方法，我们欢迎你与 <a href=\"https://modelcontextprotocol.io/community/communication\" rel=\"noopener noreferrer\">MCP 社区</a>分享发现。</p>"
+    },
+    {
+      "id": "new12_mcp_code-062",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-acknowledgments-\">Acknowledgments </h3>",
+      "zh": "<h3 id=\"zh-source-acknowledgments-\">致谢</h3>"
+    },
+    {
+      "id": "new12_mcp_code-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><em>This article was written by Adam Jones and Conor Kelly. Thanks to Jeremy Fox, Jerome Swannack, Stuart Ritchie, Molly Vorwerck, Matt Samuels, and Maggie Vo for feedback on drafts of this post.</em></p>",
+      "zh": "<p><em>本文由 Adam Jones 和 Conor Kelly 撰写。感谢 Jeremy Fox、Jerome Swannack、Stuart Ritchie、Molly Vorwerck、Matt Samuels 和 Maggie Vo 对本文草稿提出的反馈。</em></p>"
+    }
+  ],
+  "description": "直接调用工具时，每个工具定义和返回结果都会占用上下文。让 Agent 编写代码来调用工具，则更有利于扩展规模。下面介绍这种方式如何与 MCP 配合",
+  "reading_minutes": 8,
+  "downloads": {
+    "zh": "/downloads/mcp-code-zh.pdf",
+    "en": "/downloads/mcp-code-en.pdf"
+  }
+}

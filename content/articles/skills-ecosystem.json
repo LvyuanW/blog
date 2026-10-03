@@ -1,0 +1,289 @@
+{
+  "title": "面向组织、合作伙伴与生态系统的 Skills",
+  "original_title": "Skills for organizations, partners, the ecosystem",
+  "url": "https://claude.com/blog/organization-skills-and-directory",
+  "date": "2025-12-18",
+  "publisher": "Anthropic",
+  "source_order": 31,
+  "slug": "skills-ecosystem",
+  "source_id": "new31_skills_ecosystem",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new31_skills_ecosystem-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/4042a650a60ead64ca4340e1.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new31_skills_ecosystem-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In October, we introduced <a href=\"https://claude.com/blog/skills\" rel=\"noopener noreferrer\">skills</a>—a way to teach Claude repeatable workflows tailored to how you work. Today we're making skills easier to deploy, discover, and build: organization-wide management for admins; a directory of partner-built skills from Notion, Canva, Figma, Atlassian, and others; and an open standard so skills work across AI platforms.</p>",
+      "zh": "<p>10 月，我们推出了 <a href=\"https://claude.com/blog/skills\" rel=\"noopener noreferrer\">Skills</a>：一种教会 Claude 执行可重复工作流的方法，这些工作流可以根据你的工作方式量身定制。今天，我们进一步简化 Skills 的部署、发现和构建：为管理员提供覆盖整个组织的管理能力；推出包含 Notion、Canva、Figma、Atlassian 等合作伙伴所构建 Skills 的目录；并发布一项开放标准，让 Skills 能够跨 AI 平台使用。</p>"
+    },
+    {
+      "id": "new31_skills_ecosystem-002",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2><strong>Manage skills across your organization</strong></h2>",
+      "zh": "<h2><strong>在整个组织中管理 Skills</strong></h2>"
+    },
+    {
+      "id": "new31_skills_ecosystem-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Team and Enterprise plan admins can now provision skills centrally from admin settings. Admin-provisioned skills are enabled by default for all users. Users can still toggle individual skills off if they choose. This gives organizations consistent, approved workflows across teams while letting individual users customize their experience.</p>",
+      "zh": "<p>Claude Team 和 Enterprise 套餐的管理员现在可以在管理设置中集中配置 Skills。管理员配置的 Skills 默认对所有用户启用，用户仍然可以选择关闭个别 Skill。这让组织能在各团队中采用一致且经过批准的工作流，同时允许每位用户定制自己的使用体验。</p>"
+    },
+    {
+      "id": "new31_skills_ecosystem-004",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/9a64ca547b58684e6b0d65bc.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new31_skills_ecosystem-005",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2><strong>Discover, create, and edit new skills</strong></h2>",
+      "zh": "<h2><strong>发现、创建和编辑新的 Skills</strong></h2>"
+    },
+    {
+      "id": "new31_skills_ecosystem-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Creating skills is now simpler. Describe what you want and Claude helps build it, or write instructions directly. For complex workflows, upload skill folders or use the skill-creator. Claude can also help you edit existing skills, and new previews show full contents so you can understand exactly what a skill does before enabling it.</p>",
+      "zh": "<p>创建 Skills 现在变得更简单了。描述你想要的内容，Claude 就会帮助构建；你也可以直接编写指令。对于复杂工作流，可以上传 Skill 文件夹，或使用 skill-creator。Claude 还可以帮助编辑已有 Skills；新的预览功能会展示完整内容，让你在启用一个 Skill 之前准确了解它的作用。</p>"
+    },
+    {
+      "id": "new31_skills_ecosystem-007",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2><strong>Skills directory</strong></h2>",
+      "zh": "<h2><strong>Skills 目录</strong></h2>"
+    },
+    {
+      "id": "new31_skills_ecosystem-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A growing collection of partner-built skills is now available at <a href=\"https://claude.com/connectors\" rel=\"noopener noreferrer\">claude.com/connectors</a>. </p>",
+      "zh": "<p>由合作伙伴构建、且仍在不断扩充的 Skills 集合现已上线 <a href=\"https://claude.com/connectors\" rel=\"noopener noreferrer\">claude.com/connectors</a>。</p>"
+    },
+    {
+      "id": "new31_skills_ecosystem-009",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><figure><a href=\"https://www.youtube.com/embed/NGAFwBfuiJ8\" rel=\"noopener noreferrer\">Skills Directory | Partner Skills for Claude</a></figure></div></figure>"
+    },
+    {
+      "id": "new31_skills_ecosystem-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Admins can provision these partner skills across their organization, giving teams immediate access to workflows for tools they already use without any custom development.</p>",
+      "zh": "<p>管理员可以在整个组织中配置这些合作伙伴 Skills，让团队立即使用适配其现有工具的工作流，而无须进行任何定制开发。</p>"
+    },
+    {
+      "id": "new31_skills_ecosystem-011",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/7c274c57167b294d1e59679b.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Atlassian’s skills bring our decades of teamwork expertise and best practices to Claude. Now Claude doesn’t just see Jira tickets or Confluence pages, it knows what to do: turning specs into backlogs, generating status reports, surfacing company knowledge, triaging issues, and more.</p>",
+      "zh": "<p>Atlassian 的 Skills 将我们数十年来积累的团队协作专业知识和最佳实践带到了 Claude 中。现在，Claude 不仅能看到 Jira 工单或 Confluence 页面，还知道该怎么做：将规格说明转化为待办事项列表、生成状态报告、呈现公司知识、对问题进行分流，等等。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Josh Devenny, Head of Product, Rovo Skills</p>",
+      "zh": "<p>Josh Devenny，Rovo Skills 产品负责人</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-014",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/532731cc725c601787fdf0ce.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With Skills, Claude now understands how to work within Canva - not just connect to it. Anyone can create full multi-platform campaigns, generate on-brand presentations, and translate content, all with a single, simple prompt.</p>",
+      "zh": "<p>有了 Skills，Claude 现在不仅能连接 Canva，还懂得如何在 Canva 中开展工作。任何人都可以通过一个简单提示词，创建完整的跨平台营销活动、生成符合品牌风格的演示文稿，以及翻译内容。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Anwar Haneef, GM &amp; Head of Ecosystem</p>",
+      "zh": "<p>Anwar Haneef，总经理兼生态系统负责人</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-017",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/dafd39e810392051d5c94c50.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills have made it possible to one-shot deploying AI Agents and MCP servers onto Cloudflare. We're really excited for people to deploy the apps onto Region:Earth from a quick chat.</p>",
+      "zh": "<p>Skills 让一次性完成 AI Agent 和 MCP 服务器在 Cloudflare 上的部署成为可能。我们非常期待人们只需简短聊几句，就能将应用部署到 Region:Earth。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Kate Reznykova, Engineering Manager, Cloudflare Agents</p>",
+      "zh": "<p>Kate Reznykova，Cloudflare Agents 工程经理</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-020",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/eff52f95ccf6d78f4a6732b2.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Figma skills help teams build higher quality, differentiated products with Claude Code. Now, Claude can better understand the context, details, and intent of designs in Figma and translate those designs into code with accuracy and consistency.</p>",
+      "zh": "<p>Figma Skills 帮助团队用 Claude Code 构建质量更高、具有差异化的产品。现在，Claude 能更好地理解 Figma 设计的上下文、细节和意图，并将这些设计准确、一致地转化为代码。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Emil Sjölander, Director of Dev Tools</p>",
+      "zh": "<p>Emil Sjölander，开发者工具总监</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-023",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/bbd874c3b83f555406aeda1f.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>MCP gave us an open foundation for bringing Sentry’s context to developers wherever they work. With skills we can turn that context into focused workflows, and plugins make them easy to ship and keep updated. We’re excited to see how teams use these to build applications and debug issues faster.</p>",
+      "zh": "<p>MCP 为我们提供了一个开放基础，使开发者无论在哪里工作，都能获得 Sentry 的上下文。借助 Skills，我们可以将这些上下文转化为针对性的工作流；插件则让这些工作流易于发布并持续更新。我们期待看到团队如何利用它们更快地构建应用和排查问题。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Cody De Arkland, Head of Developer Experience</p>",
+      "zh": "<p>Cody De Arkland，开发者体验负责人</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-026",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/2f368342f9366bd9db27cce1.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills are a powerful way to extend Claude from figuring out a task to actually doing it. Vercel wants to enable everyone to ship sites, apps, and agents. We built the Vercel Deploy Skill alongside the Claude team to allow more people to go from idea to production. </p>",
+      "zh": "<p>Skills 是一种强大的扩展方式，让 Claude 从想清楚任务该怎么做，走向真正执行任务。Vercel 希望让每个人都能发布网站、应用和 Agent。我们与 Claude 团队一起构建了 Vercel Deploy Skill，让更多人能够将想法落地到生产环境。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Andrew Qu, Chief of Software</p>",
+      "zh": "<p>Andrew Qu，软件负责人</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-029",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Logo\" src=\"/media/7d0429d2731f020c78f1d3cb.svg\" loading=\"lazy\" decoding=\"async\">",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>By combining skills with Zapier MCP, organizations get AI that not only knows how work should be done, but actually does it reliably. Skills encode repeatable procedures and best practices; Zapier MCP Tools run them at scale across thousands of apps. The result is faster turnaround, reduced busywork, and repeatable AI-powered processes. </p>",
+      "zh": "<p>将 Skills 与 Zapier MCP 结合后，组织获得的 AI 不仅知道工作应当如何完成，还能可靠地将其执行到位。Skills 将可重复的流程与最佳实践编码为指令；Zapier MCP Tools 则在数千款应用间大规模执行它们。这带来更快的工作交付、更少的繁琐杂务，以及可重复执行的 AI 驱动流程。</p>",
+      "keep_next": true
+    },
+    {
+      "id": "new31_skills_ecosystem-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Lisa Chapello, Head of AI Platform</p>",
+      "zh": "<p>Lisa Chapello，AI 平台负责人</p>",
+      "keep_next": false
+    },
+    {
+      "id": "new31_skills_ecosystem-032",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2><strong>An open standard</strong></h2>",
+      "zh": "<h2><strong>一项开放标准</strong></h2>"
+    },
+    {
+      "id": "new31_skills_ecosystem-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We're also publishing <a href=\"https://agentskills.io\" rel=\"noopener noreferrer\">Agent Skills</a> as an open standard. Like MCP, we believe skills should be portable across tools and platforms—the same skill should work whether you're using Claude or other AI platforms. We've been collaborating with members of the ecosystem, and we're excited to see early adoption of the standard.</p>",
+      "zh": "<p>我们也正在将 <a href=\"https://agentskills.io\" rel=\"noopener noreferrer\">Agent Skills</a> 发布为一项开放标准。与 MCP 一样，我们认为 Skills 应当能够在不同工具和平台之间迁移：无论你使用 Claude 还是其他 AI 平台，同一个 Skill 都应该可以工作。我们一直在与生态系统中的成员合作，也很高兴看到这项标准已经开始获得采用。</p>"
+    },
+    {
+      "id": "new31_skills_ecosystem-034",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2><strong>Getting started</strong></h2>",
+      "zh": "<h2><strong>开始使用</strong></h2>"
+    },
+    {
+      "id": "new31_skills_ecosystem-035",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Claude Apps:</strong> Browse the<a href=\"https://claude.com/connectors\" rel=\"noopener noreferrer\"> skills directory</a> and enable in Settings &gt; Capabilities &gt; Skills.</li><li><strong>Claude Code:</strong> Install from the plugin directory or check skills into your repository.</li><li><strong>Claude Developer Platform (API):</strong> Use skills via the /v1/skills endpoint. See<a href=\"https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\"> documentation</a>.</li></ul>",
+      "zh": "<ul><li><strong>Claude 应用：</strong>浏览 <a href=\"https://claude.com/connectors\" rel=\"noopener noreferrer\">Skills 目录</a>，然后在“设置 &gt; 功能 &gt; Skills”中启用。</li><li><strong>Claude Code：</strong>从插件目录安装，或将 Skills 提交到你的代码仓库。</li><li><strong>Claude 开发者平台（API）：</strong>通过 /v1/skills 端点使用 Skills。参阅<a href=\"https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">文档</a>。</li></ul>"
+    },
+    {
+      "id": "new31_skills_ecosystem-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Admins can provision skills org-wide through Admin Settings. Skills require<a href=\"https://claude.ai/settings/capabilities\" rel=\"noopener noreferrer\"> Code Execution and File Creation</a> to be enabled.</p>",
+      "zh": "<p>管理员可以通过管理设置在整个组织中配置 Skills。使用 Skills 需要启用<a href=\"https://claude.ai/settings/capabilities\" rel=\"noopener noreferrer\">代码执行和文件创建</a>功能。</p>"
+    }
+  ],
+  "description": "10 月，我们推出了 Skills：一种教会 Claude 执行可重复工作流的方法，这些工作流可以根据你的工作方式量身定制。今天，我们进一步简化 Skills 的部署、发现和构建：为管理员提供覆盖整个组织的管理能力；推出包含 Notion、Canva…",
+  "reading_minutes": 5,
+  "downloads": {
+    "zh": "/downloads/skills-ecosystem-zh.pdf",
+    "en": "/downloads/skills-ecosystem-en.pdf"
+  }
+}

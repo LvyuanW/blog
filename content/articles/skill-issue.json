@@ -1,0 +1,953 @@
+{
+  "title": "能力问题：编程 Agent 的运行框架工程",
+  "original_title": "# Skill Issue: Harness Engineering for Coding Agents",
+  "url": "https://www.humanlayer.dev/blog/skill-issue-harness-engineering-for-coding-agents",
+  "date": "2026-03-12",
+  "publisher": "HumanLayer",
+  "author": "Kyle",
+  "source_order": 39,
+  "slug": "skill-issue",
+  "source_id": "new39_skill_issue",
+  "category": "基础与架构",
+  "blocks": [
+    {
+      "id": "new39_skill_issue-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We've spent the past year watching coding agents fail in every conceivable way: ignoring instructions, executing dangerous commands un-prompted, and going in circles on the simplest of tasks.</p>",
+      "zh": "<p>过去一年，我们见识了编程 Agent 以各种能想到的方式失败：无视指令、未经要求执行危险命令，以及在最简单的任务上原地打转。</p>"
+    },
+    {
+      "id": "new39_skill_issue-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We've seen teams ship immense amounts of slop. We've even <a href=\"https://www.youtube.com/live/99Kxkemj1g8?si=tVsK88M3XPyo0urD&amp;t=20967\" rel=\"noopener noreferrer\">shipped a little bit of slop ourselves</a>.</p>",
+      "zh": "<p>我们见过一些团队交付大量粗制滥造的代码。甚至我们自己也<a href=\"https://www.youtube.com/live/99Kxkemj1g8?si=tVsK88M3XPyo0urD&amp;t=20967\" rel=\"noopener noreferrer\">交付过一点这样的东西</a>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every time, the instinct was the same:</p>",
+      "zh": "<p>每次，人们的第一反应都一样：</p>"
+    },
+    {
+      "id": "new39_skill_issue-003",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>\"We just need better models, GPT-6 will fix it\"</li>\n<li>\"We just need better instruction-following\"</li>\n<li>\"It'll work once [niche library I'm using] is in the training data\"</li>\n</ul>",
+      "zh": "<ul><li>“我们只是需要更好的模型，GPT-6 会解决的。”</li><li>“我们只是需要更强的指令遵循能力。”</li><li>“只要训练数据里有了［我正在用的那个小众库］，就能用了。”</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But over the course of dozens of projects and hundreds of agent sessions, we kept arriving at the same conclusion: it's not a model problem. It's a <strong>configuration problem</strong>.</p>",
+      "zh": "<p>但在经历几十个项目、数百次 Agent 会话后，我们不断得出同一个结论：这不是模型问题，而是<strong>配置问题</strong>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Yes, models will get smarter, and some existing failure modes will disappear. And then because they are smarter, we will give them new problems which are bigger and harder, and they will <strong>continue to fail in unexpected ways</strong>. Unexpected failures modes are a fundamental problem for non-deterministic systems.</p>",
+      "zh": "<p>是的，模型会变聪明，一些现有失败模式也会消失。然后，正因为它们更聪明了，我们会交给它们更大、更难的新问题，而它们仍会<strong>继续以意想不到的方式失败</strong>。非预期的失败模式，是非确定性系统的根本问题。</p>"
+    },
+    {
+      "id": "new39_skill_issue-006",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"gpt-6\" src=\"/media/4bbbf54c43399073cf58b006.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>So instead of praying for <code>gpt-6.4-codex-ultrahigh_extended</code> to save us all, we try to focus on answering the question of <em>\"how do we get the most out of <strong>today's</strong> models?\"</em></p>",
+      "zh": "<p>因此，与其祈祷 <code>gpt-6.4-codex-ultrahigh_extended</code> 来拯救我们，我们更努力聚焦于回答一个问题：<em>“如何充分发挥<strong>今天</strong>的模型能力？”</em></p>"
+    },
+    {
+      "id": "new39_skill_issue-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are lots of ways to get better performance out of your coding agent. If you use coding agents for moderately hard tasks, you've probably configured your coding agent a bit. Have you used skills? MCP servers? Sub-agents? Memory? AGENTS.md files?</p>",
+      "zh": "<p>提高编程 Agent 表现的方法很多。如果你用编程 Agent 处理过有一定难度的任务，大概已经对它做过一些配置。你用过技能吗？MCP 服务器呢？子 Agent、记忆、AGENTS.md 文件呢？</p>"
+    },
+    {
+      "id": "new39_skill_issue-009",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><pre><code><span>coding agent = AI model(s) + harness</span></code></pre></pre>"
+    },
+    {
+      "id": "new39_skill_issue-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These are all technically separate concepts, but they are all part of the coding agent's configuration surface. We call this the <strong>coding agent's harness</strong>, and we think of it as <a href=\"https://www.vtrivedy.com/posts/claude-code-sdk-haas-harness-as-a-service\" rel=\"noopener noreferrer\">the agent’s runtime</a>, or as its peripherals: what does the model use to interact with its environment?</p>",
+      "zh": "<p>严格来说，这些是不同概念，但它们都属于编程 Agent 可配置的部分。我们称之为<strong>编程 Agent 的运行框架</strong>，并将其理解为 <a href=\"https://www.vtrivedy.com/posts/claude-code-sdk-haas-harness-as-a-service\" rel=\"noopener noreferrer\">Agent 的运行时</a>，或它的外围设备：模型借助什么与环境交互？</p>"
+    },
+    {
+      "id": "new39_skill_issue-011",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-harness-engineering\">Harness Engineering</h2>",
+      "zh": "<h2 id=\"zh-source-harness-engineering\">运行框架工程</h2>"
+    },
+    {
+      "id": "new39_skill_issue-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Harness engineering</strong>, coined by <a href=\"https://x.com/Vtrivedy10\" rel=\"noopener noreferrer\">Viv</a>, describes the practice of leveraging these configuration points to customize and improve your coding agent's output quality and reliability.</p>",
+      "zh": "<p><strong>运行框架工程</strong>这个术语由 <a href=\"https://x.com/Vtrivedy10\" rel=\"noopener noreferrer\">Viv</a> 提出，指的是利用这些配置点，定制并改善编程 Agent 输出质量和可靠性的实践。</p>"
+    },
+    {
+      "id": "new39_skill_issue-013",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"harness components\" src=\"/media/104dafa91289aeacd4e36594.png\" loading=\"lazy\" decoding=\"async\"></span>\n<em>Image from <a href=\"https://blog.langchain.com/the-anatomy-of-an-agent-harness/\" rel=\"noopener noreferrer\">Viv's post</a></em></p>"
+    },
+    {
+      "id": "new39_skill_issue-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As <a href=\"https://mitchellh.com/writing/my-ai-adoption-journey#step-5-engineer-the-harness\" rel=\"noopener noreferrer\">Mitchell Hashimoto put it</a>, harness engineering</p>",
+      "zh": "<p>正如 <a href=\"https://mitchellh.com/writing/my-ai-adoption-journey#step-5-engineer-the-harness\" rel=\"noopener noreferrer\">Mitchell Hashimoto 所说</a>，运行框架工程：</p>"
+    },
+    {
+      "id": "new39_skill_issue-015",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>\n<p>[...] is the idea that anytime you find an agent makes a mistake, you take the time to engineer a solution such that the agent never makes that mistake again.</p>\n</blockquote>",
+      "zh": "<blockquote><p>［……］其理念是，每当你发现 Agent 犯了一个错误，就花时间设计一个工程解决方案，让它不再犯同样的错误。</p></blockquote>"
+    },
+    {
+      "id": "new39_skill_issue-016",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source--as-a-subset-of-context-engineering\">... as a Subset of Context Engineering</h2>",
+      "zh": "<h2 id=\"zh-source--as-a-subset-of-context-engineering\">……是上下文工程的一个子集</h2>"
+    },
+    {
+      "id": "new39_skill_issue-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We view harness engineering as a subset of <a href=\"https://www.humanlayer.dev/blog/advanced-context-engineering\" rel=\"noopener noreferrer\">context engineering</a>. Coined by my cofounder <a href=\"https://x.com/dexhorthy\" rel=\"noopener noreferrer\">Dex</a> in <a href=\"https://github.com/humanlayer/12-factor-agents\" rel=\"noopener noreferrer\">12-factor agents</a>, context engineering is a superset of “prompt engineering” and a variety of other techniques for systematically improving AI agents’ reliability. You can find the original talk on <a href=\"https://www.youtube.com/watch?v=IS_y40zY-hc\" rel=\"noopener noreferrer\">here</a>.</p>",
+      "zh": "<p>我们将运行框架工程视为<a href=\"https://www.humanlayer.dev/blog/advanced-context-engineering\" rel=\"noopener noreferrer\">上下文工程</a>的一个子集。我的联合创始人 <a href=\"https://x.com/dexhorthy\" rel=\"noopener noreferrer\">Dex</a> 在 <a href=\"https://github.com/humanlayer/12-factor-agents\" rel=\"noopener noreferrer\">12-factor agents</a> 中提出了上下文工程这一概念；它涵盖“提示工程”，以及系统性提高 AI Agent 可靠性的各种其他技术。原始演讲可以在<a href=\"https://www.youtube.com/watch?v=IS_y40zY-hc\" rel=\"noopener noreferrer\">这里</a>观看。</p>"
+    },
+    {
+      "id": "new39_skill_issue-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harness engineering then is the subset of context engineering which primarily involves leveraging harness configuration points to carefully manage the context windows of coding agents.</p>",
+      "zh": "<p>那么，运行框架工程就是上下文工程的一个子集，主要通过运行框架的配置点，精细管理编程 Agent 的上下文窗口。</p>"
+    },
+    {
+      "id": "new39_skill_issue-019",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"harness engineering as context engineering\" src=\"/media/a817fbc02bab0c5c25595548.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It answers:</p>",
+      "zh": "<p>它回答以下问题：</p>"
+    },
+    {
+      "id": "new39_skill_issue-021",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>How do we give our coding agent new capabilities?</li>\n<li>How do we teach it things about our codebase that aren’t in the training data?</li>\n<li>How do we add determinism beyond <code>CRITICAL: always do XYZ</code> in the system message?</li>\n<li>How do we adapt the agent’s behavior for our specific codebase?</li>\n<li>How do we increase task success rates beyond “magic prompts”?</li>\n<li>How do we prevent our context window from inflating too rapidly, or with too much bad context?</li>\n</ul>",
+      "zh": "<ul><li>如何为编程 Agent 增加新能力？</li><li>如何教会它训练数据中没有的、关于我们代码库的知识？</li><li>除了在系统消息中写 <code>CRITICAL: always do XYZ</code>，如何引入更多确定性？</li><li>如何让 Agent 的行为适应我们的特定代码库？</li><li>除了“神奇提示词”，如何提高任务成功率？</li><li>如何避免上下文窗口膨胀得过快，或充满太多低质量上下文？</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills, MCP servers, sub-agents, hooks, and back-pressure mechanisms are all tactical solutions we’ve arrived at.</p>",
+      "zh": "<p>技能、MCP 服务器、子 Agent、钩子和反压机制，都是我们逐渐摸索出的具体解决手段。</p>"
+    },
+    {
+      "id": "new39_skill_issue-023",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Views on Harness Engineering</h3>",
+      "zh": "<h3>关于运行框架工程的不同观点</h3>"
+    },
+    {
+      "id": "new39_skill_issue-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Viv’s posts on harness engineering are worth reading alongside this one — <a href=\"https://www.vtrivedy.com/posts/claude-code-sdk-haas-harness-as-a-service\" rel=\"noopener noreferrer\">the first</a> frames the four customization levers (system prompt, tools/MCPs, context, sub-agents), and <a href=\"https://blog.langchain.com/the-anatomy-of-an-agent-harness/\" rel=\"noopener noreferrer\">the second</a> works backwards from what models <em>can’t</em> do natively to derive why each harness component exists.</p>",
+      "zh": "<p>Viv 关于运行框架工程的文章值得与本文对照阅读：<a href=\"https://www.vtrivedy.com/posts/claude-code-sdk-haas-harness-as-a-service\" rel=\"noopener noreferrer\">第一篇</a>概括了四个定制切入点，即系统提示词、工具/MCP、上下文和子 Agent；<a href=\"https://blog.langchain.com/the-anatomy-of-an-agent-harness/\" rel=\"noopener noreferrer\">第二篇</a>则从模型原生<em>做不到</em>什么倒推，解释每个框架组件为何存在。</p>"
+    },
+    {
+      "id": "new39_skill_issue-025",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"working backwards from what models can't do natively\" src=\"/media/e32637a85704e76070585533.png\" loading=\"lazy\" decoding=\"async\"></span>\n<em>Image from <a href=\"https://blog.langchain.com/the-anatomy-of-an-agent-harness/\" rel=\"noopener noreferrer\">Viv's post</a></em></p>"
+    },
+    {
+      "id": "new39_skill_issue-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We’d add two levers he doesn’t emphasize:</p>",
+      "zh": "<p>我们还想补充两个他未着重强调的切入点：</p>"
+    },
+    {
+      "id": "new39_skill_issue-027",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li><strong>hooks</strong> for automated integration and deterministic control flow</li>\n<li><strong>skills</strong> for progressive disclosure of knowledge. (Dex likes to refer to them as \"Instruction Modules\" - more on this in another post.)</li>\n</ol>",
+      "zh": "<ol><li><strong>钩子</strong>：用于自动化集成和确定性控制流。</li><li><strong>技能</strong>：用于渐进式披露知识。（Dex 喜欢称它们为“指令模块”，另一篇文章会进一步讨论。）</li></ol>"
+    },
+    {
+      "id": "new39_skill_issue-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>After months of solving hard problems in complex brownfield enterprise-scale codebases, we have found that sub-agents are a particularly powerful lever. When working on hard problems that require many, many context windows to solve, <strong>sub-agents are the key to maintaining coherency across many sessions</strong>. Sub-agents <strong>function as a \"context firewall\"</strong> that ensures discrete tasks can run in isolated context windows so none of the intermediate noise accumulates in your parent thread which is responsible for orchestration, and you can maintain coherency for much, much longer.</p>",
+      "zh": "<p>在复杂的既有企业级代码库中解决困难问题数月之后，我们发现子 Agent 是一个尤其有力的手段。当问题很难、需要许多个上下文窗口才能解决时，<strong>子 Agent 是跨大量会话保持连贯性的关键</strong>。子 Agent <strong>充当“上下文防火墙”</strong>，确保独立任务在隔离的上下文窗口中运行，让中间噪声不会堆积在负责编排的父会话里，从而将连贯性维持长得多的时间。</p>"
+    },
+    {
+      "id": "new39_skill_issue-029",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"context firewall\" src=\"/media/94c05856c966bfddbb9250ae.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>OpenAI recently wrote a <a href=\"https://openai.com/index/harness-engineering/\" rel=\"noopener noreferrer\">blog post</a> on the topic as well. There's some great content in there, and it seems to indicate that they view harness engineering as configuring everything <em>outside</em> of the agent's runtime. It's more focused on back-pressure and verification mechanisms. (Although this may be a mis-reading; the post is somewhat unclear: the word \"harness\" only appears once in the text of the post, and in reference to evals rather than harness engineering itself.)</p>",
+      "zh": "<p>OpenAI 最近也发布了一篇相关<a href=\"https://openai.com/index/harness-engineering/\" rel=\"noopener noreferrer\">博客</a>。其中有一些很好的内容；从文章来看，他们似乎将运行框架工程理解为配置 Agent 运行时<em>之外</em>的一切，更关注反压和验证机制。（不过，这也可能是误读；文章有些含糊：“harness”一词在正文只出现了一次，而且指向的是评测，而不是运行框架工程本身。）</p>"
+    },
+    {
+      "id": "new39_skill_issue-031",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>But What About Post-Training?</h3>",
+      "zh": "<h3>那后训练呢？</h3>"
+    },
+    {
+      "id": "new39_skill_issue-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Given that frontier coding models are post-trained on their harnesses (e.g. Claude in Claude Code, GPT-5 Codex in Codex), some will argue that the best harness and/or configuration is the one that the model was trained on.</p>",
+      "zh": "<p>鉴于前沿编程模型会在各自的运行框架上进行后训练，例如 Claude 在 Claude Code 中、GPT-5 Codex 在 Codex 中，有人会认为，最好的运行框架或配置，就是模型训练时使用的那一套。</p>"
+    },
+    {
+      "id": "new39_skill_issue-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For example, the Codex models are so tightly coupled with the Codex harness's <code>apply_patch</code> tool that <a href=\"https://opencode.ai\" rel=\"noopener noreferrer\">OpenCode</a> — built as an open-source alternative to Claude Code — had to <a href=\"https://github.com/anomalyco/opencode/pull/9127\" rel=\"noopener noreferrer\">add an <code>apply_patch</code> tool</a> specifically for GPT/Codex models to mimic the Codex harness to improve the Codex models' performance in the OpenCode harness - while Claude and other models still use normal <code>edit</code> and <code>write</code> tools.</p>",
+      "zh": "<p>例如，Codex 模型与 Codex 框架的 <code>apply_patch</code> 工具耦合得非常紧密，以至于作为 Claude Code 开源替代方案构建的 <a href=\"https://opencode.ai\" rel=\"noopener noreferrer\">OpenCode</a>，不得不专门为 GPT/Codex 模型<a href=\"https://github.com/anomalyco/opencode/pull/9127\" rel=\"noopener noreferrer\">增加一个 <code>apply_patch</code> 工具</a>，模仿 Codex 的框架，以改善 Codex 模型在 OpenCode 中的表现；与此同时，Claude 和其他模型仍使用普通的 <code>edit</code> 和 <code>write</code> 工具。</p>"
+    },
+    {
+      "id": "new39_skill_issue-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This <em>can</em> mean that a model will perform better when coupled with the harness it was post-trained on, and some might infer that this means you shouldn't customize the harness at all.</p>",
+      "zh": "<p>这<em>可能</em>意味着，模型与后训练时使用的框架搭配，表现会更好；有人或许进一步推断，因此根本不应该定制运行框架。</p>"
+    },
+    {
+      "id": "new39_skill_issue-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But it cuts both ways: <strong>models can be over-fitted to their harness</strong>. Viv cites <a href=\"https://terminalbench.com/\" rel=\"noopener noreferrer\">Terminal Bench 2.0</a> where Opus 4.6 in Claude Code comes in position #33, but when placed in a different harness that wasn't seen during post-training, it comes in at #5 (+/- about 4 positions in either direction).</p>",
+      "zh": "<p>但事情也有另一面：<strong>模型可能对自己的运行框架过拟合</strong>。Viv 引用了 <a href=\"https://terminalbench.com/\" rel=\"noopener noreferrer\">Terminal Bench 2.0</a>：Claude Code 中的 Opus 4.6 排名第 33，而换到一个后训练时未见过的框架后，它能达到第 5 名，名次大约上下浮动 4 位。</p>"
+    },
+    {
+      "id": "new39_skill_issue-036",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"terminal bench\" src=\"/media/e9005a829d74e84462a7541e.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-037",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-engineering-your-harness\">Engineering Your Harness</h2>",
+      "zh": "<h2 id=\"zh-source-engineering-your-harness\">打造你的运行框架</h2>"
+    },
+    {
+      "id": "new39_skill_issue-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With that in mind, let's walk through the configuration surfaces we've found most impactful.</p>",
+      "zh": "<p>有了这些背景，下面来逐一看看我们认为影响最大的配置部分。</p>"
+    },
+    {
+      "id": "new39_skill_issue-039",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>CLAUDE.md &amp; AGENTS.md</h3>",
+      "zh": "<h3>CLAUDE.md 与 AGENTS.md</h3>"
+    },
+    {
+      "id": "new39_skill_issue-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Before touching any other harness configuration points, it's usually worth customizing your CLAUDE.md / AGENTS.md files. These are markdown files at the top-level of your repository that get deterministically injected into the agent's system prompt by the harness.</p>",
+      "zh": "<p>在调整其他运行框架配置点之前，通常值得先定制 CLAUDE.md / AGENTS.md 文件。它们是仓库顶层的 Markdown 文件，由运行框架确定性地注入 Agent 的系统提示词。</p>"
+    },
+    {
+      "id": "new39_skill_issue-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We have already shared <a href=\"https://www.humanlayer.dev/blog/writing-a-good-claude-md\" rel=\"noopener noreferrer\">some opinions about what makes a good CLAUDE.md</a> file and how to use it correctly, so give that a read if you're not familiar with it. Matt Pocock also wrote a <a href=\"https://www.aihero.dev/a-complete-guide-to-agents-md\" rel=\"noopener noreferrer\">great follow-up</a> that more generally applies to AGENTS.md.</p>",
+      "zh": "<p>我们已经分享过<a href=\"https://www.humanlayer.dev/blog/writing-a-good-claude-md\" rel=\"noopener noreferrer\">怎样写好 CLAUDE.md</a> 以及如何正确使用它的一些看法；如果你不熟悉，可以先读那篇。Matt Pocock 也写了<a href=\"https://www.aihero.dev/a-complete-guide-to-agents-md\" rel=\"noopener noreferrer\">一篇很好的后续文章</a>，更广泛地适用于 AGENTS.md。</p>"
+    },
+    {
+      "id": "new39_skill_issue-042",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>The ETH Zurich Study</h4>",
+      "zh": "<h4>苏黎世联邦理工学院的研究</h4>"
+    },
+    {
+      "id": "new39_skill_issue-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>After ETH Zurich published their <a href=\"https://arxiv.org/abs/2602.11988\" rel=\"noopener noreferrer\">study testing 138 agentfiles across various repos</a> which indicated that most agentfiles were useless-or-worse, we got a lot of feedback on our <a href=\"https://www.humanlayer.dev/blog/writing-a-good-claude-md\" rel=\"noopener noreferrer\">CLAUDE.md post</a>:</p>",
+      "zh": "<p>苏黎世联邦理工学院发布了一项<a href=\"https://arxiv.org/abs/2602.11988\" rel=\"noopener noreferrer\">在不同仓库中测试 138 个 Agent 指令文件的研究</a>，指出大部分指令文件无用，甚至有害。之后，我们的 <a href=\"https://www.humanlayer.dev/blog/writing-a-good-claude-md\" rel=\"noopener noreferrer\">CLAUDE.md 文章</a>收到了不少这样的反馈：</p>"
+    },
+    {
+      "id": "new39_skill_issue-044",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>\n<p>See, CLAUDE.md files don't even help — they're a waste of time.</p>\n</blockquote>",
+      "zh": "<blockquote><p>看吧，CLAUDE.md 文件根本没用，就是浪费时间。</p></blockquote>"
+    },
+    {
+      "id": "new39_skill_issue-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Indeed: the study tested many agentfiles across a wide variety of repos, and found:</p>",
+      "zh": "<p>确实，这项研究在多种仓库中测试了许多 Agent 指令文件，并发现：</p>"
+    },
+    {
+      "id": "new39_skill_issue-046",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>that LLM-generated ones actually <em>hurt</em> performance while costing 20%+ more</li>\n<li>human-written ones only helped about 4%.</li>\n<li>Agents spent 14-22% more reasoning tokens processing context file instructions, took more steps to complete tasks, and ran more tools — all without improving resolution rates.</li>\n<li>Codebase overviews and directory listings didn't help at all; agents discover repository structure on their own just fine.</li>\n</ul>",
+      "zh": "<ul><li>大语言模型生成的文件实际上会<em>降低</em>表现，同时使成本增加 20% 以上。</li><li>人类编写的文件只带来了约 4% 的帮助。</li><li>Agent 为处理上下文文件中的指令，多花了 14% 至 22% 的推理 token；完成任务所需步骤更多，运行工具也更多，但问题解决率并没有提高。</li><li>代码库概览和目录列表完全没有帮助；Agent 自己就能很好地发现仓库结构。</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A careful reading of the study <strong>indicates that what we said in our post was correct:</strong></p>",
+      "zh": "<p>仔细阅读这项研究，<strong>会发现它表明我们原文的观点是正确的：</strong></p>"
+    },
+    {
+      "id": "new39_skill_issue-048",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><p>Agent-generated files were worse. Yes, we said:</p>\n<blockquote>\n<p>avoid auto-generating it. You should carefully craft its contents for best results.</p>\n</blockquote>\n</li>\n<li><p>Lots of files too-heavily-steered the model to use specific tools, causing worse outcomes. Yep, we said:</p>\n<blockquote>\n<p>Less (instructions) is more. While you shouldn't omit necessary instructions, you should include as few instructions as reasonably possible in the file.</p>\n</blockquote>\n</li>\n<li><p>Files contained irrelevant context. Yep, we said:</p>\n<blockquote>\n<p>Use Progressive Disclosure</p>\n</blockquote>\n</li>\n<li><p>The human-written ones barely helped because of too many conditional rules. Yep, we said:</p>\n<blockquote>\n<p>Keep the contents of your CLAUDE.md concise and universally applicable.</p>\n</blockquote>\n</li>\n</ul>",
+      "zh": "<ul><li><p>Agent 自动生成的文件更差。没错，我们说过：</p><blockquote><p>避免自动生成。想获得最好效果，应当认真编写内容。</p></blockquote></li><li><p>许多文件过度引导模型使用特定工具，结果反而更差。没错，我们说过：</p><blockquote><p>少即是多，这里指指令。虽然不应省略必要指令，但文件中的指令数量应在合理范围内尽量少。</p></blockquote></li><li><p>文件包含无关上下文。没错，我们说过：</p><blockquote><p>使用渐进式披露。</p></blockquote></li><li><p>人工编写的文件帮助有限，是因为条件规则太多。没错，我们说过：</p><blockquote><p>让 CLAUDE.md 的内容保持简洁，并且普遍适用。</p></blockquote></li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our CLAUDE.md is under 60 lines.</p>",
+      "zh": "<p>我们的 CLAUDE.md 不到 60 行。</p>"
+    },
+    {
+      "id": "new39_skill_issue-050",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>MCP Servers Are for Tools</h3>",
+      "zh": "<h3>MCP 服务器用于提供工具</h3>"
+    },
+    {
+      "id": "new39_skill_issue-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>MCP servers are primarily for plugging tools into your coding agent to extend its capabilities beyond file I/O and bash commands. The MCP specification includes additional features like resources, prompts, and elicitations, but <strong>these are generally not well-supported by MCP clients and coding agent harnesses</strong>.</p>",
+      "zh": "<p>MCP 服务器主要用于将工具接入编程 Agent，让其能力超越文件输入输出和 bash 命令。MCP 规范还包括资源、提示词和信息征询等附加功能，但<strong>MCP 客户端和编程 Agent 运行框架通常并不能很好地支持这些功能</strong>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The MCP spec supports servers that run on your (or the agent's) local machine which allow the agent to interact with its local environment, but it also supports HTTP-based MCP servers that can connect your agent with remote tools and services like Linear, Sentry, and more.</p>",
+      "zh": "<p>MCP 规范支持在你或 Agent 的本地机器上运行服务器，让 Agent 与本地环境交互；它也支持基于 HTTP 的 MCP 服务器，将 Agent 连接到 Linear、Sentry 等远程工具与服务。</p>"
+    },
+    {
+      "id": "new39_skill_issue-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When you plug an MCP server into your coding agent, the list of available tools, their descriptions, and the arguments needed to invoke them <strong>are injected into your coding agent's system prompt</strong>. As a result, the MCP server can use the tool descriptions to customize your agent’s behavior by providing your agent with instructions about when to use them. </p>",
+      "zh": "<p>将 MCP 服务器接入编程 Agent 时，可用工具列表、工具描述，以及调用所需参数，<strong>都会被注入编程 Agent 的系统提示词</strong>。因此，MCP 服务器可以在工具描述中告诉 Agent 何时使用工具，从而定制 Agent 的行为。</p>"
+    },
+    {
+      "id": "new39_skill_issue-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>WARNING</strong>: because MCP servers’ tool descriptions are added to your coding agent’s system prompt, never connect to one you don’t trust. This can be a dangerous vector for prompt injection! STDIO servers and other servers that run client-side with npx or uvx can also execute code on your host in the absence of prompt injection.</p>",
+      "zh": "<p><strong>警告</strong>：由于 MCP 服务器的工具描述会被加入编程 Agent 的系统提示词，千万不要连接不信任的服务器。这可能成为危险的提示注入途径！STDIO 服务器，以及其他通过 npx 或 uvx 在客户端运行的服务器，即使没有提示注入，也能在宿主机上执行代码。</p>"
+    },
+    {
+      "id": "new39_skill_issue-055",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Too Many Tools Is Bad</h4>",
+      "zh": "<h4>工具太多并不是好事</h4>"
+    },
+    {
+      "id": "new39_skill_issue-056",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We’ve seen this firsthand: plug too many MCP tools into your agent, and the context window fills up with tool descriptions, pushing you into <a href=\"https://youtu.be/rmvDxxNubIg?si=O17nmS3SScaAkpp-&amp;t=355\" rel=\"noopener noreferrer\">the dumb zone</a> much faster:</p>",
+      "zh": "<p>我们亲眼见过：给 Agent 接入太多 MCP 工具，上下文窗口就会被工具描述塞满，让你更快进入<a href=\"https://youtu.be/rmvDxxNubIg?si=O17nmS3SScaAkpp-&amp;t=355\" rel=\"noopener noreferrer\">“变笨区”</a>：</p>"
+    },
+    {
+      "id": "new39_skill_issue-057",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"too many tools\" src=\"/media/34385b262847f40b6c018acd.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <a href=\"https://www.aihero.dev/a-complete-guide-to-agents-md#the-instruction-budget\" rel=\"noopener noreferrer\">instruction budget</a> matters too — every irrelevant tool description is an instruction the agent has to process without any benefit.</p>",
+      "zh": "<p><a href=\"https://www.aihero.dev/a-complete-guide-to-agents-md#the-instruction-budget\" rel=\"noopener noreferrer\">指令预算</a>同样重要：每一条无关工具描述，都是 Agent 必须处理、却没有任何收益的指令。</p>"
+    },
+    {
+      "id": "new39_skill_issue-059",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In fact, these failure modes are so common that Anthropic released <a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool\" rel=\"noopener noreferrer\">experimental support for MCP tool search</a> to progressively disclose tools to Claude when the user has too many MCP tools connected. TL;DR: if you’re not actively using a server which provides a large number of tools, turn it off.</p>",
+      "zh": "<p>事实上，这些失败模式十分常见，以至于 Anthropic 发布了<a href=\"https://platform.claude.com/docs/en/agents-and-tools/tool-use/tool-search-tool\" rel=\"noopener noreferrer\">实验性的 MCP 工具搜索支持</a>：当用户连接的 MCP 工具太多时，逐步向 Claude 披露工具。简而言之，如果一个服务器提供了大量工具，而你并没有实际使用它，就把它关掉。</p>"
+    },
+    {
+      "id": "new39_skill_issue-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We also found that if an MCP server duplicates functionality that’s already available as a CLI well-represented in training data, it works better to just prompt the agent to use the CLI. For things like GitHub, Docker, or most databases, your coding agent can just use the right CLIs and shell commands. The model has seen these tools enough during training that it already knows how to use them, and you gain the added benefit of composability with tools like <code>grep</code> and <code>jq</code> to enable additional context-efficiency.</p>",
+      "zh": "<p>我们还发现，如果某个 MCP 服务器的功能，已经由训练数据中充分出现过的命令行工具提供，那么直接提示 Agent 使用 CLI 效果更好。对于 GitHub、Docker 或大多数数据库，编程 Agent 完全可以使用恰当的 CLI 和 Shell 命令。模型训练时见过这些工具足够多次，已经知道如何使用；而且你还能获得与 <code>grep</code>、<code>jq</code> 等工具组合的额外好处，进一步提高上下文效率。</p>"
+    },
+    {
+      "id": "new39_skill_issue-061",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Always Be Context-Engineering</h4>",
+      "zh": "<h4>始终做好上下文工程</h4>"
+    },
+    {
+      "id": "new39_skill_issue-062",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>At HumanLayer, we used the Linear MCP server for a while before realizing that we really only used a small subset of the tools it provides - so we wrote a small CLI that wraps the Linear API and provides very context-efficient responses, and we included 6 example usages in our <a href=\"https://www.humanlayer.dev/blog/writing-a-good-claude-md\" rel=\"noopener noreferrer\">CLAUDE.md</a> file:</p>",
+      "zh": "<p>在 HumanLayer，我们用了一段时间 Linear MCP 服务器，才意识到实际只使用它提供的一小部分工具。因此，我们写了一个小型 CLI 来封装 Linear API，提供非常节省上下文的响应，并在 <a href=\"https://www.humanlayer.dev/blog/writing-a-good-claude-md\" rel=\"noopener noreferrer\">CLAUDE.md</a> 中加入了 6 个使用示例：</p>"
+    },
+    {
+      "id": "new39_skill_issue-063",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><pre><code><span>## Linear\n</span>\nUse the Linear CLI for:\n\n- **fetching issues**: `linear get-issue ENG-XXXX`\n- **listing issues**: `linear list-issues` or `linear my-issues`\n- **adding comments**: `linear add-comment -i ENG-XXXX \"comment\"`\n- **adding links**: `linear add-link ENG-XXXX \"url\" -t \"link title\"`\n- **updating status**: `linear update-status ENG-XXXX \"status name\"` (\"spec needed\", \"research needed\", \"research in progress\", \"research in review\", \"ready for plan\", \"plan in progress\", \"plan in review\", \"ready for dev\", \"in dev\", \"code review\")\n- **get branch name**: `linear get-issue-v2 ENG-XXXX --fields branch` (use this when creating a worktree)\n- **get images from the ticket**: `linear fetch-images ENG-XXXX` (do this any time the ticket has images in the description)</code></pre></pre>"
+    },
+    {
+      "id": "new39_skill_issue-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This saved us thousands of tokens from the MCP server's tool definitions that were ending up in our agent’s system prompt, and many more from the verbose MCP server responses. </p>",
+      "zh": "<p>这省去了原本由 MCP 服务器工具定义占据系统提示词的数千个 token；对于冗长的 MCP 服务器响应，节省的 token 还要更多。</p>"
+    },
+    {
+      "id": "new39_skill_issue-065",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Skills Are for Reusable Knowledge (and Tools)</h3>",
+      "zh": "<h3>技能用于复用知识，也用于提供工具</h3>"
+    },
+    {
+      "id": "new39_skill_issue-066",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills were originally introduced by Anthropic for use with Claude Code, but have since become an open standard supported by other harnesses like Codex and OpenCode. You can read about how they're structured in <a href=\"https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">the Anthropic docs</a> — what matters here is <em>why</em> they're useful.</p>",
+      "zh": "<p>技能最初由 Anthropic 为 Claude Code 引入，之后成为开放标准，也得到 Codex、OpenCode 等其他运行框架的支持。其结构可以阅读 <a href=\"https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview\" rel=\"noopener noreferrer\">Anthropic 文档</a>；这里更重要的是它们<em>为什么</em>有用。</p>"
+    },
+    {
+      "id": "new39_skill_issue-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Before we go further: skill registries have already been caught <a href=\"https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/\" rel=\"noopener noreferrer\">distributing hundreds of malicious skills</a>. Treat skills like you'd treat <code>npm install random-package</code> — read what you're installing. Registries like <a href=\"https://docs.openclaw.ai/tools/clawhub\" rel=\"noopener noreferrer\">ClawHub</a> and <a href=\"https://skills.sh/\" rel=\"noopener noreferrer\">skills.sh</a> can execute arbitrary code on your machine.</p>",
+      "zh": "<p>继续之前先提醒一句：已经有技能注册中心被发现<a href=\"https://www.esecurityplanet.com/threats/hundreds-of-malicious-skills-found-in-openclaws-clawhub/\" rel=\"noopener noreferrer\">传播数百个恶意技能</a>。对待技能，应像对待 <code>npm install random-package</code> 一样，先阅读自己要安装的内容。<a href=\"https://docs.openclaw.ai/tools/clawhub\" rel=\"noopener noreferrer\">ClawHub</a> 和 <a href=\"https://skills.sh/\" rel=\"noopener noreferrer\">skills.sh</a> 这样的注册中心，可以在你的机器上执行任意代码。</p>"
+    },
+    {
+      "id": "new39_skill_issue-068",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Progressive Disclosure</h4>",
+      "zh": "<h4>渐进式披露</h4>"
+    },
+    {
+      "id": "new39_skill_issue-069",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We learned this one early: we kept stuffing every instruction and tool into the system prompt, and the agent kept getting worse. We were blowing through our <a href=\"https://www.aihero.dev/a-complete-guide-to-agents-md#the-instruction-budget\" rel=\"noopener noreferrer\">instruction budget</a> before the agent even started working. Skills solve this through <strong>progressive disclosure</strong> — the agent only gets access to specific instructions, knowledge, or tools when it decides (or you decide for it) that it needs them.</p>",
+      "zh": "<p>我们很早就吸取了这一教训：不断把每条指令、每个工具塞进系统提示词，Agent 却不断变差。它还没开始工作，我们就已经耗尽了<a href=\"https://www.aihero.dev/a-complete-guide-to-agents-md#the-instruction-budget\" rel=\"noopener noreferrer\">指令预算</a>。技能通过<strong>渐进式披露</strong>解决这一问题：只有当 Agent 判断需要，或你替它作出这个判断时，它才会接触到具体的指令、知识或工具。</p>"
+    },
+    {
+      "id": "new39_skill_issue-070",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Skill Activation</h4>",
+      "zh": "<h4>技能激活</h4>"
+    },
+    {
+      "id": "new39_skill_issue-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When a skill is activated, the <code>SKILL.md</code> file in the skill's directory is loaded into the agent's context window as a user message, and the agent is informed of the directory that the skill file was loaded from. The <code>SKILL.md</code> file may inform the agent of anything else it's bundled with:</p>",
+      "zh": "<p>技能被激活后，技能目录中的 <code>SKILL.md</code> 文件会作为用户消息加载进 Agent 的上下文窗口，Agent 也会获知该技能文件来自哪个目录。<code>SKILL.md</code> 可以告诉 Agent 同目录还打包了哪些内容：</p>"
+    },
+    {
+      "id": "new39_skill_issue-072",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><pre><code><span>example-skill/\n</span>|--- SKILL.md\n|--- response_template.md\n|--- CLIs/\n   |--- linear-cli\n   |--- tunnel-cli</code></pre></pre>"
+    },
+    {
+      "id": "new39_skill_issue-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Since each skill has its own directory, you can get even more creative with progressive disclosure: you might bundle several markdown files in the skill, each of which contains different information about different functionalities or for different purposes, and the main <code>SKILL.md</code> file can tell the agent what the other files in the skill are and if/when it should read them.</p>",
+      "zh": "<p>每个技能都有自己的目录，因此你可以更灵活地运用渐进式披露：比如在技能中打包多个 Markdown 文件，分别包含不同功能或不同用途的信息；主 <code>SKILL.md</code> 文件则告诉 Agent 其他文件是什么，以及是否、何时应该读取它们。</p>"
+    },
+    {
+      "id": "new39_skill_issue-074",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Distributing Tools with Skills</h4>",
+      "zh": "<h4>通过技能分发工具</h4>"
+    },
+    {
+      "id": "new39_skill_issue-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Unfortunately, it's not possible to bundle MCP servers or custom agent tools directly into a skill - you have to write them into an executable, a CLI, an NPM package, or something else which you can either distribute with your skill or instruct the agent to install in the skill file.</p>",
+      "zh": "<p>遗憾的是，不能直接把 MCP 服务器或自定义 Agent 工具打包进技能。你必须将它们写成可执行程序、CLI、NPM 包或其他形式，与技能一起分发，或者在技能文件中指示 Agent 安装。</p>"
+    },
+    {
+      "id": "new39_skill_issue-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For example, instead of configuring a Playwright MCP server, you could just provide your agent with a skill for web browsing using BrowserBase's <a href=\"https://github.com/browserbase/skills\" rel=\"noopener noreferrer\">agent browser skills</a> or Vercel's <a href=\"https://github.com/vercel-labs/agent-browser\" rel=\"noopener noreferrer\">agent browser CLI</a>.</p>",
+      "zh": "<p>例如，与其配置 Playwright MCP 服务器，你也可以直接提供网页浏览技能，使用 BrowserBase 的 <a href=\"https://github.com/browserbase/skills\" rel=\"noopener noreferrer\">Agent 浏览器技能</a>，或 Vercel 的 <a href=\"https://github.com/vercel-labs/agent-browser\" rel=\"noopener noreferrer\">Agent 浏览器 CLI</a>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-077",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Sub-Agents Are for Context Control</h3>",
+      "zh": "<h3>子 Agent 用于控制上下文</h3>"
+    },
+    {
+      "id": "new39_skill_issue-078",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sub-agents are a popular but often misunderstood harness configuration point. We tried the \"frontend engineer\" sub-agent and \"backend engineer\" sub-agent and \"data analyst\" sub-agent thing. It doesn't work. What does work is using sub-agents for <a href=\"https://www.humanlayer.dev/blog/advanced-context-engineering\" rel=\"noopener noreferrer\">context control</a>.</p>",
+      "zh": "<p>子 Agent 是一个流行、但经常被误解的运行框架配置点。我们试过“前端工程师”子 Agent、“后端工程师”子 Agent、“数据分析师”子 Agent 这一套，行不通。真正有效的，是用子 Agent 做<a href=\"https://www.humanlayer.dev/blog/advanced-context-engineering\" rel=\"noopener noreferrer\">上下文控制</a>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-079",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>They provide a way to encapsulate an entire coding agent session's worth of work such that the dispatching agent only sees the prompt it writes for the sub-agent, and the sub-agent's final result. None of the intermediate tool calls, tool results, or other messages end up in the parent coding agent's context window.</p>",
+      "zh": "<p>子 Agent 可以封装相当于一个完整编程 Agent 会话的工作量，让派发任务的 Agent 只看到自己写给子 Agent 的提示，以及子 Agent 的最终结果。中间的工具调用、工具结果和其他消息，都不会进入父编程 Agent 的上下文窗口。</p>"
+    },
+    {
+      "id": "new39_skill_issue-080",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"sub-agents\" src=\"/media/3103a7c889833c482853d6a6.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-081",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Breaking work up into discrete tasks and delegating it to sub-agents is how we keep our primary coding agent thread in the \"smart zone.\" This is how we handle research, implementation, and a number of other context-heavy tasks in our day-to-day workflows.</p>",
+      "zh": "<p>将工作拆成独立任务，并委派给子 Agent，是我们让主编程 Agent 会话保持在“聪明区”的方法。日常工作流中的研究、实现，以及其他许多上下文密集型任务，都是这样处理的。</p>"
+    },
+    {
+      "id": "new39_skill_issue-082",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Sub-Agents Avoid Context Rot</h4>",
+      "zh": "<h4>子 Agent 避免上下文腐化</h4>"
+    },
+    {
+      "id": "new39_skill_issue-083",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Chroma's <a href=\"https://research.trychroma.com/context-rot\" rel=\"noopener noreferrer\">context rot research</a> provides empirical backing to what we've been saying for a long time: models perform worse at longer context lengths. <a href=\"https://youtu.be/rmvDxxNubIg?si=O17nmS3SScaAkpp-&amp;t=355\" rel=\"noopener noreferrer\">Avoid the dumb zone</a>.</p>",
+      "zh": "<p>Chroma 的<a href=\"https://research.trychroma.com/context-rot\" rel=\"noopener noreferrer\">上下文腐化研究</a>，为我们长期以来的观点提供了实证支持：上下文越长，模型表现越差。<a href=\"https://youtu.be/rmvDxxNubIg?si=O17nmS3SScaAkpp-&amp;t=355\" rel=\"noopener noreferrer\">避开“变笨区”</a>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-084",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Chroma researchers tested 18 models on needle-in-a-haystack tasks, which is admittedly quite different from agentic coding. But the finding matches our experience exactly: performance degrades as context length increases — even on simple tasks.</p>",
+      "zh": "<p>Chroma 研究人员在“大海捞针”任务上测试了 18 个模型。诚然，这与 Agent 编程很不一样，但发现与我们的经验完全吻合：随着上下文变长，表现会下降，哪怕任务很简单。</p>"
+    },
+    {
+      "id": "new39_skill_issue-085",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Worse, when there's low semantic similarity between the question and the relevant information in context, the degradation is <em>steeper</em>. We’ve watched this happen in real time: every intermediate tool call, every grep result, every file read in the parent session that doesn’t end up being relevant is a potential distractor, and the Chroma research confirms that distractor effects <em>compound</em> at longer context windows.</p>",
+      "zh": "<p>更糟的是，当问题与上下文中相关信息的语义相似度较低时，退化会<em>更加剧烈</em>。我们曾实时看到这种情况：父会话中每次最终无关的中间工具调用、每条 grep 结果、每次文件读取，都是潜在干扰项；Chroma 的研究也证实，在较长的上下文窗口中，干扰效应会<em>不断叠加</em>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-086",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Aside: Long-Context Models</h4>",
+      "zh": "<h4>题外话：长上下文模型</h4>"
+    },
+    {
+      "id": "new39_skill_issue-087",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is also why we're skeptical of the \"just make the context window bigger\" approach to coding agents. When a lab offers an extended-context version of a given model, you are usually not getting a bigger model with a larger \"instruction budget\" - you're getting the same model with some clever math (e.g. <a href=\"https://arxiv.org/pdf/2309.00071\" rel=\"noopener noreferrer\">YaRN</a>) to extend the length of the sequence the model can attend to.</p>",
+      "zh": "<p>这也是我们对“只要把上下文窗口做大”这种编程 Agent 思路持怀疑态度的原因。当实验室提供某个模型的长上下文版本时，通常并没有给你一个“指令预算”更大的、更大的模型；你得到的仍是同一个模型，只是通过一些巧妙的数学方法，例如 <a href=\"https://arxiv.org/pdf/2309.00071\" rel=\"noopener noreferrer\">YaRN</a>，延长它能够关注的序列长度。</p>"
+    },
+    {
+      "id": "new39_skill_issue-088",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Consider the needle-in-a-haystack problem. A bigger context window doesn't make the model better at finding the needle — it just makes the haystack bigger. For our purposes, it means you can stuff more instructions (each user message is <em>at least</em> one instruction, and usually several) into the context window - putting you deeper and deeper into the \"dumb zone\".</p>",
+      "zh": "<p>想想“大海捞针”问题。更大的上下文窗口，并不会让模型更擅长找针，只会让草堆更大。对我们的用途来说，这意味着你可以向窗口里塞入更多指令；每条用户消息<em>至少</em>包含一条指令，通常还不止一条。这会让你越来越深入“变笨区”。</p>"
+    },
+    {
+      "id": "new39_skill_issue-089",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"long context\" src=\"/media/5354f1caadcc3fb51556ba9e.jpg\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-090",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you think you need longer context, you may just need better context window isolation. Sub-agents solve this structurally: each one gets a fresh, small, high-relevance context window with a fresh \"instruction budget\" for its task, and only the condensed result flows back to the parent - allowing you to stitch together many context windows for a single problem.</p>",
+      "zh": "<p>如果你觉得需要更长上下文，也许真正需要的只是更好的上下文窗口隔离。子 Agent 从结构上解决这一问题：每个子 Agent 都获得一个全新、较小、与任务高度相关的上下文窗口，以及一份新的“指令预算”；只有精简结果返回父 Agent。这样，就能把许多个上下文窗口串联起来，解决同一个问题。</p>"
+    },
+    {
+      "id": "new39_skill_issue-091",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The limit case probably looks something like this, although at some point you're crossing <a href=\"https://alexzhang13.github.io/blog/2025/rlm/\" rel=\"noopener noreferrer\">Recursive Language Model</a> territory.</p>",
+      "zh": "<p>极限情况下大概会像下面这样，不过到了某个程度，你就进入了<a href=\"https://alexzhang13.github.io/blog/2025/rlm/\" rel=\"noopener noreferrer\">递归语言模型</a>的领域。</p>"
+    },
+    {
+      "id": "new39_skill_issue-092",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"limit case\" src=\"/media/90d19caea25dce5a62c9beec.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-093",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>(Note: some arrows omitted for brevity.)</p>",
+      "zh": "<p>（注：为简洁起见，省略了部分箭头。）</p>"
+    },
+    {
+      "id": "new39_skill_issue-094",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Sub-Agent Use-Cases</h4>",
+      "zh": "<h4>子 Agent 的使用场景</h4>"
+    },
+    {
+      "id": "new39_skill_issue-095",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Great examples of things to use sub-agents for include:</p>",
+      "zh": "<p>以下是一些特别适合使用子 Agent 的任务：</p>"
+    },
+    {
+      "id": "new39_skill_issue-096",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Locating specific definitions or implementations in the codebase</li>\n<li>Analyzing the codebase to identify patterns for a specific type of work</li>\n<li>Tracing the flow of information through the codebase, e.g. tracing a request across service boundaries</li>\n<li>Other general code/documentation/web research tasks</li>\n</ul>",
+      "zh": "<ul><li>在代码库中定位特定定义或实现。</li><li>分析代码库，识别某类工作的惯用模式。</li><li>追踪信息在代码库中的流动，例如追踪跨服务边界的请求。</li><li>其他一般性的代码、文档或网页研究任务。</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-097",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These types of tasks often have a straightforward question and simple answer, but require lots of intermediate tool calls that you don't want or need in your parent session. Sub-agents should return highly condensed responses that also follow the principle of progressive disclosure. For example, our sub-agents provide an answer to the question but also cite sources in <code>filepath:line</code> format or with URLs so that the parent agent isn't exposed to all the sources the sub-agent used, but if it needs more details or confirmation, it has the information that it needs to go find the relevant context:</p>",
+      "zh": "<p>这类任务的问题通常直接、答案通常简单，却需要大量你不想、也不必放进父会话的中间工具调用。子 Agent 应返回高度精简、同时遵循渐进式披露原则的回答。例如，我们的子 Agent 不仅回答问题，也会以 <code>filepath:line</code> 格式或 URL 引用来源。这样，父 Agent 不会接触到子 Agent 使用过的全部材料，但如果需要更多细节或确认，也有足够信息找到相关上下文：</p>"
+    },
+    {
+      "id": "new39_skill_issue-098",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"compaction\" src=\"/media/cab5f3fde215406858afeec2.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-099",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Dex spoke about this more extensively <a href=\"https://www.youtube.com/watch?v=IS_y40zY-hc\" rel=\"noopener noreferrer\">here</a>.</p>",
+      "zh": "<p>Dex 在<a href=\"https://www.youtube.com/watch?v=IS_y40zY-hc\" rel=\"noopener noreferrer\">这里</a>更详细地讨论了这一点。</p>"
+    },
+    {
+      "id": "new39_skill_issue-100",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code and some other coding agents even provide built-in, task-specific sub-agents, e.g. Claude Code's <code>Explore</code> sub-agent for codebase exploration, or their <code>Bash</code> sub-agent which is designed to execute verbose bash commands and extract information to return to the parent agent without polluting its context. Other coding agents support sub-agents but don't define their own, and require that the user manually configure them if desired.</p>",
+      "zh": "<p>Claude Code 和一些其他编程 Agent 甚至内置了针对特定任务的子 Agent。例如，Claude Code 的 <code>Explore</code> 子 Agent 用于探索代码库；其 <code>Bash</code> 子 Agent 则专门执行输出冗长的 bash 命令，提取信息后返回父 Agent，避免污染父 Agent 的上下文。其他一些编程 Agent 虽然支持子 Agent，却没有预定义角色，用户需要时必须手动配置。</p>"
+    },
+    {
+      "id": "new39_skill_issue-101",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Sub-Agents Are (Also) for Cost Control</h4>",
+      "zh": "<h4>子 Agent 也用于控制成本</h4>"
+    },
+    {
+      "id": "new39_skill_issue-102",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sub-agents can also help with cost control. We use an expensive model (Opus) for the parent session where thinking-heavy tasks like planning and orchestration happen, and a cheaper, faster model like Sonnet or Haiku for each sub-agent. Sub-agents receive much smaller and more discrete tasks that can be handled by a less-intelligent model with a smaller \"instruction budget\" — no need to burn Opus tokens on a codebase grep.</p>",
+      "zh": "<p>子 Agent 也有助于控制成本。我们在负责规划、编排等重推理任务的父会话中使用昂贵模型 Opus，在各个子 Agent 中则使用 Sonnet 或 Haiku 等更便宜、更快的模型。子 Agent 接收的任务更小、更独立，智能程度较低、“指令预算”较少的模型也能处理，没必要把 Opus 的 token 烧在一次代码库 grep 搜索上。</p>"
+    },
+    {
+      "id": "new39_skill_issue-103",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>So We Heard You Like Sub-Agents</h4>",
+      "zh": "<h4>听说你喜欢子 Agent</h4>"
+    },
+    {
+      "id": "new39_skill_issue-104",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Some harnesses don't support sub-agents at all! Even Codex didn't until recently, and support is still <a href=\"https://developers.openai.com/codex/multi-agent/\" rel=\"noopener noreferrer\">experimental</a>.</p>",
+      "zh": "<p>有些运行框架完全不支持子 Agent！就连 Codex 也是最近才开始支持，而且支持仍处于<a href=\"https://developers.openai.com/codex/multi-agent/\" rel=\"noopener noreferrer\">实验阶段</a>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-105",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Fortunately you can still use this powerful context encapsulation pattern by writing an MCP server that provides a tool for launching a new agent session which receives a prompt from the parent agent, launches a new coding agent session with that prompt as the user message, and which returns the sub-agent's final response message to the parent.</p>",
+      "zh": "<p>好在，你仍然可以通过编写一个 MCP 服务器来使用这种强大的上下文封装模式。服务器提供一个用于启动新 Agent 会话的工具：接收父 Agent 的提示，将它作为用户消息启动一个新的编程 Agent 会话，再将子 Agent 的最终回答返回给父 Agent。</p>"
+    },
+    {
+      "id": "new39_skill_issue-106",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A <em>very</em> rough approximation of a server to do this can be found <a href=\"https://github.com/humanlayer/claudelayer/blob/main/src/index.ts\" rel=\"noopener noreferrer\">here</a>. <strong>Warning</strong>: using this pattern with a coding agent that supports sub-agents will allow the harness's native sub-agents to dispatch sub-agents via MCP. This can result in an unpredictable game of telephone:</p>",
+      "zh": "<p>一个实现此功能的<em>非常</em>粗略的服务器示例，可以在<a href=\"https://github.com/humanlayer/claudelayer/blob/main/src/index.ts\" rel=\"noopener noreferrer\">这里</a>找到。<strong>警告</strong>：如果在本就支持子 Agent 的编程 Agent 中使用这种模式，框架原生子 Agent 就能通过 MCP 再派发子 Agent，可能演变成一场无法预测的传话游戏：</p>"
+    },
+    {
+      "id": "new39_skill_issue-107",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><span><img alt=\"telephone\" src=\"/media/bba1846c1053239ff63c7865.png\" loading=\"lazy\" decoding=\"async\"></span></p>"
+    },
+    {
+      "id": "new39_skill_issue-108",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Jokes aside, practically you have to be very careful when you write your sub-agents' system prompts to carefully specify the scope of their role:</p>",
+      "zh": "<p>玩笑归玩笑，实际编写子 Agent 的系统提示词时，你必须非常谨慎，清楚限定其角色范围：</p>"
+    },
+    {
+      "id": "new39_skill_issue-109",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>What is the agent's role - what should it do, but also what should it <strong>not</strong> do</li>\n<li>What information should the agent return, and <strong>how</strong> should it return it</li>\n<li>What tools should the sub-agent have?</li>\n</ul>",
+      "zh": "<ul><li>Agent 的角色是什么：应该做什么，也包括<strong>不应该</strong>做什么？</li><li>应该返回哪些信息，以及<strong>如何</strong>返回？</li><li>子 Agent 应该拥有哪些工具？</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-110",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It's also worth noting that many harnesses have an MCP tool call timeout - if you implement this pattern, you may need to configure your harness to increase the MCP tool call timeout.</p>",
+      "zh": "<p>还要注意，许多框架为 MCP 工具调用设置了超时；实现这种模式时，可能需要提高框架中的 MCP 工具调用超时时间。</p>"
+    },
+    {
+      "id": "new39_skill_issue-111",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Hooks Are for Control Flow</h3>",
+      "zh": "<h3>钩子用于控制流</h3>"
+    },
+    {
+      "id": "new39_skill_issue-112",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code has the concept of <a href=\"https://code.claude.com/docs/en/hooks\" rel=\"noopener noreferrer\">hooks</a>: user-defined commands or scripts that are automatically executed when certain events occur and at various points of the agent's lifecycle. Similarly, <a href=\"https://opencode.ai\" rel=\"noopener noreferrer\">Opencode</a> has the concept of <a href=\"https://opencode.ai/docs/plugins/\" rel=\"noopener noreferrer\">plugins</a> which do the same thing. Other coding agents may have similar configuration points. (Sadly, Codex <a href=\"https://github.com/openai/codex/discussions/2150\" rel=\"noopener noreferrer\">doesn't have an equivalent</a>.)</p>",
+      "zh": "<p>Claude Code 提供<a href=\"https://code.claude.com/docs/en/hooks\" rel=\"noopener noreferrer\">钩子</a>概念：用户定义的命令或脚本，在特定事件发生时、或 Agent 生命周期的不同节点自动执行。类似地，<a href=\"https://opencode.ai\" rel=\"noopener noreferrer\">Opencode</a> 有<a href=\"https://opencode.ai/docs/plugins/\" rel=\"noopener noreferrer\">插件</a>概念，实现同样的功能。其他编程 Agent 也可能有类似配置点。（遗憾的是，Codex <a href=\"https://github.com/openai/codex/discussions/2150\" rel=\"noopener noreferrer\">没有对应机制</a>。）</p>"
+    },
+    {
+      "id": "new39_skill_issue-113",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Hooks are conceptually similar to <a href=\"https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks\" rel=\"noopener noreferrer\">git hooks</a>, but they're <a href=\"https://karanbansal.in/blog/claude-code-hooks/\" rel=\"noopener noreferrer\">quite flexible</a>. They can be used to add new features, integrate with external services, automate routine actions, modify permissions, and configure default behavior.</p>",
+      "zh": "<p>钩子在概念上类似于 <a href=\"https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks\" rel=\"noopener noreferrer\">git hooks</a>，但<a href=\"https://karanbansal.in/blog/claude-code-hooks/\" rel=\"noopener noreferrer\">相当灵活</a>。它们可用于增加新功能、集成外部服务、自动执行日常操作、修改权限，以及配置默认行为。</p>"
+    },
+    {
+      "id": "new39_skill_issue-114",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Implementation details vary between harnesses, but generally a hook can:</p>",
+      "zh": "<p>不同运行框架的实现细节各异，但一般来说，钩子可以：</p>"
+    },
+    {
+      "id": "new39_skill_issue-115",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>run something automatically but silently when an event occurs</li>\n<li>run when a tool is called, and return additional context to the agent in addition to the tool result</li>\n<li>surface build/type errors to a coding agent before it finishes, so that it's forced to keep working until it resolves the error</li>\n</ul>",
+      "zh": "<ul><li>在事件发生时自动、静默地执行某项操作。</li><li>在工具被调用时运行，并在工具结果之外，向 Agent 返回额外上下文。</li><li>在编程 Agent 结束前向其呈现构建或类型错误，迫使它继续工作，直到解决错误。</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-116",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Common use cases include...</p>",
+      "zh": "<p>常见用途包括……</p>"
+    },
+    {
+      "id": "new39_skill_issue-117",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><p><strong>Notifications</strong>: We wire our agents up to play sounds when they finish or when they need attention (e.g. an approval has been pending for too long)</p>\n</li>\n<li><p><strong>Approvals</strong>: We automatically approve or deny tool calls based on input values and more expressive rules than the coding agent’s default permissions model. For example, we automatically deny any <code>Bash()</code> tool calls that try to run migrations, with an instruction to ask the user to run them instead.</p>\n</li>\n<li><p><strong>Integrations</strong>: We have our agents send a Slack message when they’re finished, create a GitHub PR, or set up a preview environment.</p>\n</li>\n<li><p><strong>Verification</strong>: If your framework and repository can run a typecheck or build in under a handful of seconds, run it every time the agent stops to surface errors to it — this is exactly what the hook below does.</p>\n</li>\n</ul>",
+      "zh": "<ul><li><p><strong>通知：</strong>我们让 Agent 在完成工作或需要关注时播放声音，例如某次审批等待了太久。</p></li><li><p><strong>审批：</strong>我们基于输入值，以及比编程 Agent 默认权限模型更有表达力的规则，自动批准或拒绝工具调用。例如，任何试图执行迁移的 <code>Bash()</code> 调用都会被自动拒绝，并附带指令，让 Agent 请用户改为亲自运行。</p></li><li><p><strong>集成：</strong>我们让 Agent 在完成后发送 Slack 消息、创建 GitHub PR，或搭建预览环境。</p></li><li><p><strong>验证：</strong>如果你的框架和仓库能在短短几秒内完成类型检查或构建，就在 Agent 每次停止时运行，将错误反馈给它；下面的钩子正是这样做的。</p></li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-118",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>An Example Hook</h4>",
+      "zh": "<h4>一个钩子示例</h4>"
+    },
+    {
+      "id": "new39_skill_issue-119",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here's a hook I (via Claude) wrote for our repo which implements the last example I gave. When Claude stops, it runs our biome formatter and TypeScript type checks. If there are errors, they are raised to Claude. If not, the script exits silently.</p>",
+      "zh": "<p>下面是我借助 Claude 为我们的仓库编写的钩子，实现了刚才的最后一个例子。Claude 停止时，它运行 biome 格式化工具和 TypeScript 类型检查。如果有错误，就反馈给 Claude；如果没有，脚本静默退出。</p>"
+    },
+    {
+      "id": "new39_skill_issue-120",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><pre><code><span>#!/bin/bash</span><span>\n</span><span></span><span>cd</span><span> </span><span>\"</span><span>$CLAUDE_PROJECT_DIR</span><span>\"</span><span>\n</span>\n<span></span><span># prebuild generates types and builds internal SDK packages so typecheck has</span><span>\n</span><span></span><span># everything it needs. runs bun install afterward to pick up any new generated files.</span><span>\n</span><span></span><span>PREBUILD_OUTPUT</span><span>=</span><span>$(</span><span>bun run generate-cache-key </span><span>&amp;&amp;</span><span> turbo run build --filter</span><span>=</span><span>@humanlayer/hld-sdk </span><span>&amp;&amp;</span><span> bun </span><span>install</span><span> </span><span>2</span><span>&gt;</span><span>&amp;1</span><span>)</span><span>\n</span><span></span><span>if</span><span> </span><span>[</span><span> </span><span>$?</span><span> -ne </span><span>0</span><span> </span><span>]</span><span>;</span><span> </span><span>then</span><span>\n</span><span>  </span><span>echo</span><span> </span><span>\"prebuild failed:\"</span><span> </span><span>&gt;</span><span>&amp;2</span><span>\n</span><span>  </span><span>echo</span><span> </span><span>\"</span><span>$PREBUILD_OUTPUT</span><span>\"</span><span> </span><span>&gt;</span><span>&amp;2</span><span>\n</span><span>  </span><span>exit</span><span> </span><span>2</span><span>\n</span><span></span><span>fi</span><span>\n</span>\n<span></span><span># biome and typecheck run in parallel to keep the feedback loop tight.</span><span>\n</span><span></span><span># one quirk: biome --write exits with code 1 if it made any changes, even if it</span><span>\n</span><span></span><span># successfully fixed everything. so we run it twice with ||: if the first pass</span><span>\n</span><span></span><span># makes changes and exits 1, the second pass will exit 0 since there's nothing</span><span>\n</span><span></span><span># left to fix. if there are unfixable errors, both passes fail and exit 2.</span><span>\n</span><span></span><span>OUTPUT</span><span>=</span><span>$(</span><span>bun run --parallel </span><span>\\</span><span>\n</span><span>  </span><span>\"biome check . --write --unsafe || biome check . --write --unsafe\"</span><span> </span><span>\\</span><span>\n</span><span>  </span><span>\"turbo run typecheck\"</span><span> </span><span>2</span><span>&gt;</span><span>&amp;1</span><span>)</span><span>\n</span>\n<span></span><span>if</span><span> </span><span>[</span><span> </span><span>$?</span><span> -ne </span><span>0</span><span> </span><span>]</span><span>;</span><span> </span><span>then</span><span>\n</span><span>  </span><span>echo</span><span> </span><span>\"</span><span>$OUTPUT</span><span>\"</span><span> </span><span>&gt;</span><span>&amp;2</span><span>\n</span><span>  </span><span>exit</span><span> </span><span>2</span><span>\n</span><span></span><span>fi</span></code></pre></pre>"
+    },
+    {
+      "id": "new39_skill_issue-121",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>On success the hook is completely silent — nothing ends up in the agent's context. On failure, only the errors are surfaced, and exit code <code>2</code> tells the harness to re-engage the agent so it fixes them before finishing.</p>",
+      "zh": "<p>成功时，钩子完全静默，没有任何内容进入 Agent 上下文。失败时，只呈现错误；退出码 <code>2</code> 告诉运行框架重新唤起 Agent，让它修复问题后再结束。</p>"
+    },
+    {
+      "id": "new39_skill_issue-122",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-back-pressure-increases-your-chances-of-success\">Back-Pressure Increases Your Chances of Success</h2>",
+      "zh": "<h2 id=\"zh-source-back-pressure-increases-your-chances-of-success\">反压提高成功机会</h2>"
+    },
+    {
+      "id": "new39_skill_issue-123",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We've <a href=\"https://www.humanlayer.dev/blog/context-efficient-backpressure\" rel=\"noopener noreferrer\">written about back-pressure before</a>. The core insight is that your likelihood of successfully solving a problem with a coding agent is strongly correlated with the agent's ability to verify its own work. We've spent a lot of time building out tests and other back-pressure mechanisms into our repository, and it remains one of the <strong>highest-leverage things we have spent time on</strong>.</p>",
+      "zh": "<p>我们此前<a href=\"https://www.humanlayer.dev/blog/context-efficient-backpressure\" rel=\"noopener noreferrer\">写过反压</a>。核心认识是：用编程 Agent 成功解决问题的可能性，与 Agent 验证自己工作的能力高度相关。我们花了很多时间，在仓库中构建测试和其他反压机制；它至今仍是我们<strong>投入时间后回报最大的事情之一</strong>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-124",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our codebase has verification mechanisms that allow the agent to check its own work:</p>",
+      "zh": "<p>我们的代码库提供了一些验证机制，让 Agent 检查自己的工作：</p>"
+    },
+    {
+      "id": "new39_skill_issue-125",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>typechecks and build steps (<a href=\"https://arxiv.org/pdf/2504.09246\" rel=\"noopener noreferrer\">probably in a strongly-typed language</a>)</li>\n<li>unit tests and/or integration tests</li>\n<li>code coverage reporting (we have a <code>Stop</code> hook that prompts the agent to increase coverage if it drops)</li>\n<li>UI interaction and testing integrations (playwright, <a href=\"https://github.com/vercel-labs/agent-browser\" rel=\"noopener noreferrer\">agent-browser</a>, etc)</li>\n</ul>",
+      "zh": "<ul><li>类型检查和构建步骤，<a href=\"https://arxiv.org/pdf/2504.09246\" rel=\"noopener noreferrer\">可能最好使用强类型语言</a>。</li><li>单元测试和/或集成测试。</li><li>代码覆盖率报告；我们有一个 <code>Stop</code> 钩子，在覆盖率下降时提示 Agent 提高覆盖率。</li><li>界面交互和测试集成，例如 playwright、<a href=\"https://github.com/vercel-labs/agent-browser\" rel=\"noopener noreferrer\">agent-browser</a> 等。</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-126",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Critically, these verification mechanisms need to be <strong>context-efficient.</strong> We learned this one the hard way — early on we had our agent run the full test suite after every change, and 4,000 lines of passing tests would flood the context window. The agent would then lose track of the actual task and start hallucinating about test files it had just read. Now we <a href=\"https://www.humanlayer.dev/blog/context-efficient-backpressure\" rel=\"noopener noreferrer\">swallow the output and only surface errors</a>. We do the same with builds — success is silent, and only failures produce verbose output.</p>",
+      "zh": "<p>关键是，这些验证机制必须<strong>节省上下文</strong>。我们为此吃过苦头：早期，我们让 Agent 每次改动后运行完整测试套件，结果 4,000 行测试通过日志淹没了上下文窗口。Agent 随后会忘记实际任务，开始围绕刚读到的测试文件产生幻觉。现在，我们<a href=\"https://www.humanlayer.dev/blog/context-efficient-backpressure\" rel=\"noopener noreferrer\">吞掉输出，只呈现错误</a>。构建也采用同样方式：成功时静默，只有失败才输出详细信息。</p>"
+    },
+    {
+      "id": "new39_skill_issue-127",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We give Claude <strong>concise</strong> instructions about how to use all of these mechanisms in our CLAUDE.md file. Some are even bundled inside skills for <strong>progressive disclosure</strong>.</p>",
+      "zh": "<p>我们在 CLAUDE.md 中用<strong>简洁</strong>指令告诉 Claude 如何使用所有这些机制。有些机制甚至打包在技能里，以实现<strong>渐进式披露</strong>。</p>"
+    },
+    {
+      "id": "new39_skill_issue-128",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-closing-notes\">Closing Notes</h2>",
+      "zh": "<h2 id=\"zh-source-closing-notes\">结语</h2>"
+    },
+    {
+      "id": "new39_skill_issue-129",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It is entirely possible to spend more time optimizing your coding agent setup than actually shipping code with it — we’ve been there.</p>",
+      "zh": "<p>优化编程 Agent 配置所花的时间，完全可能超过真正用它交付代码的时间。我们就经历过。</p>"
+    },
+    {
+      "id": "new39_skill_issue-130",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our approach: bias towards shipping. We only spend time on harness configuration to the extent that it’s actually enabling us to ship more high-quality code faster. When the agent fails, we take the time to engineer a solution so it doesn’t fail that way again — but we don’t go looking for problems to solve preemptively.</p>",
+      "zh": "<p>我们的原则是优先交付。只有当运行框架配置确实让我们更快交付更多高质量代码时，我们才投入时间。Agent 失败后，我们会花时间设计工程解决方案，让它不再以同样方式失败；但不会主动寻找尚未发生的问题，抢先解决。</p>"
+    },
+    {
+      "id": "new39_skill_issue-131",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>What didn’t work for us:</strong></p>",
+      "zh": "<p><strong>对我们无效的做法：</strong></p>"
+    },
+    {
+      "id": "new39_skill_issue-132",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Trying to design the ideal harness configuration upfront before we’d even hit real failures</li>\n<li>Installing dozens of skills and MCP servers \"just in case\"</li>\n<li>Running our entire test suite (5+ minutes) at the end of every agent session (run a subset instead)</li>\n<li>Trying to micro-optimize which sub-agents could access which tools. This led to a lot of tool thrash which gave us worse results, not better ones. Most coding agents don't have a robust configuration surface for this anyways.</li>\n</ul>",
+      "zh": "<ul><li>还没有遇到真实失败，就试图预先设计理想的运行框架配置。</li><li>“以防万一”，安装几十个技能和 MCP 服务器。</li><li>每次 Agent 会话结束都运行整个测试套件，耗时超过 5 分钟；应改为运行一个子集。</li><li>试图精细优化各个子 Agent 可以访问哪些工具。这导致大量无效的工具尝试与切换，结果更差，并没有更好。况且，大多数编程 Agent 也没有足够完善的配置接口支持这件事。</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-133",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>What did work:</strong></p>",
+      "zh": "<p><strong>真正有效的做法：</strong></p>"
+    },
+    {
+      "id": "new39_skill_issue-134",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Starting simple and adding configuration only when the agent actually failed</li>\n<li>Designing, testing, iterating — and throwing away things that didn’t help. I have thrown away many more hooks than we actually use today.</li>\n<li>Distributing battle-tested configurations to the whole team via repository-level config</li>\n<li>Optimizing for iteration speed, not \"likelihood of 1-shotting it on the first attempt\"</li>\n<li>Giving the agent a set of capabilities (Linear) and then carefully paring down what we exposed to the model once we knew what we needed.</li>\n</ul>",
+      "zh": "<ul><li>从简单配置开始，只有 Agent 实际失败时才添加配置。</li><li>设计、测试、迭代，并丢弃没有帮助的东西。我扔掉的钩子，远比我们今天实际使用的多。</li><li>通过仓库级配置，将经过实战检验的设置分发给整个团队。</li><li>优化迭代速度，而不是“第一次就一次成功的概率”。</li><li>先给 Agent 一组能力，例如 Linear，再在了解实际需要后，仔细削减暴露给模型的部分。</li></ul>"
+    },
+    {
+      "id": "new39_skill_issue-135",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The next time your coding agent isn’t performing the way you expect, before you blame the model, check the harness. Agentfiles, MCP servers, skills, sub-agents, hooks, and back-pressure — that’s where we’ve found most of the leverage. The model is probably fine. It’s just a skill issue.</p>",
+      "zh": "<p>下次编程 Agent 的表现不如预期时，先别急着怪模型，检查一下运行框架。Agent 指令文件、MCP 服务器、技能、子 Agent、钩子和反压机制，是我们找到大部分改进空间的地方。模型大概没什么问题，只是个“技能问题”。</p>"
+    }
+  ],
+  "description": "过去一年，我们见识了编程 Agent 以各种能想到的方式失败：无视指令、未经要求执行危险命令，以及在最简单的任务上原地打转",
+  "reading_minutes": 21,
+  "downloads": {}
+}

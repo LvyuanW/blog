@@ -1,0 +1,1164 @@
+{
+  "title": "面向自我改进的运行框架工程",
+  "original_title": "Harness Engineering for Self-Improvement",
+  "url": "https://lilianweng.github.io/posts/2026-07-04-harness/",
+  "date": "2026-07-04",
+  "publisher": "Lilian Weng",
+  "author": "Lilian Weng",
+  "source_order": 42,
+  "slug": "self-improvement",
+  "source_id": "new42_self_improvement",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new42_self_improvement-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The concept of <strong>recursive self-improvement (RSI)</strong> dates back to <a href=\"https://philpapers.org/rec/GOOSCT\" rel=\"noopener noreferrer\">I. J. Good (1965)</a>, where he defined an “ultraintelligent machine” as a system that can surpass humans in all intellectual activities and design better machines to improve itself. <a href=\"https://www.lesswrong.com/posts/JBadX7rwdcRFzGuju/recursive-self-improvement\" rel=\"noopener noreferrer\">Yudkowsky (2008)</a> used the phrase “recursive self-improvement” for a specific feedback loop: an AI uses its current intelligence to improve the cognitive machinery that produces its intelligence.</p>",
+      "zh": "<p><strong>递归自我改进（recursive self-improvement，RSI）</strong>的概念可以追溯到 <a href=\"https://philpapers.org/rec/GOOSCT\" rel=\"noopener noreferrer\">I. J. Good（1965）</a>。他将“超智能机器”定义为一种能够在所有智力活动中超越人类，并能设计更好的机器来改进自身的系统。<a href=\"https://www.lesswrong.com/posts/JBadX7rwdcRFzGuju/recursive-self-improvement\" rel=\"noopener noreferrer\">Yudkowsky（2008）</a>用“递归自我改进”来描述一种特定的反馈循环：AI 利用当前的智能，改进产生其智能的认知机制。</p>"
+    },
+    {
+      "id": "new42_self_improvement-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This feedback loop in modern AI may indicate the model rewriting its own weights directly, or more broadly the model improves the <em>training pipeline</em> and the <em>deployment system</em>, which in turn enables a better successor model with improved performance across economically valuable tasks. The speed of research development in AI has been shown to drastically accelerated in frontier labs (<a href=\"https://www.anthropic.com/institute/recursive-self-improvement\" rel=\"noopener noreferrer\">Anthropic</a>; <a href=\"https://openai.com/index/how-agents-are-transforming-work/\" rel=\"noopener noreferrer\">OpenAI</a>).</p>",
+      "zh": "<p>在现代 AI 中，这种反馈循环可能指模型直接改写自身权重；更广义地说，也可以指模型改进<em>训练流程</em>和<em>部署系统</em>，进而产生一个更好的后继模型，使其在具有经济价值的任务上表现更出色。前沿实验室的实践已经表明，AI 研发速度因此显著加快（<a href=\"https://www.anthropic.com/institute/recursive-self-improvement\" rel=\"noopener noreferrer\">Anthropic</a>；<a href=\"https://openai.com/index/how-agents-are-transforming-work/\" rel=\"noopener noreferrer\">OpenAI</a>）。</p>"
+    },
+    {
+      "id": "new42_self_improvement-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>I explicitly mention <em>“deployment system”</em> because the layer between the raw model and the real-world context seems to be as important as the model’s raw intelligence (i.e. the evals right after pretraining). Harnesses are important components of AI deployment, as shown by successful coding agent products such as Claude Code and Codex. A <strong>harness</strong> is the system surrounding a base model that orchestrates execution and decides how the model thinks and plans, calls tools and acts, perceives and manages context, stores artifacts, and evaluates results.</p>",
+      "zh": "<p>我特意提到<em>“部署系统”</em>，是因为原始模型与现实环境之间的这一层，看起来与模型本身的智能（即预训练刚结束时的评测表现）同样重要。运行框架是 AI 部署的重要组成部分，Claude Code 和 Codex 等成功的编程 Agent 产品就说明了这一点。<strong>运行框架（harness）</strong>是围绕基础模型构建的系统，负责执行编排，并决定模型如何思考和规划、调用工具和采取行动、感知和管理上下文、存储产物，以及评估结果。</p>"
+    },
+    {
+      "id": "new42_self_improvement-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This one post will focus on research around harness engineering and how it contributes to RSI. Much recent work on auto-research, self-improving agents, and evolutionary program search can be organized around this question. Other work on model self-play, synthetic data, test-time training and a broader theme of continual learning also matches the RSI vision (e.g. <a href=\"https://arxiv.org/abs/2401.10020\" rel=\"noopener noreferrer\">Yuan et al. 2024</a>, <a href=\"https://arxiv.org/abs/2401.01335\" rel=\"noopener noreferrer\">Chen et al. 2024</a>), <a href=\"https://arxiv.org/abs/2505.03335\" rel=\"noopener noreferrer\">Zhao et al. 2025</a>, <a href=\"https://openreview.net/forum?id=lTbBFAoPSA\" rel=\"noopener noreferrer\">Choi et al. 2026</a>)) but they will not be the focus of this post.</p>",
+      "zh": "<p>本文将聚焦运行框架工程相关研究，以及它如何促进 RSI。近来许多关于自动化研究、自我改进 Agent 和进化式程序搜索的工作，都可以围绕这个问题来梳理。模型自我博弈、合成数据、测试时训练，以及更广泛的持续学习研究，也符合 RSI 的愿景（例如 <a href=\"https://arxiv.org/abs/2401.10020\" rel=\"noopener noreferrer\">Yuan 等，2024</a>，<a href=\"https://arxiv.org/abs/2401.01335\" rel=\"noopener noreferrer\">Chen 等，2024</a>，<a href=\"https://arxiv.org/abs/2505.03335\" rel=\"noopener noreferrer\">Zhao 等，2025</a>，<a href=\"https://openreview.net/forum?id=lTbBFAoPSA\" rel=\"noopener noreferrer\">Choi 等，2026</a>），但它们不是本文的重点。</p>"
+    },
+    {
+      "id": "new42_self_improvement-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-harness-design-patterns\">Harness Design Patterns</h2>",
+      "zh": "<h2 id=\"zh-source-harness-design-patterns\">运行框架的设计模式</h2>"
+    },
+    {
+      "id": "new42_self_improvement-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Compared with <a href=\"https://lilianweng.github.io/posts/2023-06-23-agent/\" rel=\"noopener noreferrer\">early agent frameworks</a>, “agent = LLM + memory + tools + planning + action”, harnesses engineering additionally include <em>workflow design (e.g. loop engineering), evaluation, permission controls, and persistent state management</em>. It is no longer only prompt templates, but closer to runtime and software system design: how the model observes, acts, memorizes, checks itself, and improves.</p>",
+      "zh": "<p>与<a href=\"https://lilianweng.github.io/posts/2023-06-23-agent/\" rel=\"noopener noreferrer\">早期 Agent 框架</a>中的“Agent = LLM + 记忆 + 工具 + 规划 + 行动”相比，运行框架工程还包括<em>工作流设计（如循环工程）、评测、权限控制和持久状态管理</em>。它不再只是提示词模板，而更接近运行时和软件系统设计：模型如何观察、行动、记忆、自检和改进。</p>"
+    },
+    {
+      "id": "new42_self_improvement-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The design should be deliberately simple and generic to enable generalization, likely with reference to existing software engineering practices to benefit from prertaining knowlege. There is also a strong analogy between operating systems and harnesses. Similar to an OS, a harness should encapsulate complicated logic while keeping the interface simple. Meanwhile, configs, tool interfaces and other protocols may gradually become standardized across the industry.</p>",
+      "zh": "<p>为了实现泛化，设计应刻意保持简单、通用，并且很可能需要借鉴现有软件工程实践，以利用模型的预训练知识。操作系统与运行框架之间也存在很强的类比关系。与操作系统类似，运行框架应封装复杂逻辑，同时保持接口简单。与此同时，配置、工具接口和其他协议可能逐渐形成行业标准。</p>"
+    },
+    {
+      "id": "new42_self_improvement-007",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-pattern-1-workflow-automation\">Pattern 1: Workflow Automation</h3>",
+      "zh": "<h3 id=\"zh-source-pattern-1-workflow-automation\">模式 1：工作流自动化</h3>"
+    },
+    {
+      "id": "new42_self_improvement-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Defining a workflow in which the model can operate, test, and iterate is a key design for automation. Karpathy’s autoresearch repo (<a href=\"https://github.com/karpathy/autoresearch\" rel=\"noopener noreferrer\">https://github.com/karpathy/autoresearch</a>) is a clean example of how such a workflow can be constructed. A common workflow follows a goal-oriented loop of plan, execute, observe/test, improve, and execute again <em>until</em> the goal is achieved. The process may trigger proactive requests to users for clarity in task specification or execution preference.</p>",
+      "zh": "<p>定义一种让模型能够操作、测试和迭代的工作流，是实现自动化的关键设计。Karpathy 的 autoresearch 仓库（<a href=\"https://github.com/karpathy/autoresearch\" rel=\"noopener noreferrer\">https://github.com/karpathy/autoresearch</a>）清晰地展示了如何构建这种工作流。常见的工作流遵循一个以目标为导向的循环：规划、执行、观察／测试、改进，然后再次执行，<em>直到</em>达成目标。过程中可能主动向用户提问，以澄清任务要求或执行偏好。</p>"
+    },
+    {
+      "id": "new42_self_improvement-009",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/a7876d92a8fc46825b8df119.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>A simplified Codex agent loop: the agent calls tools and tool responses affect the model's next generation.<br>(Image source: <a href=\"https://openai.com/index/unrolling-the-codex-agent-loop/\" rel=\"noopener noreferrer\">OpenAI codex agent post</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The workflow graph also emphasizes the model analyzing its own trajectories and failure cases and then iterating on its progress through an “agent runtime” rather than a static prompt template.</p>",
+      "zh": "<p>工作流图也强调，模型会分析自身的执行轨迹和失败案例，再通过“Agent 运行时”不断推进和迭代，而不是依赖静态提示词模板。</p>"
+    },
+    {
+      "id": "new42_self_improvement-011",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-pattern-2-file-system-as-persistent-memory\">Pattern 2: File System as Persistent Memory</h3>",
+      "zh": "<h3 id=\"zh-source-pattern-2-file-system-as-persistent-memory\">模式 2：将文件系统用作持久记忆</h3>"
+    },
+    {
+      "id": "new42_self_improvement-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A recurring pattern in long-horizon agent systems is simple control over rich states and artifacts. A harness should not carry the entire workflow and all logs in context; instead, it should keep durable state in files. In long-horizon agentic rollout, artifacts such as experiment logs, code diffs, paper summaries, error traces, and past rollout trajectories often grow much longer than the context window that the model has trained for.</p>",
+      "zh": "<p>长时程 Agent 系统中反复出现的一种模式，是以简单的方式控制丰富的状态和产物。运行框架不应把整个工作流和全部日志都放进上下文，而应将持久状态保存在文件中。在长时程的 Agent 执行过程中，实验日志、代码差异、论文摘要、错误轨迹和过往执行轨迹等产物，往往会增长到远远超过模型训练所适配的上下文窗口长度。</p>"
+    },
+    {
+      "id": "new42_self_improvement-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Learning how to read, write, and edit the file system (commonly via <code>bash</code> commands) is a foundation skill for LLMs, and thus managing persistent memory in the simple form of files naturally benefits from improvements in core model capability.</p>",
+      "zh": "<p>学会读取、写入和编辑文件系统（通常通过 <code>bash</code> 命令）是 LLM 的基础技能。因此，以文件这种简单形式管理持久记忆，自然能够受益于模型核心能力的提升。</p>"
+    },
+    {
+      "id": "new42_self_improvement-014",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-pattern-3-sub-agent-and-backend-jobs\">Pattern 3: Sub-agent and Backend Jobs</h3>",
+      "zh": "<h3 id=\"zh-source-pattern-3-sub-agent-and-backend-jobs\">模式 3：子 Agent 与后台任务</h3>"
+    },
+    {
+      "id": "new42_self_improvement-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A harness can spawn multiple subagents to execute in parallel and monitor backend jobs. This is useful when the main agent needs to search multiple hypotheses, run experiments concurrently, or delegate isolated subtasks without polluting the main context. The parent agent then needs a small process manager: launch jobs, inspect logs, cancel failed runs, and merge results back into the main agent thread.</p>",
+      "zh": "<p>运行框架可以启动多个子 Agent 并行执行，并监控后台任务。当主 Agent 需要搜索多个假设、并发运行实验，或者在不污染主上下文的情况下委派独立子任务时，这一点很有用。此时，父 Agent 需要一个小型进程管理器：启动任务、检查日志、取消失败的运行，并将结果合并回主 Agent 会话。</p>"
+    },
+    {
+      "id": "new42_self_improvement-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The key design choice is to make parallelism explicit and inspectable. If subagent outputs only live in a transient chat context, they quickly become obselete and hidden. If they are stored as files, logs, and status records, the model can recover after interruptions and reason over its own execution history.</p>",
+      "zh": "<p>关键设计选择是让并行执行变得显式且可检查。如果子 Agent 的输出只存在于临时聊天上下文中，它们很快就会过时并难以发现。如果将它们保存为文件、日志和状态记录，模型就能在中断后恢复，并对自身执行历史进行推理。</p>"
+    },
+    {
+      "id": "new42_self_improvement-017",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-case-study-coding-agent-harness\">Case study: Coding Agent Harness</h3>",
+      "zh": "<h3 id=\"zh-source-case-study-coding-agent-harness\">案例研究：编程 Agent 的运行框架</h3>"
+    },
+    {
+      "id": "new42_self_improvement-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The core interface of mainstream coding agents has become stabilized across Claude Code, Codex, OpenCode, and Cursor-style agents. They commonly use a loop like:</p>",
+      "zh": "<p>Claude Code、Codex、OpenCode 和 Cursor 风格的 Agent 等主流编程 Agent，其核心接口已趋于稳定。它们通常采用如下循环：</p>"
+    },
+    {
+      "id": "new42_self_improvement-019",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/f4efb3c97ce86af55c25a875.png\" loading=\"lazy\" decoding=\"async\">\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>With access to a set of tools, the coding agent is able to develop and debug issues in a given repository, similar to how human developers are equipped with IDEs.</p>",
+      "zh": "<p>借助一组工具，编程 Agent 能在指定仓库中进行开发和问题调试，类似于人类开发者使用 IDE。</p>"
+    },
+    {
+      "id": "new42_self_improvement-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>(Not a comprenhensive list; shown for demonstration. Read <a href=\"https://github.com/yasasbanukaofficial/claude-code\" rel=\"noopener noreferrer\">this</a> if interested.)</p>",
+      "zh": "<p>（这不是完整清单，仅用于展示。有兴趣可以阅读<a href=\"https://github.com/yasasbanukaofficial/claude-code\" rel=\"noopener noreferrer\">此处</a>。）</p>"
+    },
+    {
+      "id": "new42_self_improvement-022",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table>\n<thead>\n<tr>\n<th>Group</th>\n<th>Tool definitions</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>File system</td>\n<td>- File discovery: <code>glob</code>, <code>grep</code>, <code>ls</code><br>- File read: <code>read</code>, <code>read_many</code><br>- File modification: <code>write</code> (a whole new file); <code>edit</code> (string exact-match replacement); <code>multi_edit</code>; <code>apply_patch</code> (applies a structured patch/diff)</td>\n</tr>\n<tr>\n<td>Shell execution</td>\n<td>Run commands: <code>bash</code>, <code>PowerShell</code></td>\n</tr>\n<tr>\n<td>IO</td>\n<td><code>lsp</code>, git tools like <code>git_status</code>, <code>git_diff</code>, <code>git_commit</code></td>\n</tr>\n<tr>\n<td>External context</td>\n<td>MCP tools, Skills</td>\n</tr>\n<tr>\n<td>Web search</td>\n<td><code>web_search</code>, <code>web_fetch</code>, browser tools</td>\n</tr>\n<tr>\n<td>Artifacts</td>\n<td>Read docs, images; generate HTML, images</td>\n</tr>\n<tr>\n<td>Backend processes</td>\n<td>Such as: <code>CronCreate</code>, <code>CronDelete</code>, <code>CronList</code></td>\n</tr>\n<tr>\n<td>Agent delegation</td>\n<td>Such as: <code>spawn_agent</code>, <code>resume_agent</code>, <code>wait_agent</code>, <code>list_agents</code>, <code>close_agent</code>, <code>interrupt_agent</code>, etc.</td>\n</tr>\n</tbody>\n</table>"
+    },
+    {
+      "id": "new42_self_improvement-023",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-harness-layer-vs-core-intelligence\">Harness Layer vs Core Intelligence?</h3>",
+      "zh": "<h3 id=\"zh-source-harness-layer-vs-core-intelligence\">运行框架层与核心智能，孰轻孰重？</h3>"
+    },
+    {
+      "id": "new42_self_improvement-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It is hard to forecast how much the future of RSI will rely on harness engineering, but the near-term path of RSI is unlikely to start as a model directly rewriting its weights. My prediction of a practical near-term path is:</p>",
+      "zh": "<p>我们很难预测 RSI 的未来会在多大程度上依赖运行框架工程，但 RSI 的近期路径不太可能从模型直接改写自身权重开始。我对近期可行路径的预测是：</p>"
+    },
+    {
+      "id": "new42_self_improvement-025",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>Harness engineering will evolve in the direction of meta-methodology (i.e. improving the machinery for getting better answers, not just improving the answer itself). The harness system itself becomes an optimization target, with fewer heuristic rules and more general mechanisms.</li>\n<li>In turn, mature harnesses enable auto-research for model self-improvement loop and smarter models prevents harnesses from overengineering and keep the system sustainable.</li>\n</ol>",
+      "zh": "<ol><li>运行框架工程将向元方法论发展（即改进产生更好答案的机制，而不仅仅是改进答案本身）。运行框架系统自身将成为优化目标，启发式规则更少，通用机制更多。</li><li>反过来，成熟的运行框架将支持用于模型自我改进循环的自动化研究；更聪明的模型则能避免运行框架过度工程化，使系统保持可持续性。</li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Eventually it is possible that many harness improvements will be <em>internalized</em> into core model behavior, but the interface with external context and tools should remain. We have seen a softer version of this pattern with <a href=\"https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/\" rel=\"noopener noreferrer\">prompt engineering</a>: manual prompt tricks became less central as instruction tuning and model reasoning improved, but <em>the need to specify goals, constraints, context, and evaluation did not disappear</em>.</p>",
+      "zh": "<p>最终，许多运行框架改进可能会被<em>内化</em>为模型的核心行为，但与外部上下文和工具交互的接口应当仍会存在。在<a href=\"https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/\" rel=\"noopener noreferrer\">提示词工程</a>中，我们已经见过这种模式的较温和版本：随着指令微调和模型推理能力的进步，手工提示词技巧的重要性下降了，但<em>明确目标、约束、上下文和评测的需求并未消失</em>。</p>"
+    },
+    {
+      "id": "new42_self_improvement-027",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-harness-optimization\">Harness Optimization</h2>",
+      "zh": "<h2 id=\"zh-source-harness-optimization\">运行框架优化</h2>"
+    },
+    {
+      "id": "new42_self_improvement-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The progression in the object being optimized in the harness system is roughly: instruction <a href=\"https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/\" rel=\"noopener noreferrer\">prompts</a> → structured context → workflow → harness code → optimizer code. As the model becomes more intelligent and powerful, we move toward more complex targets and generic methods.</p>",
+      "zh": "<p>运行框架系统中优化对象的演进，大致是：指令<a href=\"https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/\" rel=\"noopener noreferrer\">提示词</a> → 结构化上下文 → 工作流 → 运行框架代码 → 优化器代码。随着模型变得更智能、更强大，我们开始面向更复杂的目标，采用更通用的方法。</p>"
+    },
+    {
+      "id": "new42_self_improvement-029",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-context-engineering\">Context Engineering</h3>",
+      "zh": "<h3 id=\"zh-source-context-engineering\">上下文工程</h3>"
+    },
+    {
+      "id": "new42_self_improvement-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Simply appending all the tool responses and model generations into the context can quickly grow out of control as the agentic job horizon increases significantly. Context management is a layer to construct a more structed and concise context for LLM and manage persistant states. There is no doubt that long-context research will keep on making progress but at the moment long-context intelligence and context engineering sometime intertwines.</p>",
+      "zh": "<p>随着 Agent 任务的执行跨度显著增加，简单地将所有工具响应和模型生成内容追加进上下文，可能很快变得难以控制。上下文管理这一层负责为 LLM 构建更有结构、更简洁的上下文，并管理持久状态。长上下文研究无疑会继续进步，但目前，长上下文智能与上下文工程有时是相互交织的。</p>"
+    },
+    {
+      "id": "new42_self_improvement-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Agentic Context Engineering</strong> (ACE; <a href=\"https://arxiv.org/abs/2510.04618\" rel=\"noopener noreferrer\">Zhang et al. 2025</a>) treats context as an evolving playbook rather than an increasingly lengthening prompt. It has three components to maintain one context playbook of bullet points, each with an identifier and a description.</p>",
+      "zh": "<p><strong>Agentic Context Engineering</strong>（ACE；<a href=\"https://arxiv.org/abs/2510.04618\" rel=\"noopener noreferrer\">Zhang 等，2025</a>）将上下文视为不断演进的操作手册，而不是越来越长的提示词。它通过三个组件维护一份由要点条目构成的上下文操作手册，每个条目都有标识符和说明。</p>"
+    },
+    {
+      "id": "new42_self_improvement-032",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li><em>Generator</em>: produces task trajectories, with reference to bullet points.</li>\n<li><em>Reflector</em>: distills insights from successful and failed trajectories.</li>\n<li><em>Curator</em>: updates the structured context with incremental, itemized entries.</li>\n</ol>",
+      "zh": "<ol><li><em>生成器（Generator）</em>：参考要点条目，生成任务执行轨迹。</li><li><em>反思器（Reflector）</em>：从成功和失败的执行轨迹中提炼见解。</li><li><em>整理器（Curator）</em>：通过逐项增量条目更新结构化上下文。</li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-033",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/0fbdfaa639c75b6898fd9854.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>The framework of Agentic Context Engineering (ACE). (Image source: <a href=\"https://arxiv.org/abs/2510.04618\" rel=\"noopener noreferrer\">Zhang et al. 2025</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To prevent context collapse and brevity bias during iterative rewrites, one key design choice in ACE is that the curator does not rewrite a full prompt blob. It instead outputs a collection of structured, itemized bullets in the form of (identifier, description), and these bullets are merged into a structured context logbook with deterministic logic. The context items are refined and deduplicated periodically.</p>",
+      "zh": "<p>为了防止迭代改写过程中的上下文坍缩和简短偏好，ACE 的一项关键设计是：整理器不会重写整块提示词，而是输出一组结构化、逐项列出的要点，形式为（标识符，说明），再通过确定性逻辑将这些要点合并进结构化的上下文记录。上下文条目会被定期改进和去重。</p>"
+    },
+    {
+      "id": "new42_self_improvement-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The fact that ACE learns insights from rollouts helps us move toward self-managed memory, but the update rules and the overall workflow are still handcrafted. To move toward a more self-improving loop, <strong>Meta Context Engineering</strong> (MCE; <a href=\"https://arxiv.org/abs/2601.21557\" rel=\"noopener noreferrer\">Ye et al. 2026</a>) separates the mechanism (how to manage context) from the artifact content (what is in context), running skill evolution at the meta-optimization level and context optimization at the base level.</p>",
+      "zh": "<p>ACE 从执行过程中学习见解，使我们向自主管理的记忆迈进，但更新规则和整体工作流仍是人工设计的。为了走向更能自我改进的循环，<strong>Meta Context Engineering</strong>（MCE；<a href=\"https://arxiv.org/abs/2601.21557\" rel=\"noopener noreferrer\">Ye 等，2026</a>）将机制（如何管理上下文）与产物内容（上下文中有什么）分开：在元优化层进行技能演化，在基础层进行上下文优化。</p>"
+    },
+    {
+      "id": "new42_self_improvement-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>An MCE skill <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n  <mo>∈</mo>\n  <mrow data-mjx-texclass=\"ORD\">\n    <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">S</mi>\n  </mrow>\n</math> defines a context function <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>c</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>=</mo>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>,</mo>\n  <msub>\n    <mi>F</mi>\n    <mi>s</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math> and maps an input <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>x</mi>\n</math> to context <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>c</mi>\n  <mo>=</mo>\n  <msub>\n    <mi>F</mi>\n    <mi>s</mi>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mi>x</mi>\n  <mo>;</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mi>s</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>, where:</p>",
+      "zh": "<p>MCE 技能 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n  <mo>∈</mo>\n  <mrow data-mjx-texclass=\"ORD\">\n    <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">S</mi>\n  </mrow>\n</math> 定义一个上下文函数 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>c</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>=</mo>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>,</mo>\n  <msub>\n    <mi>F</mi>\n    <mi>s</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>，将输入 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>x</mi>\n</math> 映射为上下文 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>c</mi>\n  <mo>=</mo>\n  <msub>\n    <mi>F</mi>\n    <mi>s</mi>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mi>x</mi>\n  <mo>;</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mi>s</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>，其中：</p>"
+    },
+    {
+      "id": "new42_self_improvement-037",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>ρ</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mn>1</mn>\n  </msub>\n  <mo>,</mo>\n  <mo>…</mo>\n  <mo>,</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mi>m</mi>\n  </msub>\n  <mo fence=\"false\" stretchy=\"false\">}</mo>\n</math> are static components (prompts, knowledge bases, code libraries).</li>\n<li><math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>F</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <msub>\n    <mi>F</mi>\n    <mn>1</mn>\n  </msub>\n  <mo>,</mo>\n  <mo>…</mo>\n  <mo>,</mo>\n  <msub>\n    <mi>F</mi>\n    <mi>k</mi>\n  </msub>\n  <mo fence=\"false\" stretchy=\"false\">}</mo>\n</math> are dynamic operators (search, selection, filtering, formatting).</li>\n</ul>",
+      "zh": "<ul><li><math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>ρ</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mn>1</mn>\n  </msub>\n  <mo>,</mo>\n  <mo>…</mo>\n  <mo>,</mo>\n  <msub>\n    <mi>ρ</mi>\n    <mi>m</mi>\n  </msub>\n  <mo fence=\"false\" stretchy=\"false\">}</mo>\n</math> 是静态组件（提示词、知识库、代码库）。</li><li><math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>F</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <msub>\n    <mi>F</mi>\n    <mn>1</mn>\n  </msub>\n  <mo>,</mo>\n  <mo>…</mo>\n  <mo>,</mo>\n  <msub>\n    <mi>F</mi>\n    <mi>k</mi>\n  </msub>\n  <mo fence=\"false\" stretchy=\"false\">}</mo>\n</math> 是动态算子（搜索、选择、过滤、格式化）。</li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The bi-level optimization is to find the best context <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msubsup>\n    <mi>c</mi>\n    <mi>s</mi>\n    <mo>∗</mo>\n  </msubsup>\n</math> given skill <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n</math> on the training data, while the outer loop finds the optimal skill that provides the best performance on the validation set:</p>",
+      "zh": "<p>这种双层优化是在给定技能 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n</math> 的情况下，根据训练数据找到最佳上下文 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msubsup>\n    <mi>c</mi>\n    <mi>s</mi>\n    <mo>∗</mo>\n  </msubsup>\n</math>；外层循环则寻找能在验证集上取得最佳表现的技能：</p>"
+    },
+    {
+      "id": "new42_self_improvement-039",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\n  <mtext>Inner: </mtext>\n  <msubsup>\n    <mi>c</mi>\n    <mi>s</mi>\n    <mo>∗</mo>\n  </msubsup>\n  <mo>=</mo>\n  <mi>arg</mi>\n  <mo data-mjx-texclass=\"NONE\">⁡</mo>\n  <munder>\n    <mo data-mjx-texclass=\"OP\" movablelimits=\"true\">max</mo>\n    <mrow data-mjx-texclass=\"ORD\">\n      <msub>\n        <mi>c</mi>\n        <mi>s</mi>\n      </msub>\n    </mrow>\n  </munder>\n  <msub>\n    <mi>J</mi>\n    <mtext>train</mtext>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>c</mi>\n    <mi>s</mi>\n  </msub>\n  <mo>;</mo>\n  <mi>s</mi>\n  <mo stretchy=\"false\">)</mo>\n  <mstyle scriptlevel=\"0\">\n    <mspace width=\"1em\"></mspace>\n  </mstyle>\n  <mtext>Outer: </mtext>\n  <msup>\n    <mi>s</mi>\n    <mo>∗</mo>\n  </msup>\n  <mo>=</mo>\n  <mi>arg</mi>\n  <mo data-mjx-texclass=\"NONE\">⁡</mo>\n  <munder>\n    <mo data-mjx-texclass=\"OP\" movablelimits=\"true\">max</mo>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>s</mi>\n      <mo>∈</mo>\n      <mrow data-mjx-texclass=\"ORD\">\n        <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">S</mi>\n      </mrow>\n    </mrow>\n  </munder>\n  <msub>\n    <mi>J</mi>\n    <mtext>val</mtext>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <msubsup>\n    <mi>c</mi>\n    <mi>s</mi>\n    <mo>∗</mo>\n  </msubsup>\n  <mo stretchy=\"false\">)</mo>\n</math>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The skill database tracks the history of previous skills, context functions and eval metrics <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">H</mi>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>s</mi>\n    <mi>i</mi>\n  </msub>\n  <mo>,</mo>\n  <msub>\n    <mi>c</mi>\n    <mi>i</mi>\n  </msub>\n  <mo>,</mo>\n  <msubsup>\n    <mi>J</mi>\n    <mi>i</mi>\n    <mtext>train</mtext>\n  </msubsup>\n  <mo>,</mo>\n  <msubsup>\n    <mi>J</mi>\n    <mi>i</mi>\n    <mtext>val</mtext>\n  </msubsup>\n  <mo stretchy=\"false\">)</mo>\n  <msubsup>\n    <mo fence=\"false\" stretchy=\"false\">}</mo>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>i</mi>\n      <mo>=</mo>\n      <mn>1</mn>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msubsup>\n</math>. A meta-level agent performs agentic <a href=\"https://en.wikipedia.org/wiki/Crossover_(evolutionary_algorithm)\" rel=\"noopener noreferrer\">crossover</a> over prior skills to create a new skill given a task <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>τ</mi>\n</math>: <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>s</mi>\n    <mi>k</mi>\n  </msub>\n  <mo>=</mo>\n  <mtext>crossover</mtext>\n  <mo stretchy=\"false\">(</mo>\n  <mi>τ</mi>\n  <mo>,</mo>\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">H</mi>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>.</p>",
+      "zh": "<p>技能数据库跟踪以往技能、上下文函数和评测指标的历史记录 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">H</mi>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <mo stretchy=\"false\">(</mo>\n  <msub>\n    <mi>s</mi>\n    <mi>i</mi>\n  </msub>\n  <mo>,</mo>\n  <msub>\n    <mi>c</mi>\n    <mi>i</mi>\n  </msub>\n  <mo>,</mo>\n  <msubsup>\n    <mi>J</mi>\n    <mi>i</mi>\n    <mtext>train</mtext>\n  </msubsup>\n  <mo>,</mo>\n  <msubsup>\n    <mi>J</mi>\n    <mi>i</mi>\n    <mtext>val</mtext>\n  </msubsup>\n  <mo stretchy=\"false\">)</mo>\n  <msubsup>\n    <mo fence=\"false\" stretchy=\"false\">}</mo>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>i</mi>\n      <mo>=</mo>\n      <mn>1</mn>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msubsup>\n</math>。给定任务 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>τ</mi>\n</math>，元层 Agent 对先前技能执行 Agent 式<a href=\"https://en.wikipedia.org/wiki/Crossover_(evolutionary_algorithm)\" rel=\"noopener noreferrer\">交叉</a>操作，创建新技能：<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>s</mi>\n    <mi>k</mi>\n  </msub>\n  <mo>=</mo>\n  <mtext>crossover</mtext>\n  <mo stretchy=\"false\">(</mo>\n  <mi>τ</mi>\n  <mo>,</mo>\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">H</mi>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>。</p>"
+    },
+    {
+      "id": "new42_self_improvement-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Then a base-level context engineer executes the skill <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>s</mi>\n    <mi>k</mi>\n  </msub>\n</math> and learns the context function from rollout feedback <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">R</mi>\n    </mrow>\n    <mi>k</mi>\n  </msub>\n</math>, guided by the current skill: <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>c</mi>\n    <mi>k</mi>\n  </msub>\n  <mo>=</mo>\n  <mtext>engineer</mtext>\n  <mo stretchy=\"false\">(</mo>\n  <mi>τ</mi>\n  <mo>,</mo>\n  <msub>\n    <mi>s</mi>\n    <mi>k</mi>\n  </msub>\n  <mo>;</mo>\n  <msubsup>\n    <mi>c</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n    <mo>∗</mo>\n  </msubsup>\n  <mo>,</mo>\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">R</mi>\n    </mrow>\n    <mi>k</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>.</p>",
+      "zh": "<p>接着，基础层的上下文工程 Agent 执行技能 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>s</mi>\n    <mi>k</mi>\n  </msub>\n</math>，在当前技能的指导下，从执行反馈 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">R</mi>\n    </mrow>\n    <mi>k</mi>\n  </msub>\n</math> 中学习上下文函数：<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>c</mi>\n    <mi>k</mi>\n  </msub>\n  <mo>=</mo>\n  <mtext>engineer</mtext>\n  <mo stretchy=\"false\">(</mo>\n  <mi>τ</mi>\n  <mo>,</mo>\n  <msub>\n    <mi>s</mi>\n    <mi>k</mi>\n  </msub>\n  <mo>;</mo>\n  <msubsup>\n    <mi>c</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>k</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n    <mo>∗</mo>\n  </msubsup>\n  <mo>,</mo>\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">R</mi>\n    </mrow>\n    <mi>k</mi>\n  </msub>\n  <mo stretchy=\"false\">)</mo>\n</math>。</p>"
+    },
+    {
+      "id": "new42_self_improvement-042",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/b029e8a00415e024ca5ea9fc.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>The framework of Meta Context Engineering (MCE): meta-level skill evolution searches over context-management mechanisms, while the base level optimizes the task context. (Image source: <a href=\"https://arxiv.org/abs/2601.21557\" rel=\"noopener noreferrer\">Ye et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>MCE does not enforce a heuristic rule for how to structure context as ACE does. It uses <em>free-form skills</em> to store the most important knowledge for a task, and evolves the skill and the skill-conditioned context iteratively together. Implementation-wise, a context function <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>c</mi>\n</math> is instantiated as a collection of files in a dedicated directory, including both static (<code>skill.md</code>) and dynamic (context and data rollouts) components. Both meta-level and base-level optimization are executed in agentic coding envs with a standard tool set,</p>",
+      "zh": "<p>MCE 不像 ACE 那样强制采用某种关于上下文结构的启发式规则。它使用<em>自由形式的技能</em>保存任务最重要的知识，并将技能和受技能约束的上下文一起迭代演化。在实现上，上下文函数 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>c</mi>\n</math> 被实例化为专用目录中的一组文件，既包括静态组件（<code>skill.md</code>），也包括动态组件（上下文和数据执行轨迹）。元层优化与基础层优化都在具有标准工具集的 Agent 编程环境中执行，工具集为：</p>"
+    },
+    {
+      "id": "new42_self_improvement-044",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\n  <mrow data-mjx-texclass=\"ORD\">\n    <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">T</mi>\n  </mrow>\n  <mo>=</mo>\n  <mo fence=\"false\" stretchy=\"false\">{</mo>\n  <mtext mathvariant=\"monospace\">Read</mtext>\n  <mo>,</mo>\n  <mtext mathvariant=\"monospace\">Write</mtext>\n  <mo>,</mo>\n  <mtext mathvariant=\"monospace\">Edit</mtext>\n  <mo>,</mo>\n  <mtext mathvariant=\"monospace\">Bash</mtext>\n  <mo>,</mo>\n  <mtext mathvariant=\"monospace\">Glob</mtext>\n  <mo>,</mo>\n  <mtext mathvariant=\"monospace\">Grep</mtext>\n  <mo>,</mo>\n  <mtext mathvariant=\"monospace\">TodoWrite</mtext>\n  <mo fence=\"false\" stretchy=\"false\">}</mo>\n</math>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Meta-Harness</strong> (<a href=\"https://arxiv.org/abs/2603.28052\" rel=\"noopener noreferrer\">Lee et al. 2026</a>) moves another level deeper: the optimized object is the <em>code</em> that determines and optimizes what information should be stored, retrieved, and presented to the model. “Meta-” in its name means it is a harness for optimizing harnesses.</p>",
+      "zh": "<p><strong>Meta-Harness</strong>（<a href=\"https://arxiv.org/abs/2603.28052\" rel=\"noopener noreferrer\">Lee 等，2026</a>）又深入了一层：优化对象是用于决定并优化“应当存储、检索哪些信息，以及向模型展示哪些信息”的<em>代码</em>。其名称中的“Meta-”表示，它是一个用于优化运行框架的运行框架。</p>"
+    },
+    {
+      "id": "new42_self_improvement-046",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/382d9c707bebbe570214015d.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>The Meta-Harness outer-loop optimization algorithm. (Image source: <a href=\"https://arxiv.org/abs/2603.28052\" rel=\"noopener noreferrer\">Lee et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The proposer for creating a new harness is itself a coding agent and the final output is a collection of harness candidates on the Pareto frontier.</p>",
+      "zh": "<p>负责提出新运行框架的提议者，本身就是一个编程 Agent；最终输出是位于帕累托前沿上的一组运行框架候选方案。</p>"
+    },
+    {
+      "id": "new42_self_improvement-048",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>The entire execution history is accessible via a file system, and thus the coding agent uses commands like <code>grep</code> or <code>cat</code> to read through it instead of shoveling everything into a single prompt context.</li>\n<li>The proposed harness is a dictionary in the file system containing its own source code, scores, rollout trajectories, and state updates.</li>\n<li>The mete-harness loop iteratively creates new harnesses, and only qualified ones are kept.</li>\n</ul>",
+      "zh": "<ul><li>整个执行历史都能通过文件系统访问，因此编程 Agent 会使用 <code>grep</code> 或 <code>cat</code> 等命令读取它，而不是把所有内容塞进单个提示词上下文。</li><li>提出的运行框架是文件系统中的一个字典，包含自身源代码、分数、执行轨迹和状态更新。</li><li>元运行框架循环迭代创建新的运行框架，只保留合格的候选方案。</li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-049",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/11c0d4cf8735a06d68052688.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>The performance of Meta-Harness on (Left) text classification with a small number of iterations and (Right) TerminalBench-2. Note that the search in the TerminalBench-2 experiment is initialized from Terminus-KIRA and Terminus-2, two very strong harnesses. (Image source: <a href=\"https://arxiv.org/abs/2603.28052\" rel=\"noopener noreferrer\">Lee et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Still, the important lesson is clear: once harness design becomes an executable search space, a strong coding agent can exploit the same design space human engineers use.</p>",
+      "zh": "<p>不过，重要启示已经很清楚：一旦运行框架设计成为可执行的搜索空间，强大的编程 Agent 就能利用人类工程师使用的同一设计空间。</p>"
+    },
+    {
+      "id": "new42_self_improvement-051",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-workflow-design\">Workflow Design</h3>",
+      "zh": "<h3 id=\"zh-source-workflow-design\">工作流设计</h3>"
+    },
+    {
+      "id": "new42_self_improvement-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Workflow design in harness engineering can be handcrafted by domain experts. Taking auto-research as an example, various frameworks have been proposed and tested. The <strong>AI Scientist</strong> system (<a href=\"https://www.nature.com/articles/s41586-026-10265-5\" rel=\"noopener noreferrer\">Lu et al. 2026</a>) builds a pipeline to propose research ideas, write code, run experiments, analyze results, write a manuscript, and perform peer review. <a href=\"https://arxiv.org/abs/2605.26340\" rel=\"noopener noreferrer\">Meng et al. (2026)</a> make verifiability the central design constraint in <strong>ScientistOne</strong>, where every claim (citation, numerical, methodological, conclusion) must trace to an evidence source and is audited by Chain-of-Evidence checks.</p>",
+      "zh": "<p>运行框架工程中的工作流，可以由领域专家手工设计。以自动化研究为例，人们已经提出并测试了多种框架。<strong>AI Scientist</strong> 系统（<a href=\"https://www.nature.com/articles/s41586-026-10265-5\" rel=\"noopener noreferrer\">Lu 等，2026</a>）构建了一条提出研究想法、编写代码、运行实验、分析结果、撰写论文和开展同行评审的流水线。<a href=\"https://arxiv.org/abs/2605.26340\" rel=\"noopener noreferrer\">Meng 等（2026）</a>在 <strong>ScientistOne</strong> 中将可验证性作为核心设计约束：每一项主张（引文、数值、方法、结论）都必须能够追溯到证据来源，并经过证据链检查的审计。</p>"
+    },
+    {
+      "id": "new42_self_improvement-053",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/b0d204e24a6c0326a6f09356.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>AI Scientist pipeline for idea generation, experimentation, paper writing, and review. (Image source: <a href=\"https://www.nature.com/articles/s41586-026-10265-5\" rel=\"noopener noreferrer\">Lu et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <strong>Autodata</strong> agent (<a href=\"https://arxiv.org/abs/2606.25996\" rel=\"noopener noreferrer\">Kulikov et al. 2026</a>) is designed to work as a data scientist for generating training and evaluation data. The main agent manages a <em>challenger</em> that proposes problems, a <em>weak solver</em>, a <em>strong solver</em>, and a <em>verifier/judge</em>, aiming to synthesize data at the “just right” level of difficulty, meaning that the strong solver succeeds but the weak solver fails.</p>",
+      "zh": "<p><strong>Autodata</strong> Agent（<a href=\"https://arxiv.org/abs/2606.25996\" rel=\"noopener noreferrer\">Kulikov 等，2026</a>）旨在充当生成训练数据和评测数据的数据科学家。主 Agent 管理一个提出问题的<em>挑战者</em>、一个<em>弱求解器</em>、一个<em>强求解器</em>和一个<em>验证器／评判器</em>，目标是合成难度“恰到好处”的数据，即强求解器能够成功，而弱求解器会失败。</p>"
+    },
+    {
+      "id": "new42_self_improvement-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In Autodata, the challenger prompt is updated iteratively according to feedback from the solvers and verifier. The limitation here is that synthesized tasks are used to fine-tune weak solvers but not strong solvers; if the loop cannot iteratively improve the strong model, it is more like indirect distillation over a generated prompt distribution, with less RSI flavor.</p>",
+      "zh": "<p>在 Autodata 中，挑战者的提示词会根据求解器和验证器的反馈迭代更新。这里的局限是：合成任务用于微调弱求解器，却不用于微调强求解器；如果循环无法迭代改进强模型，它就更像是在生成的提示词分布上进行间接蒸馏，RSI 的意味较弱。</p>"
+    },
+    {
+      "id": "new42_self_improvement-056",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/dc949203f206858744d3b356.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Autodata agentic workflow design for generating synthetic training and evaluation data around challenger, solver, and verifier roles. (Image source: <a href=\"https://arxiv.org/abs/2606.25996\" rel=\"noopener noreferrer\">Kulikov et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The design space for workflow is <em>enormous</em>, and naturally we can think of workflow design as a search problem, and therefore we should be able to find good solutions by algorithms rather than only manually craft them. Following this direction, <strong>Automated Design of Agentic Systems</strong> (ADAS; <a href=\"https://arxiv.org/abs/2408.08435\" rel=\"noopener noreferrer\">Hu et al. 2025</a>) formulates agent design itself as an optimization problem, “meta-agent search” where a meta-agent proposes new designs of agentic workflows.</p>",
+      "zh": "<p>工作流的设计空间<em>极其庞大</em>，因此我们自然可以将工作流设计视为搜索问题，也就应该能够通过算法找到好的方案，而不只是手工设计。沿着这一方向，<strong>Automated Design of Agentic Systems</strong>（ADAS；<a href=\"https://arxiv.org/abs/2408.08435\" rel=\"noopener noreferrer\">Hu 等，2025</a>）将 Agent 设计本身表述为优化问题，即“元 Agent 搜索”：由元 Agent 提出新的 Agent 工作流设计。</p>"
+    },
+    {
+      "id": "new42_self_improvement-058",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>Initialize an archive of agentic workflows with simple agents such as CoT and self-refine.</li>\n<li>Ask a meta-agent to program new agents, all in <em>code</em>, inspired by existing solutions in the archive.\n<ul>\n<li>The meta-agent first generates a high-level description of the new workflow, and then implements it in code.</li>\n<li>The draft program then goes through two self-refine steps (i.e. ask the model to provide feedback and then ask the same model to refine the previously generated outputs based on the feedback; <a href=\"https://arxiv.org/abs/2303.17651\" rel=\"noopener noreferrer\">Madaan et al. 2023</a>) by the meta-agent to check its novelty.</li>\n</ul>\n</li>\n<li>Evaluate each new candidate and add successful ones back to the archive.</li>\n<li>Repeat steps 2-3 until the maximum iteration count is reached.</li>\n</ol>",
+      "zh": "<ol><li>以 CoT、自我改进（self-refine）等简单 Agent 初始化 Agent 工作流档案库。</li><li>让元 Agent 受档案库中现有方案启发，完全以<em>代码</em>编写新的 Agent。<ul><li>元 Agent 先生成新工作流的高层描述，再用代码实现。</li><li>随后，元 Agent 对程序草稿执行两步自我改进，以检查其新颖性（即先让模型提供反馈，再让同一个模型根据反馈改进先前生成的输出；<a href=\"https://arxiv.org/abs/2303.17651\" rel=\"noopener noreferrer\">Madaan 等，2023</a>）。</li></ul></li><li>评测每个新候选方案，将成功者加入档案库。</li><li>重复步骤 2–3，直到达到最大迭代次数。</li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-059",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/dc5a10cecf66c578612dc964.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Illustration of Automated Design of Agentic Systems (ADAS).<br>(Image source: <a href=\"https://arxiv.org/abs/2408.08435\" rel=\"noopener noreferrer\">Hu et al. 2025</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>AFlow</strong> (<a href=\"https://arxiv.org/abs/2410.10762\" rel=\"noopener noreferrer\">Zhang et al. 2025</a>) represents an agentic workflow as a graph, where nodes represent LLM-invoking actions and edges implement logical operations in code. The workflow optimization relies on <a href=\"https://en.wikipedia.org/wiki/Monte_Carlo_tree_search\" rel=\"noopener noreferrer\">MCTS</a> (Monte Carlo Tree Search):</p>",
+      "zh": "<p><strong>AFlow</strong>（<a href=\"https://arxiv.org/abs/2410.10762\" rel=\"noopener noreferrer\">Zhang 等，2025</a>）将 Agent 工作流表示为图：节点表示调用 LLM 的行动，边通过代码实现逻辑操作。工作流优化依赖 <a href=\"https://en.wikipedia.org/wiki/Monte_Carlo_tree_search\" rel=\"noopener noreferrer\">MCTS</a>（蒙特卡洛树搜索）：</p>"
+    },
+    {
+      "id": "new42_self_improvement-061",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>Initialize the starting workflow <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>W</mi>\n    <mn>0</mn>\n  </msub>\n</math> in the tree with a template.</li>\n<li>Select a workflow node using a soft mixture of score and uniform exploration.</li>\n<li>Expand it by asking an LLM to produce a modified workflow conditioned on its evaluation performance.</li>\n<li>Execute and evaluate the new workflow.</li>\n<li>Add it back to the tree if the new workflow shows improvement within a budget of <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>N</mi>\n</math> rounds.</li>\n<li>Repeat steps 2-5 and stop when the top-<math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>k</mi>\n</math> average score plateaus or hit the budget.</li>\n</ol>",
+      "zh": "<ol><li>用模板初始化树中的起始工作流 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>W</mi>\n    <mn>0</mn>\n  </msub>\n</math>。</li><li>通过分数与均匀探索的软混合策略，选择一个工作流节点。</li><li>让 LLM 根据该工作流的评测表现生成修改后的工作流，从而扩展节点。</li><li>执行并评测新工作流。</li><li>如果新工作流在 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>N</mi>\n</math> 轮预算内表现出改进，就将其加入树中。</li><li>重复步骤 2–5，直到前 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>k</mi>\n</math> 个工作流的平均分趋于平稳，或用尽预算。</li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-062",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/2bdf9fd25f4a57c62b723ac8.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>AFlow optimization process over a tree of workflow candidates. (Image source: <a href=\"https://arxiv.org/abs/2410.10762\" rel=\"noopener noreferrer\">Zhang et al. 2025</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Experiments of AFlow in QA, code, and math tasks showed decent improvement of AFlow over manually designed workflows and ADAS.</p>",
+      "zh": "<p>AFlow 在问答、代码和数学任务上的实验表明，与手工设计的工作流和 ADAS 相比，它取得了不错的提升。</p>"
+    },
+    {
+      "id": "new42_self_improvement-064",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/b974178fc5c68103638566a5.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>AFlow experiments in comparison to manual methods and ADAS. (Image source: <a href=\"https://arxiv.org/abs/2410.10762\" rel=\"noopener noreferrer\">Zhang et al. 2025</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-065",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-self-improving-harness\">Self-Improving Harness</h3>",
+      "zh": "<h3 id=\"zh-source-self-improving-harness\">自我改进的运行框架</h3>"
+    },
+    {
+      "id": "new42_self_improvement-066",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Either context engineering or workflow design is only one part of a harness. We need to search through the entire design space and optimize context-management logic, workflow, permissions, and many other harness components together. As we have seen in work like Meta-Harness, ADAS, and AFlow, <strong>✨code✨</strong> is a <strong>universal language</strong> for defining programs and systems. In simple words, a harness is code that programs how prompts, tool calls, subagents, control flow, memory, and workflow logic work together. If an LLM can optimize the code that executes agents, it can access a <em>much larger design space</em> than hand-written prompts.</p>",
+      "zh": "<p>上下文工程或工作流设计，都只是运行框架的一部分。我们需要搜索整个设计空间，同时优化上下文管理逻辑、工作流、权限，以及运行框架的许多其他组件。正如 Meta-Harness、ADAS 和 AFlow 等工作所展示的，<strong>✨代码✨</strong>是定义程序与系统的<strong>通用语言</strong>。简单来说，运行框架就是一段代码，规定提示词、工具调用、子 Agent、控制流、记忆和工作流逻辑如何协同运作。如果 LLM 能优化执行 Agent 的代码，它就能进入一个比手写提示词<em>大得多的设计空间</em>。</p>"
+    },
+    {
+      "id": "new42_self_improvement-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Self-Taught Optimizer</strong> (STOP; <a href=\"https://arxiv.org/abs/2310.02304\" rel=\"noopener noreferrer\">Zelikman et al. 2023</a>) is one of the early examples of recursive scaffolding improvement. A seed improver <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>I</mi>\n    <mn>0</mn>\n  </msub>\n</math> at step <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>t</mi>\n  <mo>=</mo>\n  <mn>0</mn>\n</math> takes an initial solution <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n</math>, a utility function <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>u</mi>\n</math>, and a black-box language model <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>M</mi>\n</math>, and returns an improved solution <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msup>\n    <mi>s</mi>\n    <mo data-mjx-alternate=\"1\">′</mo>\n  </msup>\n</math>, that is, <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msup>\n    <mi>s</mi>\n    <mo data-mjx-alternate=\"1\">′</mo>\n  </msup>\n  <mo>=</mo>\n  <mi>I</mi>\n  <mo stretchy=\"false\">(</mo>\n  <mi>u</mi>\n  <mo>,</mo>\n  <mi>s</mi>\n  <mo>;</mo>\n  <mi>M</mi>\n  <mo stretchy=\"false\">)</mo>\n</math>. The goal of STOP is not directly to improve <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n</math> but <em>to improve the improver <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>I</mi>\n</math> itself</em>.</p>",
+      "zh": "<p><strong>Self-Taught Optimizer</strong>（STOP；<a href=\"https://arxiv.org/abs/2310.02304\" rel=\"noopener noreferrer\">Zelikman 等，2023</a>）是递归改进辅助框架的早期案例之一。在步骤 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>t</mi>\n  <mo>=</mo>\n  <mn>0</mn>\n</math>，初始改进器 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>I</mi>\n    <mn>0</mn>\n  </msub>\n</math> 接收初始方案 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n</math>、效用函数 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>u</mi>\n</math> 和黑箱语言模型 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>M</mi>\n</math>，返回改进后的方案 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msup>\n    <mi>s</mi>\n    <mo data-mjx-alternate=\"1\">′</mo>\n  </msup>\n</math>，即 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msup>\n    <mi>s</mi>\n    <mo data-mjx-alternate=\"1\">′</mo>\n  </msup>\n  <mo>=</mo>\n  <mi>I</mi>\n  <mo stretchy=\"false\">(</mo>\n  <mi>u</mi>\n  <mo>,</mo>\n  <mi>s</mi>\n  <mo>;</mo>\n  <mi>M</mi>\n  <mo stretchy=\"false\">)</mo>\n</math>。STOP 的目标不是直接改进 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>s</mi>\n</math>，而是<em>改进改进器 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>I</mi>\n</math> 本身</em>。</p>"
+    },
+    {
+      "id": "new42_self_improvement-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>First, let’s define the meta-utility as the average utility of a given improver function <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>I</mi>\n</math> over a collection of downstream tasks <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mrow data-mjx-texclass=\"ORD\">\n    <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">D</mi>\n  </mrow>\n</math>:</p>",
+      "zh": "<p>首先，将元效用定义为：给定改进器函数 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>I</mi>\n</math> 在一组下游任务 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mrow data-mjx-texclass=\"ORD\">\n    <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">D</mi>\n  </mrow>\n</math> 上的平均效用：</p>"
+    },
+    {
+      "id": "new42_self_improvement-069",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\n  <mrow data-mjx-texclass=\"ORD\">\n    <mover>\n      <mi>u</mi>\n      <mo stretchy=\"false\">^</mo>\n    </mover>\n  </mrow>\n  <mo stretchy=\"false\">(</mo>\n  <mi>I</mi>\n  <mo stretchy=\"false\">)</mo>\n  <mo>≜</mo>\n  <mfrac>\n    <mn>1</mn>\n    <mrow>\n      <mo data-mjx-texclass=\"ORD\" fence=\"false\" stretchy=\"false\">|</mo>\n      <mrow data-mjx-texclass=\"ORD\">\n        <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">D</mi>\n      </mrow>\n      <mo data-mjx-texclass=\"ORD\" fence=\"false\" stretchy=\"false\">|</mo>\n    </mrow>\n  </mfrac>\n  <msub>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi mathvariant=\"double-struck\">E</mi>\n    </mrow>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mo stretchy=\"false\">(</mo>\n      <mi>u</mi>\n      <mo>,</mo>\n      <mi>s</mi>\n      <mo stretchy=\"false\">)</mo>\n      <mo>∼</mo>\n      <mrow data-mjx-texclass=\"ORD\">\n        <mi data-mjx-variant=\"-tex-calligraphic\" mathvariant=\"script\">D</mi>\n      </mrow>\n    </mrow>\n  </msub>\n  <mo stretchy=\"false\">[</mo>\n  <mi>u</mi>\n  <mo stretchy=\"false\">(</mo>\n  <mi>I</mi>\n  <mo stretchy=\"false\">(</mo>\n  <mi>u</mi>\n  <mo>,</mo>\n  <mi>s</mi>\n  <mo>;</mo>\n  <mi>M</mi>\n  <mo stretchy=\"false\">)</mo>\n  <mo stretchy=\"false\">)</mo>\n  <mo stretchy=\"false\">]</mo>\n</math>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Because improving the improver function is an optimization problem itself, we can recursively get a new version of <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>I</mi>\n    <mi>t</mi>\n  </msub>\n</math> based on <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>I</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n</math>’s performance measured by meta-utility via a self-improvement update:</p>",
+      "zh": "<p>由于改进改进器函数本身也是一个优化问题，我们可以根据元效用衡量的 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>I</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n</math> 表现，通过一次自我改进更新，递归得到新版 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>I</mi>\n    <mi>t</mi>\n  </msub>\n</math>：</p>"
+    },
+    {
+      "id": "new42_self_improvement-071",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">\n  <msub>\n    <mi>I</mi>\n    <mi>t</mi>\n  </msub>\n  <mo>=</mo>\n  <msub>\n    <mi>I</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n  <mo stretchy=\"false\">(</mo>\n  <mrow data-mjx-texclass=\"ORD\">\n    <mover>\n      <mi>u</mi>\n      <mo stretchy=\"false\">^</mo>\n    </mover>\n  </mrow>\n  <mo>,</mo>\n  <msub>\n    <mi>I</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>−</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n  <mo>;</mo>\n  <mi>M</mi>\n  <mo stretchy=\"false\">)</mo>\n</math>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-072",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/8f791ddd4796151d367bb358.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Algorithm of Self-Taught Optimizer (STOP). (Image source: <a href=\"https://arxiv.org/abs/2310.02304\" rel=\"noopener noreferrer\">Zelikman et al. 2023</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In their experiments, the improved improver discovered various strategies, such as genetic algorithms, decomposing and improving parts, multi-armed prompt bandits, simulated annealing, varying temperature, and beam/tree search. This is analogous to how a harness workflow can be represented as an object for optimization.</p>",
+      "zh": "<p>在实验中，改进后的改进器发现了多种策略，例如遗传算法、分解并改进各个部分、多臂提示词老虎机、模拟退火、改变温度，以及束搜索／树搜索。这与将运行框架工作流表示为可优化对象的方式类似。</p>"
+    },
+    {
+      "id": "new42_self_improvement-074",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/0e0212ea355985574125bad2.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Examples of self-improvement strategies discovered by STOP. (Image source: <a href=\"https://arxiv.org/abs/2310.02304\" rel=\"noopener noreferrer\">Zelikman et al. 2023</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A <em>cautionary</em> result in Zelikman et al. (2023)’s findings is that STOP improved mean downstream performance across iterations with GPT-4 but degraded with weaker models like GPT-3.5 and Mixtral. Recursive structure alone is not enough. The base model must be <em>capable enough</em> to improve the mechanism. This implies that harness improvement enables better deployment of the model but intelligence is still the core.</p>",
+      "zh": "<p>Zelikman 等（2023）的研究中，有一个<em>值得警惕</em>的结果：使用 GPT-4 时，STOP 的平均下游表现随迭代提升；但使用 GPT-3.5 和 Mixtral 等较弱模型时，表现反而下降。仅有递归结构还不够，基础模型必须<em>足够强</em>，才能改进机制。这意味着，运行框架改进可以让模型得到更好的部署，但智能仍然是核心。</p>"
+    },
+    {
+      "id": "new42_self_improvement-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://arxiv.org/abs/2605.30621\" rel=\"noopener noreferrer\">Lin et al. (2026)</a> investigated the dependency of harness evolution on model capabilities in more details. They disentangled two axes: (1) <em>harness-updating</em> refers to the capability of producing useful harness edits and (2) <em>harness-benefit</em> denotes the capability of utilizing the updated harness, to achieve better task solving. Interestingly a range of model of different sizes and core intelligence, from Qwen3.5-9B to Claude Opus 4.6, were observed in their experiments to show similar harness updating capability; the 9B harness proposer/evolver is able to write a skill procedurally isomorphic to Opus. To best utilize a harness, a model needs to invoke skills/tools correctly and timely and be good at long-horizon instruction following.</p>",
+      "zh": "<p><a href=\"https://arxiv.org/abs/2605.30621\" rel=\"noopener noreferrer\">Lin 等（2026）</a>更详细地研究了运行框架演化对模型能力的依赖。他们区分了两个维度：（1）<em>运行框架更新能力</em>，指产生有用的运行框架修改的能力；（2）<em>运行框架受益能力</em>，指利用更新后的运行框架、更好地解决任务的能力。有趣的是，他们的实验观察到，从 Qwen3.5-9B 到 Claude Opus 4.6，一系列规模和核心智能不同的模型表现出相近的运行框架更新能力；9B 规模的运行框架提议者／演化器，能够写出在过程结构上与 Opus 同构的技能。要充分利用运行框架，模型需要正确、及时地调用技能／工具，并擅长长时程指令遵循。</p>"
+    },
+    {
+      "id": "new42_self_improvement-077",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/f47fa538e5e9ca01007c3052.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Main results: (A) harness updating capability is measured flat across a range of models from Qwen2-32B to Opus 4.6; (B) harness benefit capability is non-monotonic where middle tier models benefit the most. (Image source: <a href=\"https://arxiv.org/abs/2605.30621\" rel=\"noopener noreferrer\">Lin et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-078",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A more recent work, <strong>Self-Harness</strong> (<a href=\"https://arxiv.org/abs/2606.09498\" rel=\"noopener noreferrer\">Zhang et al. 2026</a>), relies on LLM agents to improve their own harness via a propose-evaluate-accept loop.</p>",
+      "zh": "<p>较近的一项工作 <strong>Self-Harness</strong>（<a href=\"https://arxiv.org/abs/2606.09498\" rel=\"noopener noreferrer\">Zhang 等，2026</a>），依靠 LLM Agent 通过“提出—评测—接受”循环改进自身的运行框架。</p>"
+    },
+    {
+      "id": "new42_self_improvement-079",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/895bd4a7cd9b6b9db2c7a1b1.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Self-Harness uses a loop of weakness mining, bounded harness proposal, and validation to update a harness. (Image source: <a href=\"https://arxiv.org/abs/2606.09498\" rel=\"noopener noreferrer\">Zhang et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-080",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The loop in Self-Harness has three stages:</p>",
+      "zh": "<p>Self-Harness 的循环有三个阶段：</p>"
+    },
+    {
+      "id": "new42_self_improvement-081",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li><em>Weakness mining</em>: cluster failures into verifier-grounded failure patterns.\n<ul>\n<li>The current harness <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mi>t</mi>\n  </msub>\n</math> is used to evaluate on tasks and execution traces are collected for analysis.</li>\n<li>Note that two runs can share the same verifier outcome in the error logs on the surface, such as timeout or missing artifact, while having different causal mechanisms. Therefore we need a failure record of rich information, containing the terminal verifier-level cause, the causal status of the relevant agent behavior, and the abstract agent mechanism exposed by the trace, to uncover the root causes.</li>\n</ul>\n</li>\n<li><em>Harness proposal</em>: propose bounded harness edits based on mined failure patterns.\n<ul>\n<li>The same model is invoked under <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mi>t</mi>\n  </msub>\n</math> as a proposer.</li>\n<li>The model is provided with a bounded proposal context: (1) the editable surfaces of the current harness, (2) the verifier-grounded failure patterns from the evaluation system, (3) records of passing behaviors that should be preserved, and (4) summaries of previously attempted edits.</li>\n<li>Harness edits should prefer recurrent error patterns that are addressable (e.g. not task-specific difficulty) and can be resolved by narrow changes.</li>\n<li>Harness edit candidates should be distinct and diverse.</li>\n</ul>\n</li>\n<li><em>Proposal validation</em>: validate and merge qualified edits to create a new harness <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>+</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n</math>.\n<ul>\n<li>Candidate edits are evaluated by regression tests on held-in <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>D</mi>\n    <mtext>in</mtext>\n  </msub>\n</math> (for testing whether the weakness is resolved) and held-out <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>D</mi>\n    <mtext>out</mtext>\n  </msub>\n</math> (for checking whether other unknown issues were introduced) splits.</li>\n<li>Candidates are accepted only if they have no regression on both held-in and held-out data.</li>\n<li>Accepted candidates are merged to update the harness to <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>+</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n</math>, while rejected candidates are logged without changing the active harness.</li>\n</ul>\n</li>\n</ol>",
+      "zh": "<ol><li><em>弱点挖掘</em>：将失败聚类为以验证器结果为依据的失败模式。<ul><li>使用当前运行框架 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mi>t</mi>\n  </msub>\n</math> 对任务进行评测，并收集执行轨迹以供分析。</li><li>需要注意，两次运行在错误日志中表面上可能具有相同的验证器结果，例如超时或缺少产物，但背后的因果机制不同。因此，我们需要信息丰富的失败记录，其中包含最终验证器层面的原因、相关 Agent 行为的因果状态，以及执行轨迹暴露出的抽象 Agent 机制，才能揭示根本原因。</li></ul></li><li><em>运行框架提议</em>：根据挖掘出的失败模式，提出范围受限的运行框架修改。<ul><li>在 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mi>t</mi>\n  </msub>\n</math> 下调用同一个模型，让它充当提议者。</li><li>向模型提供范围受限的提议上下文：（1）当前运行框架中允许编辑的部分；（2）评测系统提供的、以验证器结果为依据的失败模式；（3）应该保留的成功行为记录；（4）先前尝试过的修改摘要。</li><li>运行框架修改应优先处理反复出现、可以解决（例如并非任务特有的难点）、且能通过局部修改消除的错误模式。</li><li>候选修改应彼此不同，具有多样性。</li></ul></li><li><em>提议验证</em>：验证并合并合格修改，创建新的运行框架 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>+</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n</math>。<ul><li>在内部分割 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>D</mi>\n    <mtext>in</mtext>\n  </msub>\n</math>（测试弱点是否得到解决）和留出分割 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>D</mi>\n    <mtext>out</mtext>\n  </msub>\n</math>（检查是否引入其他未知问题）上，通过回归测试评测候选修改。</li><li>只有在内部分割和留出数据上都没有回归退化时，才接受候选方案。</li><li>将接受的候选方案合并，把运行框架更新为 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <msub>\n    <mi>h</mi>\n    <mrow data-mjx-texclass=\"ORD\">\n      <mi>t</mi>\n      <mo>+</mo>\n      <mn>1</mn>\n    </mrow>\n  </msub>\n</math>；对于被拒绝的候选方案，则只记录日志，不修改当前生效的运行框架。</li></ul></li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-082",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When running <code>MiniMax M2.5</code>, <code>Qwen3.5-35B-A3B</code>, and <code>GLM-5</code> on Terminal-Bench-2, Self-Harness was shown to learn model-specific harness instructions that target at different weaknesses of different base models and improve held-out pass rates.</p>",
+      "zh": "<p>在 Terminal-Bench-2 上运行 <code>MiniMax M2.5</code>、<code>Qwen3.5-35B-A3B</code> 和 <code>GLM-5</code> 时，研究表明 Self-Harness 能学到针对特定模型的运行框架指令，分别处理不同基础模型的不同弱点，并提高留出集通过率。</p>"
+    },
+    {
+      "id": "new42_self_improvement-083",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Self-harness type of work does raise my concerns that if a program is allowed to edit the OS system, abstraction boundaries are broken. The editable surface needs to be properly designed and the permission control and security layers need to live outside this loop. All the challenges around <a href=\"https://lilianweng.github.io/posts/2024-11-28-reward-hacking/\" rel=\"noopener noreferrer\">reward hacking</a> still remain.</p>",
+      "zh": "<p>Self-Harness 这类工作确实让我担心：如果允许程序编辑操作系统，抽象边界就被打破了。允许编辑的范围需要妥善设计，权限控制层和安全层则必须放在这一循环之外。围绕<a href=\"https://lilianweng.github.io/posts/2024-11-28-reward-hacking/\" rel=\"noopener noreferrer\">奖励投机</a>的所有挑战仍然存在。</p>"
+    },
+    {
+      "id": "new42_self_improvement-084",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Agentic Harness Engineering</strong> (AHE; <a href=\"https://arxiv.org/abs/2604.25850\" rel=\"noopener noreferrer\">Lin et al. 2026</a>) see the bottlenecks of harness evolution are around <strong>observability</strong>—that is, when a rollout fails, we need to know which component is responsible for that and every edit should be grounded by evidence.</p>",
+      "zh": "<p><strong>Agentic Harness Engineering</strong>（AHE；<a href=\"https://arxiv.org/abs/2604.25850\" rel=\"noopener noreferrer\">Lin 等，2026</a>）认为，运行框架演化的瓶颈集中在<strong>可观测性</strong>上：也就是说，一次执行失败时，我们需要知道哪个组件对此负责，而且每项修改都应有证据支撑。</p>"
+    },
+    {
+      "id": "new42_self_improvement-085",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The framework creates a closed loop with 3 observability pillars:</p>",
+      "zh": "<p>该框架围绕可观测性的三个支柱构建闭环：</p>"
+    },
+    {
+      "id": "new42_self_improvement-086",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li><em>Component observability</em>: every editable harness component has a representation in the file system so the action space is explicit and tracable.\n<ul>\n<li>A harness contains 7 components: system prompt, tool description, tool implementation, middleware, skill, sub-agent configuration, and long-term memory.</li>\n<li>Each failure pattern is mapped to one component so the edit can be more targeted.</li>\n</ul>\n</li>\n<li><em>Experience observability</em>: analysize and summarize a large amount of raw trajectories into a hierarchy of evidence and failure patterns.\n<ul>\n<li>Each harness generates <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>k</mi>\n</math> traces.</li>\n<li>Use an agent (“Agent debugger”) to analysis the trajectories each stored in one file and generate per-task analysis report on the root cause for the failure or success.</li>\n<li>All the per-task reports are aggregated into a benchmark overview for the next step, and raw traces can be accessed if needed. This layered access structure is more token efficient.</li>\n</ul>\n</li>\n<li><em>Decision observability</em>: every edit is paired with a prediction for the next round to validate.\n<ul>\n<li>An agent (“Evolve agent”) reads the repo and decides which component to edit, and then produces the edit and the reasoning behind it.</li>\n<li>Every edit is a file-level, falsifiable claim and can be verified in the next round, under two constraints:\n<ul>\n<li>(1) Edits are only applied to the harness workspace. the runs directory, tracer, verifier, and LLM configuration are read-only, which disables a set of reward hacking (e.g  disabling the verifier, swapping the model, or raising the reasoning budget) and thus it can keep every recorded gain attributable to harness edits.</li>\n<li>(2) Edits are evidence-driven, with a manifesto entry: the failure evidence’s name, the inferred root cause, the targeted fix, and a predicted impact comprising both expected fixes and at-risk regressions.</li>\n</ul>\n</li>\n</ul>\n</li>\n</ol>",
+      "zh": "<ol><li><em>组件可观测性</em>：每个允许编辑的运行框架组件都在文件系统中有对应表示，使行动空间清晰且可追溯。<ul><li>运行框架包含 7 个组件：系统提示词、工具描述、工具实现、中间件、技能、子 Agent 配置和长期记忆。</li><li>每种失败模式都映射到一个组件，以便更有针对性地修改。</li></ul></li><li><em>经验可观测性</em>：分析并总结大量原始执行轨迹，形成分层的证据和失败模式。<ul><li>每个运行框架生成 <math xmlns=\"http://www.w3.org/1998/Math/MathML\">\n  <mi>k</mi>\n</math> 条执行轨迹。</li><li>使用一个 Agent（“Agent debugger”）分析各自存储在单独文件中的执行轨迹，并为每个任务生成关于失败或成功根本原因的分析报告。</li><li>将所有逐任务报告汇总为基准测试概览，供下一步使用；需要时也可以访问原始执行轨迹。这种分层访问结构更加节省 token。</li></ul></li><li><em>决策可观测性</em>：每项修改都附带一个供下一轮验证的预测。<ul><li>一个 Agent（“Evolve agent”）读取仓库，决定编辑哪个组件，然后生成修改及其背后的理由。</li><li>每项修改都是文件层面、可证伪的主张，可以在下一轮验证，并受以下两项约束：<ul><li>（1）修改只能应用于运行框架工作区。运行记录目录、轨迹记录器、验证器和 LLM 配置均为只读，这排除了一组奖励投机手段（例如禁用验证器、更换模型或提高推理预算），从而使记录到的每项提升都能归因于运行框架修改。</li><li>（2）修改由证据驱动，并附带一条声明记录：失败证据名称、推断出的根本原因、有针对性的修复，以及预测影响，其中同时包含预期修复效果和可能发生回归退化的风险。</li></ul></li></ul></li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-087",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>On Terminal-Bench-2, AHE achieved better than human-designed harness (OpenCode, Terminus-2, Codex) except for Hard tier and a few other self-evolve baselines (ACE, TF-GRPO). The same frozen harness, without further evolving, transfers to SWE-bench-verified, indicating that the evolved harness is able to encode engineering experience into harness components rather than doing benchmark-specific optimization.</p>",
+      "zh": "<p>在 Terminal-Bench-2 上，除 Hard 难度层级外，AHE 的表现优于人工设计的运行框架（OpenCode、Terminus-2、Codex），也优于其他若干自我演化基线（ACE、TF-GRPO）。同一个冻结后的运行框架，无需进一步演化，就能迁移到 SWE-bench-verified。这表明，演化后的运行框架能够将工程经验编码进组件，而不是只针对特定基准进行优化。</p>"
+    },
+    {
+      "id": "new42_self_improvement-088",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-evolutionary-search\">Evolutionary Search</h3>",
+      "zh": "<h3 id=\"zh-source-evolutionary-search\">进化式搜索</h3>"
+    },
+    {
+      "id": "new42_self_improvement-089",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Evolutionary search is an optimization method inspired by natural selection (see my old post on <a href=\"https://lilianweng.github.io/posts/2019-09-05-evolution-strategies/\" rel=\"noopener noreferrer\">evolutionary algorithm</a>). It evolves a population of solutions by mutating them and only keeping those with high “fitness” in the crowd. Evolutionary search comes in handy when (1) the search space is extensive or weirdly shaped; and (2) it is hard to optimize directly with gradients but easy to evaluate solutions. Harness search seems to be a good fit here.</p>",
+      "zh": "<p>进化式搜索是一种受自然选择启发的优化方法（参见我以前关于<a href=\"https://lilianweng.github.io/posts/2019-09-05-evolution-strategies/\" rel=\"noopener noreferrer\">进化算法</a>的文章）。它通过对方案进行变异，并只保留群体中“适应度”较高的方案，来演化一个解的种群。在以下情况下，进化式搜索很有用：（1）搜索空间庞大或形状不规则；（2）难以直接用梯度优化，但容易评估方案。运行框架搜索似乎很适合这种方法。</p>"
+    },
+    {
+      "id": "new42_self_improvement-090",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Evolutionary search has been used in prompt engineering in the past studies. <strong>Promptbreeder</strong> (<a href=\"https://arxiv.org/abs/2309.16797\" rel=\"noopener noreferrer\">Fernando et al. 2023</a>) optimizes task-specific prompts through a rich set of mutation operations, and interestingly the mutation prompts (i.e. instructions to an LLM to mutate a task prompt) are themselves also improved through evolution. <strong>GEPA</strong> (<a href=\"https://arxiv.org/abs/2507.19457\" rel=\"noopener noreferrer\">Agrawal et al. 2025</a>) combines <a href=\"https://lilianweng.github.io/posts/2023-06-23-agent/#self-reflection\" rel=\"noopener noreferrer\">reflection</a>-based prompting with evolutionary search and uses natural language reflection over trajectories of trial and error to propose prompt updates.</p>",
+      "zh": "<p>以往研究已经在提示词工程中使用进化式搜索。<strong>Promptbreeder</strong>（<a href=\"https://arxiv.org/abs/2309.16797\" rel=\"noopener noreferrer\">Fernando 等，2023</a>）通过丰富的变异操作优化特定任务的提示词；有趣的是，变异提示词本身（即要求 LLM 对任务提示词进行变异的指令）也会通过演化得到改进。<strong>GEPA</strong>（<a href=\"https://arxiv.org/abs/2507.19457\" rel=\"noopener noreferrer\">Agrawal 等，2025</a>）将基于<a href=\"https://lilianweng.github.io/posts/2023-06-23-agent/#self-reflection\" rel=\"noopener noreferrer\">反思</a>的提示方法与进化式搜索结合，通过对试错执行轨迹进行自然语言反思，提出提示词更新。</p>"
+    },
+    {
+      "id": "new42_self_improvement-091",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://arxiv.org/abs/2506.13131\" rel=\"noopener noreferrer\">Novikov et al. (2025)</a> introduced <strong>AlphaEvolve</strong> as a coding-agent evolutionary search system, which stores a pool of candidate programs and prompts frozen LLMs to generate diffs for improvement. As the system repeatedly evaluates child programs and keeps successful ones, it discovers better solutions in time.</p>",
+      "zh": "<p><a href=\"https://arxiv.org/abs/2506.13131\" rel=\"noopener noreferrer\">Novikov 等（2025）</a>提出了 <strong>AlphaEvolve</strong>，这是一个基于编程 Agent 的进化式搜索系统。它保存一组候选程序，并提示权重冻结的 LLM 生成用于改进的代码差异。随着系统反复评测子代程序并保留成功者，它会逐渐发现更好的方案。</p>"
+    },
+    {
+      "id": "new42_self_improvement-092",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/9aff606707805732b0a8d1d9.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>How AlphaEvolve works. (Image source: <a href=\"https://arxiv.org/abs/2506.13131\" rel=\"noopener noreferrer\">Novikov et al. 2025</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-093",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A few details matter in the design of AlphaEvolve:</p>",
+      "zh": "<p>AlphaEvolve 的设计中，有几个值得关注的细节：</p>"
+    },
+    {
+      "id": "new42_self_improvement-094",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>The prompt includes parent programs, results, instructions, and sometimes meta information.</li>\n<li>The coding agent has access to the full repo, but code regions for improvement are explicitly marked with <code># EVOLVE-BLOCK-START</code> and <code># EVOLVE-BLOCK-END</code>.</li>\n<li>Meta-prompt co-evolves with instructions and context as suggested by LLM, in a similar way as how we evolve solution programs.</li>\n</ul>",
+      "zh": "<ul><li>提示词包含父代程序、结果、指令，有时也包含元信息。</li><li>编程 Agent 可以访问整个仓库，但允许改进的代码区域用 <code># EVOLVE-BLOCK-START</code> 和 <code># EVOLVE-BLOCK-END</code> 显式标记。</li><li>元提示词根据 LLM 的建议，与指令和上下文共同演化，方式类似于方案程序的演化。</li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-095",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Ablations show the evolution procedure, context in prompts, meta-prompts, full-file evolution and the use of stronger LLMs.</p>",
+      "zh": "<p>消融实验展示了演化流程、提示词中的上下文、元提示词、整文件演化，以及使用更强 LLM 的作用。</p>"
+    },
+    {
+      "id": "new42_self_improvement-096",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/ad59c8ccfbcca45e7fa7c963.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>Ablations show the value of everal designs in AlphaEvolve. (Image source: <a href=\"https://arxiv.org/abs/2506.13131\" rel=\"noopener noreferrer\">Novikov et al. 2025</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-097",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Recent variants such as <strong>ThetaEvolve</strong> (<a href=\"https://arxiv.org/abs/2511.23473\" rel=\"noopener noreferrer\">Wang et al. 2025</a>) combines evolutionary search with RL and in-context learning, and <strong>DemoEvolve</strong> (<a href=\"https://arxiv.org/abs/2605.24539\" rel=\"noopener noreferrer\">Che, et al. 2026</a>) augments the self-rollout archive with human expert demonstrations as reference experience for harness-level diagnosis and editing. <strong>ShinkaEvolve</strong> (<a href=\"https://arxiv.org/abs/2509.19349\" rel=\"noopener noreferrer\">Lange et al. 2025</a>), on the other hand, introduced three new components to improve LLM sampling efficiency:</p>",
+      "zh": "<p>近期的一些变体，例如 <strong>ThetaEvolve</strong>（<a href=\"https://arxiv.org/abs/2511.23473\" rel=\"noopener noreferrer\">Wang 等，2025</a>），将进化式搜索与强化学习和上下文学习结合；<strong>DemoEvolve</strong>（<a href=\"https://arxiv.org/abs/2605.24539\" rel=\"noopener noreferrer\">Che 等，2026</a>）则用人类专家示范扩充自主执行档案库，为运行框架层面的诊断和编辑提供参考经验。另一方面，<strong>ShinkaEvolve</strong>（<a href=\"https://arxiv.org/abs/2509.19349\" rel=\"noopener noreferrer\">Lange 等，2025</a>）引入了三个新组件，以提高 LLM 采样效率：</p>"
+    },
+    {
+      "id": "new42_self_improvement-098",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>More sample-efficient exploration by designing parent sampling to balance performance rank and offspring count.</li>\n<li>Code-novelty rejection sampling by discarding candidates that are too similar to the existing population based on embedding-based cosine similarity.</li>\n<li>Identifying good patterns in successful solutions in a meta-scratchpad to guide future mutation.</li>\n</ul>",
+      "zh": "<ul><li>通过设计父代采样策略，在表现排名与后代数量之间取得平衡，实现样本效率更高的探索。</li><li>根据基于嵌入的余弦相似度，丢弃与现有种群过于相似的候选方案，实现基于代码新颖性的拒绝采样。</li><li>在元草稿区中识别成功方案中的良好模式，以指导未来变异。</li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-099",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Unlike the methods above, which focus on solution improvement, <strong>Darwin Gödel Machine</strong> (DGM; <a href=\"https://arxiv.org/abs/2505.22954\" rel=\"noopener noreferrer\">Zhang et al. 2025</a>) explicitly targets the evolution of an editable harness-code repository with an LLM-based coding agent. Precisely, this agent is allowed to modify its own harness. A follow-up work on Hyperagents (<a href=\"https://arxiv.org/abs/2603.19461\" rel=\"noopener noreferrer\">Zhang et al. 2026</a>) introduced a meta-agent to control how to modify existing task agents to create new ones.</p>",
+      "zh": "<p>与上述专注于改进方案的方法不同，<strong>Darwin Gödel Machine</strong>（DGM；<a href=\"https://arxiv.org/abs/2505.22954\" rel=\"noopener noreferrer\">Zhang 等，2025</a>）明确面向可编辑的运行框架代码仓库，使用基于 LLM 的编程 Agent 对其进行演化。准确地说，这个 Agent 被允许修改自身的运行框架。后续关于 Hyperagents 的工作（<a href=\"https://arxiv.org/abs/2603.19461\" rel=\"noopener noreferrer\">Zhang 等，2026</a>）引入了元 Agent，控制如何修改现有任务 Agent，以创建新的 Agent。</p>"
+    },
+    {
+      "id": "new42_self_improvement-100",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>Start with one coding agent in the pool.</li>\n<li>In each iteration, pick one parent with a probability proportional to its performance and inversely to the number of children it has, to modify and branch off to produce new agents.</li>\n<li>The selected parent agent examines its own benchmark evaluation log and then proposes improvements to its own harness codebase to generate a new version of the coding agent. Code editing is implemented with two basic tools: (1) bash (args: <code>&lt;bash_command&gt;</code>) and (2) editor (args: <code>view/create/edit &lt;file_path&gt;</code>).</li>\n<li>New coding agents are evaluated, and only those with sufficiently high performance are added back into the pool.</li>\n<li>Repeat steps 2-4 until some stop criteria hit.</li>\n</ol>",
+      "zh": "<ol><li>在候选池中放入一个编程 Agent，作为起点。</li><li>每轮迭代按与表现成正比、与已有子代数量成反比的概率选择一个父代，对它进行修改并分支，产生新的 Agent。</li><li>选中的父代 Agent 检查自身的基准评测日志，再对自己的运行框架代码库提出改进，生成新版编程 Agent。代码编辑由两个基本工具实现：（1）bash（参数：<code>&lt;bash_command&gt;</code>）；（2）editor（参数：<code>view/create/edit &lt;file_path&gt;</code>）。</li><li>对新的编程 Agent 进行评测，只将表现足够好的 Agent 加回候选池。</li><li>重复步骤 2–4，直到满足某项停止条件。</li></ol>"
+    },
+    {
+      "id": "new42_self_improvement-101",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>DGM is harness evolution under a fixed model. In experiments with <code>Claude 3.5 Sonnet</code> as the base LLM and simple initial harness configs, the DGM-discovered agents are comparable to or outperform handcrafted agents on SWE-bench Verified (20% to 50%) and Polyglot (14.2% to 30.7%).</p>",
+      "zh": "<p>DGM 是在固定模型下进行运行框架演化。在以 <code>Claude 3.5 Sonnet</code> 为基础 LLM、采用简单初始运行框架配置的实验中，DGM 发现的 Agent 在 SWE-bench Verified（20% 提升至 50%）和 Polyglot（14.2% 提升至 30.7%）上的表现，与人工设计的 Agent 相当或更好。</p>"
+    },
+    {
+      "id": "new42_self_improvement-102",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This family of methods works well when candidate solutions are automatically evaluable and candidate fitness is easy to quantify, such as matrix multiplication, GPU kernel optimization, algorithm contests, datacenter scheduling. It struggles with domains where evaluation is slow, ambiguous, or mostly heuristic-based. The compute efficiency and effectiveness of evolution are also concerns.</p>",
+      "zh": "<p>当候选方案可以自动评测，且适应度容易量化时，这类方法效果很好，例如矩阵乘法、GPU 内核优化、算法竞赛和数据中心调度。对于评测缓慢、模糊或主要依赖启发式方法的领域，它们则面临困难。演化的计算效率和有效性也值得关注。</p>"
+    },
+    {
+      "id": "new42_self_improvement-103",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-joint-optimization-with-model-weights\">Joint Optimization with Model Weights</h3>",
+      "zh": "<h3 id=\"zh-source-joint-optimization-with-model-weights\">与模型权重联合优化</h3>"
+    },
+    {
+      "id": "new42_self_improvement-104",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harness evolution changes the non-parametric system around the model. To enable full self-improvement, the model can totally be allowed to update its own weights at the same time. The weight update can be implemented via improvements in the model training pipeline or continual learning at test time. The topic of continual learning is worthy of its own post in the future.</p>",
+      "zh": "<p>运行框架演化改变的是模型周围的非参数化系统。为了实现完整的自我改进，完全可以允许模型同时更新自身权重。权重更新可以通过改进模型训练流程实现，也可以通过测试时的持续学习实现。持续学习这个主题值得在未来另写一篇文章。</p>"
+    },
+    {
+      "id": "new42_self_improvement-105",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>SIA</strong> (<a href=\"https://arxiv.org/abs/2605.27276\" rel=\"noopener noreferrer\">Hebbar et al. 2026</a>) is an early attempt to combine harness improvement and model-parameter updates in the same optimization loop, with three components in the design:</p>",
+      "zh": "<p><strong>SIA</strong>（<a href=\"https://arxiv.org/abs/2605.27276\" rel=\"noopener noreferrer\">Hebbar 等，2026</a>）是将运行框架改进与模型参数更新结合在同一优化循环中的早期尝试，其设计包含三个组件：</p>"
+    },
+    {
+      "id": "new42_self_improvement-106",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><em>Meta-Agent</em>: proposes the initial harness.</li>\n<li><em>Task-Specific Agent</em>: executes the task.</li>\n<li><em>Feedback-Agent</em>: chooses whether to update the harness or the model weights based on recent trajectories.</li>\n</ul>",
+      "zh": "<ul><li><em>Meta-Agent</em>：提出初始运行框架。</li><li><em>Task-Specific Agent</em>：执行任务。</li><li><em>Feedback-Agent</em>：根据近期执行轨迹，选择更新运行框架还是模型权重。</li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-107",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure>\n<img src=\"/media/86fbe9555a0bf6f3c772683c.png\" loading=\"lazy\" decoding=\"async\">\n<figcaption>The Feedback-Agent in SIA decides the next iteration type. (Image source: <a href=\"https://arxiv.org/abs/2605.27276\" rel=\"noopener noreferrer\">Hebbar et al. 2026</a>)</figcaption>\n</figure>"
+    },
+    {
+      "id": "new42_self_improvement-108",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are a few confounding choices in SIA’s experiments that make the results hard to interpret. For example, the task-specific agent is much weaker than the models used for the Meta-Agent and Feedback-Agent (<code>gpt-oss-120b</code> vs <code>Claude Sonnet 4.6</code>), and the baselines are too weak to cross-reference cleanly against related methods. I would consider the direction interesting, but the evidence provisional. Yet many challenges, such as training stability and Goodhart effect, still remain open.</p>",
+      "zh": "<p>SIA 实验中的一些设计选择引入了混淆因素，使结果难以解释。例如，任务专用 Agent 远弱于 Meta-Agent 和 Feedback-Agent 使用的模型（<code>gpt-oss-120b</code> 对比 <code>Claude Sonnet 4.6</code>），基线也过弱，无法与相关方法进行清晰的交叉比较。我认为这个方向很有意思，但证据尚属初步。同时，训练稳定性和古德哈特效应等许多挑战仍未解决。</p>"
+    },
+    {
+      "id": "new42_self_improvement-109",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Continual Harness</strong> (<a href=\"https://arxiv.org/abs/2605.09998\" rel=\"noopener noreferrer\">Karten et al. 2026</a>) experimented in long-horizon gameplay setting with harness updating and co-learning a policy model by distilling a strong teacher model’s labels on low-reward trajectories.</p>",
+      "zh": "<p><strong>Continual Harness</strong>（<a href=\"https://arxiv.org/abs/2605.09998\" rel=\"noopener noreferrer\">Karten 等，2026</a>）在长时程游戏场景中进行了实验：一边更新运行框架，一边通过蒸馏强教师模型对低奖励执行轨迹所给出的标签，协同学习一个策略模型。</p>"
+    },
+    {
+      "id": "new42_self_improvement-110",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-future-challenges\">Future Challenges</h2>",
+      "zh": "<h2 id=\"zh-source-future-challenges\">未来的挑战</h2>"
+    },
+    {
+      "id": "new42_self_improvement-111",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The AI Scientist line of work is a strong demonstration that an expert-designed harness can coordinate a large portion of auto-research loop, experimented in the form of writing research papers. But paper production is not identical to scientific discovery. A system can write a plausible manuscript while still having fabricated citations, implementation drift, or weak experimental results.</p>",
+      "zh": "<p>AI Scientist 这一系列工作以撰写研究论文为实验形式，有力地证明了专家设计的运行框架能够协调自动化研究循环中的大部分环节。但论文生产并不等于科学发现。系统可以写出一篇看似合理的稿件，同时仍然存在编造引文、实现偏移或实验结果薄弱等问题。</p>"
+    },
+    {
+      "id": "new42_self_improvement-112",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><a href=\"https://arxiv.org/abs/2601.03315\" rel=\"noopener noreferrer\">Trehan &amp; Chopra (2026)</a> tested whether LLMs can go from a research idea to a paper with minimal scaffolding and basic tools (i.e., <code>read_file</code>, <code>write_file</code>, <code>llm_search</code>, <code>list_files</code>). Each idea had a dedicated workspace where agents could generate and read documents as part of context. They experimented in three domains (world models, multi-agent RL, AI safety &amp; alignment), with each domain containing 45-50 high-quality seed documents to inspire new ideas. Only four ideas were selected by human experts to run through the full pipeline, and only one was fully executed into a paper. They observed six recurring failure modes in the experiments:</p>",
+      "zh": "<p><a href=\"https://arxiv.org/abs/2601.03315\" rel=\"noopener noreferrer\">Trehan 与 Chopra（2026）</a>测试了 LLM 能否在最少的辅助框架和基本工具（即 <code>read_file</code>、<code>write_file</code>、<code>llm_search</code>、<code>list_files</code>）支持下，从研究想法走到论文。每个想法都有专用工作区，Agent 可以在其中生成和读取文档，作为上下文的一部分。他们在三个领域开展实验（世界模型、多 Agent 强化学习、AI 安全与对齐），每个领域包含 45–50 份高质量种子文档，用于启发新想法。人类专家只选出四个想法进入完整流程，其中只有一个被完整执行并形成论文。他们在实验中观察到六种反复出现的失败模式：</p>"
+    },
+    {
+      "id": "new42_self_improvement-113",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><em>Bias toward training-data defaults</em>: use old libraries, stale commands, standard formats, or assumptions not grounded in the actual repository or dataset.</li>\n<li><em>Implementation drift under execution pressure</em>: when implementation becomes technically complex, the model may move toward a common simpler solution rather than the proposed method.</li>\n<li><em>Memory and context degradation</em>: long-horizon projects lose critical details unless logs are written as persistent artifacts.</li>\n<li><em>Over-optimism</em>: the model declares success despite noisy or failed experiments, similarly observed as “p-hacking and eureka-ing” pattern by <a href=\"https://arxiv.org/abs/2511.16072\" rel=\"noopener noreferrer\">Bubeck et al. (2025)</a> where models can introduce “numerical duct tape” and declare victory when signals are still noise.</li>\n<li><em>Insufficient domain intelligence</em>: the model lacks tacit craft knowledge, e.g. predicting implementation complexity, judging whether an experimental result is plausible, or knowing which baselines matter.</li>\n<li><em>Weak scientific taste</em>: experiments may be executable but fail to answer the right question.</li>\n</ul>",
+      "zh": "<ul><li><em>偏向训练数据中的默认做法</em>：使用旧库、过时命令、标准格式，或未经实际仓库和数据集证实的假设。</li><li><em>执行压力下的实现偏移</em>：当实现变得技术上复杂时，模型可能转向常见的简单方案，而不是提出的方法。</li><li><em>记忆和上下文退化</em>：长时程项目会丢失关键细节，除非将日志写成持久产物。</li><li><em>过度乐观</em>：尽管实验充满噪声或已经失败，模型仍宣告成功。<a href=\"https://arxiv.org/abs/2511.16072\" rel=\"noopener noreferrer\">Bubeck 等（2025）</a>也观察到了类似的“p 值操纵与大喊发现了”模式：模型可能贴上“数值胶带”进行临时修补，在信号仍然只是噪声时就宣告胜利。</li><li><em>领域智能不足</em>：模型缺乏隐性的实践知识，例如预判实现复杂度、判断实验结果是否可信，或知道哪些基线重要。</li><li><em>科研品味薄弱</em>：实验可能可以执行，却没有回答正确的问题。</li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-114",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Toward full RSI, researchers have made real progress, but several bottlenecks remain.</p>",
+      "zh": "<p>在迈向完整 RSI 的道路上，研究者已经取得实质进展，但仍存在若干瓶颈。</p>"
+    },
+    {
+      "id": "new42_self_improvement-115",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>1. Weak and fuzzy evaluators.</strong> Many research claims do not have a fast and precise verifier, and the same is true for many real-world tasks. Current self-improvement loops work best for tasks when evaluation metrics are measurable and objective, similar as <a href=\"https://lilianweng.github.io/posts/2018-02-19-rl-overview/\" rel=\"noopener noreferrer\">how RL works</a>.</p>",
+      "zh": "<p><strong>1. 能力弱且标准模糊的评估器。</strong>许多研究主张没有快速、精确的验证器，很多现实任务也一样。当前的自我改进循环，在评测指标可测量且客观的任务上效果最好，这与<a href=\"https://lilianweng.github.io/posts/2018-02-19-rl-overview/\" rel=\"noopener noreferrer\">强化学习发挥作用的方式</a>相似。</p>"
+    },
+    {
+      "id": "new42_self_improvement-116",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Research taste, novelty, and long-term scientific value are much harder to measure. For example, research taste often mixes problem framing, experimental design, and judgment about which surprising results are worth pursuing and which failure cases are worth retries.</p>",
+      "zh": "<p>科研品味、新颖性和长期科学价值则难以衡量得多。例如，科研品味往往涉及问题表述、实验设计，以及判断哪些出人意料的结果值得追究、哪些失败案例值得重试。</p>"
+    },
+    {
+      "id": "new42_self_improvement-117",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>2. Context and memory lifecycle.</strong> Memory grows as AI agents become more autonomous and independent. A useful harness needs to manage context and memory to complement existing limitation in long-context generation while still maximizing the success of long-horizon tasks. Since humans are able to maintain memory through our life time, I see an anoloy here that <a href=\"https://lilianweng.github.io/posts/2026-07-04-harness/#context-engineering\" rel=\"noopener noreferrer\">context engineering</a> will and should become a core part of intelligence, rather than staying in the software system layer.</p>",
+      "zh": "<p><strong>2. 上下文与记忆的生命周期。</strong>随着 AI Agent 变得更自主、更独立，记忆也会不断增长。有用的运行框架需要管理上下文和记忆，弥补当前长上下文生成的局限，同时尽可能提高长时程任务的成功率。人类能够在一生中维持记忆，这里存在一种类比：我认为，<a href=\"https://lilianweng.github.io/posts/2026-07-04-harness/#context-engineering\" rel=\"noopener noreferrer\">上下文工程</a>将会、也应当成为智能的核心组成部分，而不是停留在软件系统层。</p>"
+    },
+    {
+      "id": "new42_self_improvement-118",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>3. Negative results.</strong> Researchers are incentivized to publish successful results and thus literature is biased toward successes. LLMs trained on a vast amount of data (mostly human created, at least for now, lol) may be bad at deciding when to abandon a hypothesis, report a negative result, or even acknowledge a failure due to the imablance of success vs failure cases in data. A research harness should make failed attempts easy to preserve, as learning from failure is the best way to trim down the task search space.</p>",
+      "zh": "<p><strong>3. 负面结果。</strong>研究者受到发表成功结果的激励，因此文献偏向成功。训练于海量数据的 LLM（至少目前主要还是人类创建的数据，哈哈），可能因为数据中成功与失败案例不平衡，而不擅长决定何时放弃假设、报告负面结果，甚至承认失败。研究运行框架应让失败尝试易于保存，因为从失败中学习，是缩小任务搜索空间的最佳方式。</p>"
+    },
+    {
+      "id": "new42_self_improvement-119",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>4. Diversity collapse.</strong> Evolutionary and RL loops tend to exploit known high-reward patterns. We need <a href=\"https://lilianweng.github.io/posts/2020-06-07-exploration-drl/\" rel=\"noopener noreferrer\">mechanisms</a> to prevent the population from collapsing into variants of the same solution. This is especially critical for open-ended research, where the best path may initially look worse under the current evaluator.</p>",
+      "zh": "<p><strong>4. 多样性坍缩。</strong>进化和强化学习循环倾向于利用已知的高奖励模式。我们需要相应<a href=\"https://lilianweng.github.io/posts/2020-06-07-exploration-drl/\" rel=\"noopener noreferrer\">机制</a>，防止种群坍缩为同一方案的不同变体。这对于开放式研究尤其重要，因为在当前评估器看来，最佳路径起初可能表现更差。</p>"
+    },
+    {
+      "id": "new42_self_improvement-120",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>5. <a href=\"https://lilianweng.github.io/posts/2024-11-28-reward-hacking/\" rel=\"noopener noreferrer\">Reward hacking</a>.</strong> A self-improvement loop optimizes whatever signal it is given. If the reward comes from unit tests, the agent may overfit to tests; if it comes from a judge model, it may learn reward hacking tricks specific to this judge; if it comes from benchmark scores, it may exploit benchmark artifacts.</p>",
+      "zh": "<p><strong>5. <a href=\"https://lilianweng.github.io/posts/2024-11-28-reward-hacking/\" rel=\"noopener noreferrer\">奖励投机</a>。</strong>自我改进循环会优化它获得的任何信号。如果奖励来自单元测试，Agent 可能对测试过拟合；如果来自评判模型，它可能学会针对该评判器的奖励投机技巧；如果来自基准分数，它可能利用基准中的非本质特征。</p>"
+    },
+    {
+      "id": "new42_self_improvement-121",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The evaluator and permission control should likely sit outside the loop that evolves harness, with held-out tests, trace audits, and human review at decision points that matter—how much oversight can be scaled up and automated remains an open research area.</p>",
+      "zh": "<p>评估器和权限控制很可能应当位于运行框架演化循环之外，并在重要决策点设置留出测试、执行轨迹审计和人工审查。监督能够在多大程度上扩展并自动化，仍是开放的研究领域。</p>"
+    },
+    {
+      "id": "new42_self_improvement-122",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>6. Long-term success.</strong> An extrinsic loop of optimization works on rewards outside of individual rollouts that we can simulate in training sandbox.</p>",
+      "zh": "<p><strong>6. 长期成功。</strong>外部优化循环处理的奖励，超出了我们能在训练沙箱中模拟的单次执行范围。</p>"
+    },
+    {
+      "id": "new42_self_improvement-123",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Take coding agent as an example. Coding agents have already increased daily productivity in software engineering, but many optimization goals are still too short-term. It can often complete the task at hand, but less obvious how it should protect the long-term health of a repo collectively maintained by hundreds or thousands of engineers. Standard sandbox-based RLVR-style training rarely captures maintainability, ownership boundaries, migration cost, backwards compatibility, or future debugging burden.</p>",
+      "zh": "<p>以编程 Agent 为例。它已经提高了软件工程的日常生产力，但很多优化目标仍然过于短期。它常常能完成手头任务，但对于一个由数百乃至数千名工程师共同维护的仓库，如何保护其长期健康，则没有那么明确。标准的、基于沙箱的 RLVR 风格训练，很少涵盖可维护性、所有权边界、迁移成本、向后兼容性或未来调试负担。</p>"
+    },
+    {
+      "id": "new42_self_improvement-124",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>7. The role of humans.</strong> Humans should move up the stack, not be removed from the loop, meaning that human should provide oversight at the right time, at the right abstraction level and our system design should consider when and how to set up such touch points.</p>",
+      "zh": "<p><strong>7. 人类的角色。</strong>人类应向更高层移动，而不是从循环中被移除。这意味着，人类应在合适的时间、合适的抽象层级提供监督；系统设计则应考虑何时、如何设置这样的介入点。</p>"
+    },
+    {
+      "id": "new42_self_improvement-125",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Many challenges listed above need human’s feedback and steering. After all, we are building the technology for better future of humanity, not other way around.</p>",
+      "zh": "<p>上面列出的许多挑战，需要人类的反馈和引导。毕竟，我们构建技术是为了人类更美好的未来，而不是反过来。</p>"
+    },
+    {
+      "id": "new42_self_improvement-126",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-citation\">Citation</h2>",
+      "zh": "<h2 id=\"zh-source-citation\">引用</h2>"
+    },
+    {
+      "id": "new42_self_improvement-127",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Please cite this work as:</p>",
+      "zh": "<p>请按以下方式引用本文：</p>"
+    },
+    {
+      "id": "new42_self_improvement-128",
+      "tag": "blockquote",
+      "preserve": true,
+      "en": "<blockquote>\n<p>Weng, Lilian. “Harness Engineering for Self-Improvement”. Lil’Log (Jul 2026). https://lilianweng.github.io/posts/2026-07-04-harness/</p>\n</blockquote>"
+    },
+    {
+      "id": "new42_self_improvement-129",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Or use the BibTeX citation:</p>",
+      "zh": "<p>或使用以下 BibTeX 引用：</p>"
+    },
+    {
+      "id": "new42_self_improvement-130",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>@article{weng2026harness,\n  title = {Harness Engineering for Self-Improvement},\n  author = {Weng, Lilian},\n  journal = {lilianweng.github.io},\n  year = {2026},\n  month = {July},\n  url = \"https://lilianweng.github.io/posts/2026-07-04-harness/\"\n}\n</code></pre>"
+    },
+    {
+      "id": "new42_self_improvement-131",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-appendix-some-useful-benchmarks\">Appendix: Some useful benchmarks</h2>",
+      "zh": "<h2 id=\"zh-source-appendix-some-useful-benchmarks\">附录：一些有用的基准</h2>"
+    },
+    {
+      "id": "new42_self_improvement-132",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong><a href=\"https://arxiv.org/abs/2504.01848\" rel=\"noopener noreferrer\">PaperBench</a></strong>: replicate 20 ICML 2024 Spotlight and Oral papers from scratch, including understanding paper contributions, developing a codebase, and successfully executing experiments.\n<ul>\n<li>Each replication task is decomposed into smaller, individually gradable tasks.</li>\n<li>8,316 rubrics in total, co-developed with the paper authors.</li>\n<li>The best model at the time (<code>Claude 3.5 Sonnet</code>, ~21%) does not outperform ML PhDs.</li>\n<li>Includes PaperBench, PaperBench Code-Dev (a lighter version), and JudgeEval.</li>\n</ul>\n</li>\n<li><strong><a href=\"https://arxiv.org/abs/2409.11363\" rel=\"noopener noreferrer\">CORE-Bench</a></strong>: evaluate computational reproducibility of published research.\n<ul>\n<li>270 tasks based on 90 scientific papers across computer science, social science, and medicine.</li>\n<li>Tasks involve reproducing results from provided code and data.</li>\n<li>Includes multiple difficulty levels and both language-only and vision-language tasks.</li>\n<li>The best reported agent at the time (<code>GPT-4o</code> and <code>GPT-4o-mini</code>) achieved only 21% accuracy on the hardest task.</li>\n</ul>\n</li>\n<li><strong><a href=\"https://arxiv.org/abs/2410.05080\" rel=\"noopener noreferrer\">ScienceAgentBench</a></strong>: evaluate LLM agents for data-driven scientific discovery.\n<ul>\n<li>Extracts 102 tasks from 44 peer-reviewed publications in four disciplines (math, chemistry, biology, geography).</li>\n<li>Covers basic data-science tasks in these domains: data processing, model development, data analysis, and information visualization.</li>\n</ul>\n</li>\n<li><strong><a href=\"https://arxiv.org/abs/2411.15114\" rel=\"noopener noreferrer\">RE-Bench</a></strong>: evaluate frontier AI agents on realistic ML research-engineering envs against human experts.\n<ul>\n<li>7 challenging, open-ended ML research-engineering environments.</li>\n<li>Each environment = (scoring function, starting solution, reference solution); each can be run with 8 or fewer H100 GPUs.</li>\n<li>Examples: optimize a kernel, run a scaling-law experiment, fix an embedding, fine-tune GPT-2 for QA, etc.</li>\n<li>Includes data from 71 eight-hour attempts by 61 distinct human experts.</li>\n<li>Human experts achieved non-zero score in 82% of 8-hour attempts; 24% matched or exceeded strong reference solutions.</li>\n<li>Best AI agents scored 4× higher than humans at a 2-hour budget, but humans had better returns to longer budgets and exceeded agents at 8-hour and 32-hour settings.</li>\n</ul>\n</li>\n<li><strong><a href=\"https://arxiv.org/abs/2410.07095\" rel=\"noopener noreferrer\">MLE-bench</a></strong>: evaluate ML engineering agents on offline Kaggle competitions.\n<ul>\n<li>Contains 75 ML-engineering competitions curated from Kaggle.</li>\n<li>Tests training models, preparing datasets, running experiments, and submitting predictions to grading scripts.</li>\n<li>Uses Kaggle public leaderboards as human baselines.</li>\n<li>Best setup in the paper, <code>o1-preview</code> with AIDE scaffolding, reached at least Kaggle bronze-medal level in 16.9% of competitions.</li>\n<li>Includes resource-scaling and contamination analyses.</li>\n</ul>\n</li>\n<li><strong><a href=\"https://arxiv.org/abs/2502.10517\" rel=\"noopener noreferrer\">KernelBench</a></strong>: evaluate correctness and speed for generated GPU kernels.\n<ul>\n<li>250 PyTorch tasks to evaluate whether LLM can write fast and correct kernels.</li>\n<li>The evaluation metric fast_p = the percentage of generated kernels that are correct and faster than baseline.</li>\n</ul>\n</li>\n</ul>",
+      "zh": "<ul><li><strong><a href=\"https://arxiv.org/abs/2504.01848\" rel=\"noopener noreferrer\">PaperBench</a></strong>：从零复现 20 篇 ICML 2024 Spotlight 和 Oral 论文，包括理解论文贡献、开发代码库和成功执行实验。<ul><li>每项复现任务都会分解为更小、可单独评分的任务。</li><li>共包含 8,316 项评分标准，由研究团队与论文作者共同制定。</li><li>当时最好的模型（<code>Claude 3.5 Sonnet</code>，约 21%）未能超过机器学习博士。</li><li>包含 PaperBench、PaperBench Code-Dev（较轻量版本）和 JudgeEval。</li></ul></li><li><strong><a href=\"https://arxiv.org/abs/2409.11363\" rel=\"noopener noreferrer\">CORE-Bench</a></strong>：评估已发表研究的计算可复现性。<ul><li>基于计算机科学、社会科学和医学领域的 90 篇科学论文，构建 270 项任务。</li><li>任务要求利用提供的代码和数据复现结果。</li><li>包含多个难度等级，以及纯语言任务和视觉语言任务。</li><li>当时报告的最佳 Agent（<code>GPT-4o</code> 和 <code>GPT-4o-mini</code>）在最难任务上的准确率仅为 21%。</li></ul></li><li><strong><a href=\"https://arxiv.org/abs/2410.05080\" rel=\"noopener noreferrer\">ScienceAgentBench</a></strong>：评估 LLM Agent 在数据驱动科学发现中的能力。<ul><li>从四个学科（数学、化学、生物、地理）的 44 篇同行评审文献中提取 102 项任务。</li><li>涵盖这些领域的基础数据科学任务：数据处理、模型开发、数据分析和信息可视化。</li></ul></li><li><strong><a href=\"https://arxiv.org/abs/2411.15114\" rel=\"noopener noreferrer\">RE-Bench</a></strong>：在真实的机器学习研究工程环境中，将前沿 AI Agent 与人类专家进行比较。<ul><li>包含 7 个有挑战性的开放式机器学习研究工程环境。</li><li>每个环境 =（评分函数、起始方案、参考方案）；每个环境均可用不超过 8 张 H100 GPU 运行。</li><li>示例包括：优化内核、开展规模定律实验、修复嵌入、微调 GPT-2 以完成问答等。</li><li>包含 61 位不同人类专家进行的 71 次、每次 8 小时的尝试数据。</li><li>人类专家在 82% 的 8 小时尝试中获得了非零分；24% 的尝试达到或超过了强参考方案。</li><li>在 2 小时预算下，最佳 AI Agent 的得分是人类的 4 倍；但人类从更长预算中获得的收益更大，在 8 小时和 32 小时设置下超过了 Agent。</li></ul></li><li><strong><a href=\"https://arxiv.org/abs/2410.07095\" rel=\"noopener noreferrer\">MLE-bench</a></strong>：在离线 Kaggle 竞赛上评估机器学习工程 Agent。<ul><li>包含从 Kaggle 筛选出的 75 项机器学习工程竞赛。</li><li>测试训练模型、准备数据集、运行实验，以及向评分脚本提交预测结果的能力。</li><li>使用 Kaggle 公开排行榜作为人类基线。</li><li>论文中的最佳配置是采用 AIDE 辅助框架的 <code>o1-preview</code>，在 16.9% 的竞赛中至少达到 Kaggle 铜牌水平。</li><li>包含资源扩展和数据污染分析。</li></ul></li><li><strong><a href=\"https://arxiv.org/abs/2502.10517\" rel=\"noopener noreferrer\">KernelBench</a></strong>：评估生成的 GPU 内核的正确性与速度。<ul><li>包含 250 项 PyTorch 任务，评估 LLM 能否编写快速且正确的内核。</li><li>评测指标 fast_p = 生成的内核中，正确且快于基线的比例。</li></ul></li></ul>"
+    },
+    {
+      "id": "new42_self_improvement-133",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-references\">References</h2>",
+      "zh": "<h2 id=\"zh-source-references\">参考文献</h2>"
+    },
+    {
+      "id": "new42_self_improvement-134",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[1] Good, I. J. <a href=\"https://philpapers.org/rec/GOOSCT\" rel=\"noopener noreferrer\">“Speculations Concerning the First Ultraintelligent Machine.”</a> <em>Advances in Computers</em>, 6:31–88, 1965.</p>"
+    },
+    {
+      "id": "new42_self_improvement-135",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[2] Yudkowsky, Eliezer. <a href=\"https://www.lesswrong.com/posts/JBadX7rwdcRFzGuju/recursive-self-improvement\" rel=\"noopener noreferrer\">“Recursive Self-Improvement.”</a> LessWrong, 2008.</p>"
+    },
+    {
+      "id": "new42_self_improvement-136",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[3] Choi, et al. <a href=\"https://openreview.net/forum?id=lTbBFAoPSA\" rel=\"noopener noreferrer\">“Anchored Self-Play for Code Repair.”</a> ICML 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-137",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[4] Zhao, et al. <a href=\"https://arxiv.org/abs/2505.03335\" rel=\"noopener noreferrer\">“Absolute Zero: Reinforced Self-play Reasoning with Zero Data.”</a> arXiv preprint arXiv:2505.03335, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-138",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[5] Yuan, et al. <a href=\"https://arxiv.org/abs/2401.10020\" rel=\"noopener noreferrer\">“Self-Rewarding Language Models.”</a> arXiv preprint arXiv:2401.10020, 2024.</p>"
+    },
+    {
+      "id": "new42_self_improvement-139",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[6] Chen, et al. <a href=\"https://arxiv.org/abs/2401.01335\" rel=\"noopener noreferrer\">“Self-Play Fine-Tuning Converts Weak Language Models to Strong Language Models.”</a> ICML 2024.</p>"
+    },
+    {
+      "id": "new42_self_improvement-140",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[7] Zhang, et al. <a href=\"https://arxiv.org/abs/2510.04618\" rel=\"noopener noreferrer\">“Agentic Context Engineering: Evolving Contexts for Self-Improving Language Models.”</a> ICLR 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-141",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[8] Ye, et al. <a href=\"https://arxiv.org/abs/2601.21557\" rel=\"noopener noreferrer\">“Meta Context Engineering via Agentic Skill Evolution.”</a> arXiv preprint arXiv:2601.21557, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-142",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[9] Lee, et al. <a href=\"https://arxiv.org/abs/2603.28052\" rel=\"noopener noreferrer\">“Meta-Harness: End-to-End Optimization of Model Harnesses.”</a> arXiv preprint arXiv:2603.28052, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-143",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[10] Lu, et al. <a href=\"https://www.nature.com/articles/s41586-026-10265-5\" rel=\"noopener noreferrer\">“Towards end-to-end automation of AI research.”</a> <em>Nature</em>, 651:914–919, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-144",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[11] Meng, et al. <a href=\"https://arxiv.org/abs/2605.26340\" rel=\"noopener noreferrer\">“ScientistOne: Towards Human-Level Autonomous Research via Chain-of-Evidence.”</a> arXiv preprint arXiv:2605.26340, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-145",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[12] Kulikov, et al. <a href=\"https://arxiv.org/abs/2606.25996\" rel=\"noopener noreferrer\">“Autodata: An agentic data scientist to create high quality synthetic data.”</a> arXiv preprint arXiv:2606.25996, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-146",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[13] Hu, Lu, and Clune. <a href=\"https://arxiv.org/abs/2408.08435\" rel=\"noopener noreferrer\">“Automated Design of Agentic Systems.”</a> ICLR 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-147",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[14] Madaan, et al. <a href=\"https://arxiv.org/abs/2303.17651\" rel=\"noopener noreferrer\">“Self-Refine: Iterative Refinement with Self-Feedback.”</a> NeurIPS 2023.</p>"
+    },
+    {
+      "id": "new42_self_improvement-148",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[15] Zhang, et al. <a href=\"https://arxiv.org/abs/2410.10762\" rel=\"noopener noreferrer\">“AFlow: Automating Agentic Workflow Generation.”</a> ICLR 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-149",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[16] Zelikman, et al. <a href=\"https://arxiv.org/abs/2310.02304\" rel=\"noopener noreferrer\">“Self-Taught Optimizer (STOP): Recursively Self-Improving Code Generation.”</a> COLM 2024.</p>"
+    },
+    {
+      "id": "new42_self_improvement-150",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[17] Zhang, et al. <a href=\"https://arxiv.org/abs/2606.09498\" rel=\"noopener noreferrer\">“Self-Harness: Harnesses That Improve Themselves.”</a> arXiv preprint arXiv:2606.09498, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-151",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[18] Fernando, et al. <a href=\"https://arxiv.org/abs/2309.16797\" rel=\"noopener noreferrer\">“Promptbreeder: Self-Referential Self-Improvement Via Prompt Evolution.”</a> arXiv preprint arXiv:2309.16797, 2023.</p>"
+    },
+    {
+      "id": "new42_self_improvement-152",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[19] Agrawal, A. et al. <a href=\"https://arxiv.org/abs/2507.19457\" rel=\"noopener noreferrer\">“GEPA: Reflective Prompt Evolution Can Outperform Reinforcement Learning.”</a> arXiv preprint arXiv:2507.19457, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-153",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[20] Novikov, et al. <a href=\"https://arxiv.org/abs/2506.13131\" rel=\"noopener noreferrer\">“AlphaEvolve: A coding agent for scientific and algorithmic discovery.”</a> arXiv preprint arXiv:2506.13131, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-154",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[21] Lange, Imajuku, and Cetin. <a href=\"https://arxiv.org/abs/2509.19349\" rel=\"noopener noreferrer\">“ShinkaEvolve: Towards Open-Ended And Sample-Efficient Program Evolution.”</a> arXiv preprint arXiv:2509.19349, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-155",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[22] Wang, et al. <a href=\"https://arxiv.org/abs/2511.23473\" rel=\"noopener noreferrer\">“ThetaEvolve: Test-time Learning on Open Problems.”</a> arXiv preprint arXiv:2511.23473, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-156",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[23] Zhang, et al. <a href=\"https://arxiv.org/abs/2505.22954\" rel=\"noopener noreferrer\">“Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents.”</a> arXiv preprint arXiv:2505.22954, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-157",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[24] Zhang, et al. <a href=\"https://arxiv.org/abs/2603.19461\" rel=\"noopener noreferrer\">“Hyperagents.”</a> arXiv preprint arXiv:2603.19461, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-158",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[25] Yuksekgonul, et al. <a href=\"https://arxiv.org/abs/2601.16175\" rel=\"noopener noreferrer\">“Learning to Discover at Test Time.”</a> arXiv preprint arXiv:2601.16175, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-159",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[26] Riaz, et al. <a href=\"https://arxiv.org/abs/2605.11328\" rel=\"noopener noreferrer\">“Epistemic Uncertainty for Test-Time Discovery.”</a> arXiv preprint arXiv:2605.11328, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-160",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[27] Hebbar, et al. <a href=\"https://arxiv.org/abs/2605.27276\" rel=\"noopener noreferrer\">“SIA: Self Improving AI with Harness &amp; Weight Updates.”</a> arXiv preprint arXiv:2605.27276, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-161",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[28] Trehan and Chopra. <a href=\"https://arxiv.org/abs/2601.03315\" rel=\"noopener noreferrer\">“Why LLMs Aren’t Scientists Yet: Lessons from Four Autonomous Research Attempts.”</a> arXiv preprint arXiv:2601.03315, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-162",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[29] Bubeck, et al. <a href=\"https://arxiv.org/abs/2511.16072\" rel=\"noopener noreferrer\">“Early science acceleration experiments with GPT-5.”</a> arXiv preprint arXiv:2511.16072, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-163",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[30] Starace, et al. <a href=\"https://arxiv.org/abs/2504.01848\" rel=\"noopener noreferrer\">“PaperBench: Evaluating AI’s Ability to Replicate AI Research.”</a> ICML 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-164",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[31] Wijk, et al. <a href=\"https://arxiv.org/abs/2411.15114\" rel=\"noopener noreferrer\">“RE-Bench: Evaluating frontier AI R&amp;D capabilities of language model agents against human experts.”</a> ICML 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-165",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[32] Chan, et al. <a href=\"https://arxiv.org/abs/2410.07095\" rel=\"noopener noreferrer\">“MLE-bench: Evaluating Machine Learning Agents on Machine Learning Engineering.”</a> arXiv preprint arXiv:2410.07095, 2024.</p>"
+    },
+    {
+      "id": "new42_self_improvement-166",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[33] Chen, et al. <a href=\"https://arxiv.org/abs/2410.05080\" rel=\"noopener noreferrer\">“ScienceAgentBench: Toward Rigorous Assessment of Language Agents for Data-Driven Scientific Discovery.”</a> ICLR 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-167",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[34] Siegel, et al. <a href=\"https://arxiv.org/abs/2409.11363\" rel=\"noopener noreferrer\">“CORE-Bench: Fostering the Credibility of Published Research Through a Computational Reproducibility Agent Benchmark.”</a> TMLR 2024.</p>"
+    },
+    {
+      "id": "new42_self_improvement-168",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[35] Ouyang, et al. <a href=\"https://arxiv.org/abs/2502.10517\" rel=\"noopener noreferrer\">“KernelBench: Can LLMs Write Efficient GPU Kernels?”</a> arXiv preprint arXiv:2502.10517, 2025.</p>"
+    },
+    {
+      "id": "new42_self_improvement-169",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[36] Lin, et al. <a href=\"https://arxiv.org/abs/2605.30621\" rel=\"noopener noreferrer\">“Harness Updating Is Not Harness Benefit: Disentangling Evolution Capabilities in Self-Evolving LLM Agents.”</a> arXiv preprint arXiv:2605.30621, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-170",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[37] Lin, et al. <a href=\"https://arxiv.org/abs/2604.25850\" rel=\"noopener noreferrer\">“Agentic Harness Engineering: Observability-Driven Automatic Evolution of Coding-Agent Harnesses.”</a> arXiv preprint arXiv:2604.25850, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-171",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[38] Karten, et al. <a href=\"https://arxiv.org/abs/2605.09998\" rel=\"noopener noreferrer\">“Continual Harness: Online Adaptation for Self-Improving Foundation Agents.”</a> arXiv preprint arXiv:2605.09998, 2026.</p>"
+    },
+    {
+      "id": "new42_self_improvement-172",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>[39] Che, et al. <a href=\"https://arxiv.org/abs/2605.24539\" rel=\"noopener noreferrer\">“DemoEvolve: Overcoming Sparse Feedback in Agentic Harness Evolution with Demonstrations.”</a> arXiv preprint arXiv:2605.24539, 2026.</p>"
+    }
+  ],
+  "description": "递归自我改进（recursive self-improvement，RSI）的概念可以追溯到 I. J. Good（1965）。他将“超智能机器”定义为一种能够在所有智力活动中超越人类，并能设计更好的机器来改进自身的系统。Yudkowsky（2008…",
+  "reading_minutes": 31,
+  "downloads": {}
+}

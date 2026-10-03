@@ -1,0 +1,186 @@
+{
+  "title": "使用 Mods 定制 Claude Code",
+  "original_title": "Customize Claude Code with mods",
+  "url": "https://claude.com/blog/claude-code-mods",
+  "date": "2026-10-01",
+  "publisher": "Anthropic",
+  "source_order": 32,
+  "slug": "code-mods",
+  "source_id": "new32_code_mods",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new32_code_mods-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/0204556c94d585a8b1c94ebc.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new32_code_mods-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Change how Claude Code behaves and looks with a few lines of TypeScript.</p>",
+      "zh": "<p>用几行 TypeScript，改变 Claude Code 的行为与外观。</p>"
+    },
+    {
+      "id": "new32_code_mods-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Today we're introducing mods, small TypeScript functions that change how Claude Code works. A mod can rewrite a prompt, add new UI, replace a built-in feature, or add entirely new functionality. You can write a mod yourself, or ask Claude Code to write one for you. Mods ship inside plugins, so you install and share them like any plugin. They work in the Claude Code CLI and desktop app.</p>",
+      "zh": "<p>今天，我们推出 Mods：用于改变 Claude Code 工作方式的小型 TypeScript 函数。一个 Mod 可以改写提示词、添加新的 UI、替换内置功能，或加入全新的能力。你可以自己编写 Mod，也可以让 Claude Code 帮你写。Mods 随插件一起分发，因此安装和分享方式与其他插件相同。它们可以在 Claude Code CLI 和桌面应用中使用。</p>"
+    },
+    {
+      "id": "new32_code_mods-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Mods run with the same access to your machine as Claude Code itself. They aren’t sandboxed, and you should only install mods from sources you trust, the same way you'd install any code on your computer.</p>",
+      "zh": "<p>Mods 对你的计算机拥有与 Claude Code 本身相同的访问权限。它们不在沙箱中运行，因此你应当只安装来自可信来源的 Mods，就像在计算机上安装其他代码一样。</p>"
+    },
+    {
+      "id": "new32_code_mods-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To see what mods can do, <a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/\" rel=\"noopener noreferrer\">read our guide to building your first mod</a>.</p>",
+      "zh": "<p>想了解 Mods 能做什么，请<a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/\" rel=\"noopener noreferrer\">阅读我们的首个 Mod 构建指南</a>。</p>"
+    },
+    {
+      "id": "new32_code_mods-005",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Why we built mods</h3>",
+      "zh": "<h3>我们为什么开发 Mods</h3>"
+    },
+    {
+      "id": "new32_code_mods-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Developers have asked for more control over how Claude Code works, without waiting for us to ship a feature. <a href=\"https://code.claude.com/docs/en/hooks\" rel=\"noopener noreferrer\">Hooks</a> helped give users some of this control, but hooks can't rewrite events, draw new UI, or replace features. Mods can.</p>",
+      "zh": "<p>开发者希望更自主地控制 Claude Code 的工作方式，而无须等待我们发布某项功能。<a href=\"https://code.claude.com/docs/en/hooks\" rel=\"noopener noreferrer\">Hooks</a> 已经提供了其中一部分控制能力，但 Hooks 无法改写事件、绘制新的 UI 或替换功能。Mods 则可以。</p>"
+    },
+    {
+      "id": "new32_code_mods-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We want Claude Code to feel like yours, so you can shape it to the way you work. We <a href=\"https://github.com/anthropics/claude-code/issues/91870\" rel=\"noopener noreferrer\">shared the design for mods on GitHub</a> before launch to get feedback from developers. Thank you to everyone who weighed in.</p>",
+      "zh": "<p>我们希望 Claude Code 能成为真正属于你的工具，让你按照自己的工作方式塑造它。为收集开发者的反馈，我们在发布前就<a href=\"https://github.com/anthropics/claude-code/issues/91870\" rel=\"noopener noreferrer\">在 GitHub 上分享了 Mods 的设计</a>。感谢每一位提出意见的人。</p>"
+    },
+    {
+      "id": "new32_code_mods-008",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>How mods work</h3>",
+      "zh": "<h3>Mods 如何工作</h3>"
+    },
+    {
+      "id": "new32_code_mods-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Each time Claude Code does something, it emits an event. Examples include calling a tool, asking for permission, and drawing part of the screen. A mod is a function that hooks into one of these events. A mod can run before the event, after it, or instead of it. It can also wrap the event, running code both before and after. With one function, a mod can:</p>",
+      "zh": "<p>Claude Code 每次执行操作时，都会发出一个事件，例如调用工具、请求权限或绘制部分屏幕界面。Mod 是一个接入此类事件的函数。它可以在事件发生之前、之后运行，也可以代替事件本身执行。它还可以包裹事件，在前后都运行代码。只用一个函数，Mod 就能够：</p>"
+    },
+    {
+      "id": "new32_code_mods-010",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Rewrite a prompt before it reaches the model.</li><li>Block, rewrite, or retry a tool call.</li><li>Approve or deny a permission request.</li><li>Redact secrets from tool output before Claude reads it.</li></ul>",
+      "zh": "<ul><li>在提示词送达模型之前改写它。</li><li>阻止、改写或重试工具调用。</li><li>批准或拒绝权限请求。</li><li>在 Claude 读取工具输出之前，隐去其中的机密信息。</li></ul>"
+    },
+    {
+      "id": "new32_code_mods-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A mod can also change what you see. It can edit or replace part of the interface Claude Code draws, like a tool result or a question from Claude. It can add buttons and inputs, and other mods can respond when you press them. Today, a mod can target the terminal, the desktop app, or both.</p>",
+      "zh": "<p>Mod 也能改变你看到的内容。它可以编辑或替换 Claude Code 绘制的部分界面，例如工具结果或 Claude 提出的问题。它可以添加按钮和输入控件，其他 Mods 则可以在你按下这些控件时作出响应。目前，一个 Mod 可以面向终端、桌面应用，或者同时面向两者。</p>"
+    },
+    {
+      "id": "new32_code_mods-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When several mods hook the same event, they run in the order they load. The first mod to load sees the event first and the result last. This lets you stack mods from different authors.</p>",
+      "zh": "<p>当多个 Mods 接入同一事件时，它们会按照加载顺序运行。最先加载的 Mod 最先看到事件，最后看到结果。这样，你就可以叠加使用不同作者编写的 Mods。</p>"
+    },
+    {
+      "id": "new32_code_mods-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can also use Claude Code to mod Claude Code. Ask Claude to create a mod, and it can write the TypeScript, install it, and hot reload it in your session.</p>",
+      "zh": "<p>你也可以用 Claude Code 为 Claude Code 编写 Mod。让 Claude 创建一个 Mod，它就可以编写 TypeScript、完成安装，并在当前会话中热重载。</p>"
+    },
+    {
+      "id": "new32_code_mods-014",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Swap built-in features for your own</h3>",
+      "zh": "<h3>用自己的功能替换内置功能</h3>"
+    },
+    {
+      "id": "new32_code_mods-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Some built-in features of Claude Code now ship as mods. For example, the built-in <code>/diff</code> feature is now a mod, so you can turn it off (in <code>/plugin</code>) or replace it with your own version. We plan to move more built-in features to mods over time, so you can pare Claude Code down to a small core and add back only what you want.</p>",
+      "zh": "<p>Claude Code 的一些内置功能现在已经以 Mods 的形式提供。例如，内置的 <code>/diff</code> 功能现在就是一个 Mod，因此你可以在 <code>/plugin</code> 中关闭它，或用自己的版本替换它。我们计划逐步将更多内置功能迁移为 Mods，让你能够将 Claude Code 精简到一个小型核心，再只加回自己需要的功能。</p>"
+    },
+    {
+      "id": "new32_code_mods-016",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Mods for teams and enterprises</h3>",
+      "zh": "<h3>面向团队和企业的 Mods</h3>"
+    },
+    {
+      "id": "new32_code_mods-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Mods ship inside plugins, so your existing plugin controls apply. Admins can allow or block plugin marketplaces. On Team and Enterprise plans, an owner sets this in the admin console. On Claude API and third-party API plans, admins push managed settings to users' machines.</p>",
+      "zh": "<p>Mods 随插件一起分发，因此现有的插件管理控制同样适用。管理员可以允许或屏蔽插件市场。在 Team 和 Enterprise 套餐中，由所有者在管理控制台中设置。在 Claude API 和第三方 API 套餐中，管理员向用户计算机推送托管设置。</p>"
+    },
+    {
+      "id": "new32_code_mods-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>On Team and Enterprise plans, and on any machine with managed settings, a built-in mod called <code>sec-default</code> (“security default”) loads first. It stops mods that users install from doing risky things, like overriding your permission deny rules. You can <a href=\"http://github.com/anthropics/claude-code/tree/main/mods\" rel=\"noopener noreferrer\">view the source code</a> to see what it restricts. Admins can load their own mods first instead. If you do, add <code>sec-default</code> to your list to keep its restrictions.</p>",
+      "zh": "<p>在 Team 和 Enterprise 套餐中，以及任何应用了托管设置的计算机上，一个名为 <code>sec-default</code>（“默认安全设置”）的内置 Mod 会最先加载。它会阻止用户安装的 Mods 执行有风险的操作，例如覆盖你的权限拒绝规则。你可以<a href=\"http://github.com/anthropics/claude-code/tree/main/mods\" rel=\"noopener noreferrer\">查看源代码</a>，了解它施加了哪些限制。管理员也可以改为优先加载自己的 Mods。如果这样做，请将 <code>sec-default</code> 加入加载列表，以保留它的限制。</p>"
+    },
+    {
+      "id": "new32_code_mods-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Teams can also use mods to build their own controls and functionality. For example:</p>",
+      "zh": "<p>团队也可以利用 Mods 构建自己的控制机制和功能。例如：</p>"
+    },
+    {
+      "id": "new32_code_mods-020",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>CI/CD status: </strong>a mod can show your pipeline’s status in a pane beside the conversation, and update it as builds pass or fail.</li><li><strong>Production safeguards</strong>: a mod can require confirmation before any command touches production config.</li><li><strong>Audit logging: </strong>a mod that loads first can record every call that every other mod makes.</li></ul>",
+      "zh": "<ul><li><strong>CI/CD 状态：</strong>Mod 可以在对话旁的面板中显示流水线状态，并在构建成功或失败时更新。</li><li><strong>生产环境保护：</strong>Mod 可以要求在任何命令涉及生产环境配置之前先进行确认。</li><li><strong>审计日志：</strong>最先加载的 Mod 可以记录其他每个 Mod 发出的每一次调用。</li></ul>"
+    },
+    {
+      "id": "new32_code_mods-021",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Getting started</h3>",
+      "zh": "<h3>开始使用</h3>"
+    },
+    {
+      "id": "new32_code_mods-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Mods are available today in the Claude Code CLI and desktop app. Install plugins that include mods from the <a href=\"https://claude.ai/directory\" rel=\"noopener noreferrer\">Claude directory</a> or by running <code>/plugin</code> in the CLI. To share a mod, package it in a plugin and <a href=\"https://claude.ai/directory/manage\" rel=\"noopener noreferrer\">submit it to the directory</a>. </p>",
+      "zh": "<p>Mods 即日起可在 Claude Code CLI 和桌面应用中使用。你可以从 <a href=\"https://claude.ai/directory\" rel=\"noopener noreferrer\">Claude 目录</a>安装包含 Mods 的插件，也可以在 CLI 中运行 <code>/plugin</code> 进行安装。要分享一个 Mod，请将其打包为插件，并<a href=\"https://claude.ai/directory/manage\" rel=\"noopener noreferrer\">提交到目录</a>。</p>"
+    },
+    {
+      "id": "new32_code_mods-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To build your own mods, read our <a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/\" rel=\"noopener noreferrer\">getting started guide</a> or see the <a href=\"https://code.claude.com/docs/en/plugins/mods/overview\" rel=\"noopener noreferrer\">documentation</a>.</p>",
+      "zh": "<p>要构建自己的 Mods，请阅读我们的<a href=\"https://claude.dev/blog/getting-started-with-claude-code-mods/\" rel=\"noopener noreferrer\">入门指南</a>，或参阅<a href=\"https://code.claude.com/docs/en/plugins/mods/overview\" rel=\"noopener noreferrer\">文档</a>。</p>"
+    }
+  ],
+  "description": "今天，我们推出 Mods：用于改变 Claude Code 工作方式的小型 TypeScript 函数。一个 Mod 可以改写提示词、添加新的 UI、替换内置功能，或加入全新的能力。你可以自己编写 Mod，也可以让 Claude Code 帮你写。M…",
+  "reading_minutes": 4,
+  "downloads": {
+    "zh": "/downloads/code-mods-zh.pdf",
+    "en": "/downloads/code-mods-en.pdf"
+  }
+}

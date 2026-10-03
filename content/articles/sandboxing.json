@@ -1,0 +1,268 @@
+{
+  "title": "超越权限提示：让 Claude Code 更安全、更自主",
+  "original_title": "Beyond permission prompts: making Claude Code more secure and autonomous",
+  "url": "https://www.anthropic.com/engineering/claude-code-sandboxing",
+  "date": "2025-10-20",
+  "publisher": "Anthropic",
+  "source_order": 14,
+  "slug": "sandboxing",
+  "source_id": "new14_sandboxing",
+  "category": "安全与可靠性",
+  "blocks": [
+    {
+      "id": "new14_sandboxing-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/008d718fe77e768aa1d72cf4.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new14_sandboxing-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code's new sandboxing features, a bash tool and Claude Code on the web,  reduce permission prompts and increase user safety by enabling two boundaries: filesystem and network isolation. </p>",
+      "zh": "<p>Claude Code 新增了两项沙箱功能：沙箱化的 bash 工具与网页版 Claude Code。它们通过文件系统隔离和网络隔离两道边界，减少权限提示，并提升用户安全性。</p>"
+    },
+    {
+      "id": "new14_sandboxing-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In <a href=\"https://www.claude.com/product/claude-code\" rel=\"noopener noreferrer\">Claude Code</a>, Claude writes, tests, and debugs code alongside you, navigating your codebase, editing multiple files, and running commands to verify its work. Giving Claude this much access to your codebase and files can introduce risks, especially in the case of prompt injection.</p>",
+      "zh": "<p>在 <a href=\"https://www.claude.com/product/claude-code\" rel=\"noopener noreferrer\">Claude Code</a> 中，Claude 与你一起编写、测试和调试代码，浏览代码库、编辑多个文件，并运行命令验证自己的工作。向 Claude 开放如此广泛的代码库和文件访问权限，可能带来风险，尤其是在遭遇提示词注入时。</p>"
+    },
+    {
+      "id": "new14_sandboxing-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To help address this, we’ve introduced two new features in Claude Code built on top of sandboxing, both of which are designed to provide a more secure place for developers to work, while also allowing Claude to run more autonomously and with fewer permission prompts. In our internal usage, we've found that sandboxing safely reduces permission prompts by 84%. By defining set boundaries within which Claude can work freely, they increase security and agency.</p>",
+      "zh": "<p>为帮助解决这个问题，我们在 Claude Code 中引入了两项基于沙箱的新功能。它们都旨在为开发者提供更安全的工作环境，同时让 Claude 能够更自主地运行，减少权限提示。在内部使用中，我们发现，沙箱能够在保障安全的同时，将权限提示减少 84%。通过划定明确边界，让 Claude 在边界内自由工作，这些功能同时提升了安全性与自主行动能力。</p>"
+    },
+    {
+      "id": "new14_sandboxing-004",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-keeping-users-secure-on-claude-code\"><strong>Keeping users secure on Claude Code</strong></h3>",
+      "zh": "<h3 id=\"zh-source-keeping-users-secure-on-claude-code\"><strong>保障 Claude Code 用户的安全</strong></h3>"
+    },
+    {
+      "id": "new14_sandboxing-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code runs on a permission-based model: by default, it's read-only, which means it asks for permission before making modifications or running any commands. There are some exceptions to this: we auto-allow safe commands like echo or cat, but most operations still need explicit approval.</p>",
+      "zh": "<p>Claude Code 采用基于权限的运行模式：默认情况下处于只读状态，这意味着在修改内容或运行命令之前，它都会请求许可。不过也有一些例外：对于 echo 或 cat 这样的安全命令，我们会自动允许执行，但大多数操作仍需明确批准。</p>"
+    },
+    {
+      "id": "new14_sandboxing-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Constantly clicking \"approve\" slows down development cycles and can lead to ‘approval fatigue’, where users might not pay close attention to what they're approving, and in turn making development less safe.</p>",
+      "zh": "<p>不断点击“批准”会拖慢开发周期，还可能造成“审批疲劳”：用户可能不再仔细留意自己批准了什么，反而降低了开发过程的安全性。</p>"
+    },
+    {
+      "id": "new14_sandboxing-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To address this, we launched sandboxing for Claude Code.</p>",
+      "zh": "<p>为此，我们为 Claude Code 推出了沙箱机制。</p>"
+    },
+    {
+      "id": "new14_sandboxing-008",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-sandboxing-a-safer-and-more-autonomous-approach\"><strong>Sandboxing: a safer and more autonomous approach</strong></h2>",
+      "zh": "<h2 id=\"zh-source-sandboxing-a-safer-and-more-autonomous-approach\"><strong>沙箱：更安全、更自主的方式</strong></h2>"
+    },
+    {
+      "id": "new14_sandboxing-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sandboxing creates pre-defined boundaries within which Claude can work more freely, instead of asking for permission for each action. With sandboxing enabled, you get drastically fewer permission prompts and increased safety.</p>",
+      "zh": "<p>沙箱预先划定边界，让 Claude 在边界内更自由地工作，而无需为每一个动作请求许可。启用沙箱后，权限提示会大幅减少，安全性也会提升。</p>"
+    },
+    {
+      "id": "new14_sandboxing-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our approach to sandboxing is built on top of operating system-level features to enable two boundaries:</p>",
+      "zh": "<p>我们的沙箱方案建立在操作系统级功能之上，形成两道边界：</p>"
+    },
+    {
+      "id": "new14_sandboxing-011",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Filesystem isolation</strong>,<strong> </strong>which ensures that Claude can only access or modify specific directories. This is particularly important in preventing a prompt-injected Claude from modifying sensitive system files.</li><li><strong>Network isolation</strong>,<strong> </strong>which ensures that Claude can only connect to approved servers. This prevents a prompt-injected Claude from leaking sensitive information or downloading malware.</li></ol>",
+      "zh": "<ol><li><strong>文件系统隔离</strong>，<strong> </strong>确保 Claude 只能访问或修改特定目录。这对防止遭受提示词注入的 Claude 修改敏感系统文件尤为重要。</li><li><strong>网络隔离</strong>，<strong> </strong>确保 Claude 只能连接已获批准的服务器。这能防止遭受提示词注入的 Claude 泄露敏感信息或下载恶意软件。</li></ol>"
+    },
+    {
+      "id": "new14_sandboxing-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It is worth noting that effective sandboxing requires <em>both</em> filesystem and network isolation. Without network isolation, a compromised agent could exfiltrate sensitive files like SSH keys; without filesystem isolation, a compromised agent could easily escape the sandbox and gain network access. It’s by using both techniques that we can provide a safer and faster agentic experience for Claude Code users.</p>",
+      "zh": "<p>有效的沙箱需要<em>同时</em>具备文件系统隔离与网络隔离。如果没有网络隔离，被攻陷的 Agent 可能会将 SSH 密钥等敏感文件外传；如果没有文件系统隔离，被攻陷的 Agent 则可能轻易逃出沙箱并获得网络访问能力。正是通过同时使用这两种技术，我们才能为 Claude Code 用户提供更安全、更快速的 Agent 使用体验。</p>"
+    },
+    {
+      "id": "new14_sandboxing-013",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-two-new-sandboxing-features-in-claude-code\">Two new sandboxing features in Claude Code</h3>",
+      "zh": "<h3 id=\"zh-source-two-new-sandboxing-features-in-claude-code\">Claude Code 的两项沙箱新功能</h3>"
+    },
+    {
+      "id": "new14_sandboxing-014",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-sandboxed-bash-tool-safe-bash-execution-without-permission-prompts\"><strong>Sandboxed bash tool: safe bash execution without permission prompts</strong></h4>",
+      "zh": "<h4 id=\"zh-source-sandboxed-bash-tool-safe-bash-execution-without-permission-prompts\"><strong>沙箱化的 bash 工具：无需权限提示，也能安全执行 bash</strong></h4>"
+    },
+    {
+      "id": "new14_sandboxing-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We're introducing <a href=\"https://docs.claude.com/en/docs/claude-code/sandboxing\" rel=\"noopener noreferrer\">a new sandbox runtime</a>, available in beta as a research preview, that lets you define exactly which directories and network hosts your agent can access, without the overhead of spinning up and managing a container. This can be used to sandbox arbitrary processes, agents and MCP servers. It is also available as <a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">an open source research preview</a>.</p>",
+      "zh": "<p>我们推出了一个<a href=\"https://docs.claude.com/en/docs/claude-code/sandboxing\" rel=\"noopener noreferrer\">新的沙箱运行时</a>，目前以 beta 研究预览版提供。它让你能够精确定义 Agent 可以访问哪些目录和网络主机，而不必承担启动和管理容器的开销。它可以用于隔离任意进程、Agent 和 MCP 服务器，并且也以<a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">开源研究预览版</a>的形式提供。</p>"
+    },
+    {
+      "id": "new14_sandboxing-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In Claude Code, we use this runtime to sandbox the bash tool, which allows Claude to run commands within the defined limits you set. Inside the safe sandbox, Claude can run more autonomously and safely execute commands without permission prompts. If Claude tries to access something <em>outside</em> of the sandbox, you'll be notified immediately, and can choose whether or not to allow it.</p>",
+      "zh": "<p>在 Claude Code 中，我们使用这个运行时对 bash 工具进行沙箱隔离，让 Claude 在你设定的范围内运行命令。在安全的沙箱内部，Claude 可以更自主地运行，安全执行命令而无需权限提示。如果 Claude 尝试访问沙箱<em>之外</em>的内容，你会立即收到通知，并可以决定是否允许。</p>"
+    },
+    {
+      "id": "new14_sandboxing-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We’ve built this on top of OS level primitives such as <a href=\"https://github.com/containers/bubblewrap\" rel=\"noopener noreferrer\">Linux bubblewrap</a> and MacOS seatbelt to enforce these restrictions at the OS level. They cover not just Claude Code's direct interactions, but also any scripts, programs, or subprocesses that are spawned by the command.As described above, this sandbox enforces both:</p>",
+      "zh": "<p>我们基于 <a href=\"https://github.com/containers/bubblewrap\" rel=\"noopener noreferrer\">Linux bubblewrap</a> 和 macOS seatbelt 等操作系统级原语构建了这一机制，在操作系统层面强制执行限制。这些限制不仅覆盖 Claude Code 的直接交互，也覆盖命令所启动的所有脚本、程序和子进程。如上所述，这个沙箱同时强制执行：</p>"
+    },
+    {
+      "id": "new14_sandboxing-018",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Filesystem isolation, </strong>by allowing read and write access to the current working directory, but blocking the modification of any files outside of it.</li><li><strong>Network isolation, </strong>by only allowing internet access through a unix domain socket connected to a proxy server running outside the sandbox. This proxy server enforces restrictions on the domains that a process can connect to, and handles user confirmation for newly requested domains. And if you’d like further-increased security, we also support customizing this proxy to enforce arbitrary rules on outgoing traffic.</li></ol>",
+      "zh": "<ol><li><strong>文件系统隔离：</strong>允许读写当前工作目录，但阻止修改该目录之外的任何文件。</li><li><strong>网络隔离：</strong>只允许通过 Unix 域套接字访问互联网，该套接字连接到运行于沙箱外部的代理服务器。代理服务器限制进程可以连接的域名，并在请求新域名时处理用户确认。如果你希望进一步增强安全性，还可以自定义这个代理，对出站流量施加任意规则。</li></ol>"
+    },
+    {
+      "id": "new14_sandboxing-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Both components are configurable: you can easily choose to allow or disallow specific file paths or domains.</p>",
+      "zh": "<p>这两个组件都可以配置：你可以方便地允许或禁止特定文件路径或域名。</p>"
+    },
+    {
+      "id": "new14_sandboxing-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"This image illustrations how sandboxing in Claude Code works.\" src=\"/media/7b35cf6667252a6c8f067d8a.png\" loading=\"lazy\" decoding=\"async\"><figcaption>Claude Code's sandboxing architecture isolates code execution with filesystem and network controls, automatically allowing safe operations, blocking malicious ones, and asking permission only when needed.</figcaption></figure>"
+    },
+    {
+      "id": "new14_sandboxing-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sandboxing ensures that even a successful prompt injection is fully isolated, and cannot impact overall user security. This way, a compromised Claude Code can't steal your SSH keys, or phone home to an attacker's server.</p>",
+      "zh": "<p>沙箱确保即使提示词注入成功，其影响也会被完全隔离，无法危及用户的整体安全。这样，即便 Claude Code 被攻陷，也无法窃取你的 SSH 密钥，或向攻击者的服务器回传信息。</p>"
+    },
+    {
+      "id": "new14_sandboxing-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To get started with this feature, run /sandbox in Claude Code and check out <a href=\"https://docs.claude.com/en/docs/claude-code/sandboxing\" rel=\"noopener noreferrer\">more technical details</a> about our security model.</p>",
+      "zh": "<p>要开始使用此功能，请在 Claude Code 中运行 /sandbox，并查看有关我们安全模型的<a href=\"https://docs.claude.com/en/docs/claude-code/sandboxing\" rel=\"noopener noreferrer\">更多技术细节</a>。</p>"
+    },
+    {
+      "id": "new14_sandboxing-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To make it easier for other teams to build safer agents, we have <a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">open sourced</a> this feature. We believe that others should consider adopting this technology for their own agents in order to enhance the security posture of their agents.</p>",
+      "zh": "<p>为了让其他团队更容易构建安全的 Agent，我们已经<a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">开源</a>了这项功能。我们认为，其他团队应考虑在自己的 Agent 中采用这项技术，以增强其安全防护能力。</p>"
+    },
+    {
+      "id": "new14_sandboxing-024",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-claude-code-on-the-web-running-claude-code-securely-in-the-cloud\"><strong>Claude Code on the web: running Claude Code securely in the cloud</strong></h4>",
+      "zh": "<h4 id=\"zh-source-claude-code-on-the-web-running-claude-code-securely-in-the-cloud\"><strong>网页版 Claude Code：在云端安全运行 Claude Code</strong></h4>"
+    },
+    {
+      "id": "new14_sandboxing-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Today, we're also releasing <a href=\"https://docs.claude.com/en/docs/claude-code/claude-code-on-the-web\" rel=\"noopener noreferrer\">Claude Code on the web</a> enabling users to run Claude Code in an isolated sandbox in the cloud. Claude Code on the web executes each Claude Code session in an isolated sandbox where it has full access to its server in a safe and secure way. We've designed this sandbox to ensure that sensitive credentials (such as git credentials or signing keys) are never inside the sandbox with Claude Code. This way, even if the code running in the sandbox is compromised, the user is kept safe from further harm.</p>",
+      "zh": "<p>今天，我们还发布了<a href=\"https://docs.claude.com/en/docs/claude-code/claude-code-on-the-web\" rel=\"noopener noreferrer\">网页版 Claude Code</a>，让用户可以在云端的隔离沙箱中运行 Claude Code。网页版 Claude Code 将每个会话放在独立的沙箱中执行，在保障安全的前提下，让它完整访问所在服务器。我们设计这个沙箱时，确保敏感凭据，例如 git 凭据或签名密钥，绝不会与 Claude Code 一起存在于沙箱内部。这样，即使沙箱中运行的代码被攻陷，也能保护用户免受进一步损害。</p>"
+    },
+    {
+      "id": "new14_sandboxing-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code on the web uses a custom proxy service that transparently handles all git interactions. Inside the sandbox, the git client authenticates to this service with a custom-built scoped credential. The proxy verifies this credential and the contents of the git interaction (e.g. ensuring it is only pushing to the configured branch), then attaches the right authentication token before sending the request to GitHub.</p>",
+      "zh": "<p>网页版 Claude Code 使用一个定制代理服务，透明地处理所有 git 交互。在沙箱内部，git 客户端使用专门构建、限定权限范围的凭据向该服务认证。代理会验证凭据和 git 交互的内容，例如确保只向已配置的分支推送，然后附上正确的身份验证令牌，再将请求发送给 GitHub。</p>"
+    },
+    {
+      "id": "new14_sandboxing-027",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"This illustration depicts how Claude Code on the web uses a custom proxy to handle all git interactions.\" src=\"/media/94f73966d8a6a33a185595ea.png\" loading=\"lazy\" decoding=\"async\"><figcaption>Claude Code's Git integration routes commands through a secure proxy that validates authentication tokens, branch names, and repository destinations—allowing safe version control workflows while preventing unauthorized pushes.</figcaption></figure>"
+    },
+    {
+      "id": "new14_sandboxing-028",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-getting-started\">Getting started</h2>",
+      "zh": "<h2 id=\"zh-source-getting-started\">开始使用</h2>"
+    },
+    {
+      "id": "new14_sandboxing-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our new sandboxed bash tool and Claude Code on the web offer substantial improvements in both security and productivity for developers using Claude for their engineering work.</p>",
+      "zh": "<p>对于使用 Claude 开展工程工作的开发者，新的沙箱化 bash 工具和网页版 Claude Code，在安全性与生产力方面都带来了显著改善。</p>"
+    },
+    {
+      "id": "new14_sandboxing-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To get started with these tools:</p>",
+      "zh": "<p>要开始使用这些工具：</p>"
+    },
+    {
+      "id": "new14_sandboxing-031",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Run `/sandbox` in Claude and check out <a href=\"https://docs.claude.com/en/docs/claude-code/sandboxing\" rel=\"noopener noreferrer\">our docs</a> on how to configure this sandbox.</li><li>Go to <a href=\"http://claude.ai/redirect/website.v1.d4c615d7-322d-4088-9200-3526a8075ba1/code\" rel=\"noopener noreferrer\">claude.com/code</a> to try out Claude Code on the web.</li></ol>",
+      "zh": "<ol><li>在 Claude 中运行 `/sandbox`，并查阅<a href=\"https://docs.claude.com/en/docs/claude-code/sandboxing\" rel=\"noopener noreferrer\">文档</a>，了解如何配置沙箱。</li><li>前往 <a href=\"http://claude.ai/redirect/website.v1.d4c615d7-322d-4088-9200-3526a8075ba1/code\" rel=\"noopener noreferrer\">claude.com/code</a>，体验网页版 Claude Code。</li></ol>"
+    },
+    {
+      "id": "new14_sandboxing-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Or, if you're building your own agents, check out our <a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">open-sourced sandboxing code</a>, and consider integrating it into your work. We look forward to seeing what you build.</p>",
+      "zh": "<p>如果你正在构建自己的 Agent，也可以查看我们的<a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">开源沙箱代码</a>，考虑将其集成到你的项目中。我们期待看到你的成果。</p>"
+    },
+    {
+      "id": "new14_sandboxing-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To learn more about Claude Code on the web, check out our <a href=\"https://www.anthropic.com/news/claude-code-on-the-web\" rel=\"noopener noreferrer\">launch blog post</a>.</p>",
+      "zh": "<p>若想进一步了解网页版 Claude Code，请阅读我们的<a href=\"https://www.anthropic.com/news/claude-code-on-the-web\" rel=\"noopener noreferrer\">发布博客文章</a>。</p>"
+    },
+    {
+      "id": "new14_sandboxing-034",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-acknowledgements\">Acknowledgements</h2>",
+      "zh": "<h2 id=\"zh-source-acknowledgements\">致谢</h2>"
+    },
+    {
+      "id": "new14_sandboxing-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Article written by David Dworken and Oliver Weller-Davies, with contributions from Meaghan Choi, Catherine Wu, Molly Vorwerck, Alex Isken, Kier Bradwell, and Kevin Garcia</p>",
+      "zh": "<p>本文由 David Dworken 和 Oliver Weller-Davies 撰写，Meaghan Choi、Catherine Wu、Molly Vorwerck、Alex Isken、Kier Bradwell 和 Kevin Garcia 参与贡献。</p>"
+    }
+  ],
+  "description": "Claude Code 新增了两项沙箱功能：沙箱化的 bash 工具与网页版 Claude Code。它们通过文件系统隔离和网络隔离两道边界，减少权限提示，并提升用户安全性",
+  "reading_minutes": 6,
+  "downloads": {
+    "zh": "/downloads/sandboxing-zh.pdf",
+    "en": "/downloads/sandboxing-en.pdf"
+  }
+}

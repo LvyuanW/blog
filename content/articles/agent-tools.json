@@ -1,0 +1,406 @@
+{
+  "title": "构建 Agent 的新工具",
+  "original_title": "New tools for building agents",
+  "url": "https://openai.com/index/new-tools-for-building-agents/",
+  "date": "2025-03-11",
+  "publisher": "OpenAI",
+  "source_order": 27,
+  "slug": "agent-tools",
+  "source_id": "new27_agent_tools",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new27_agent_tools-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"A sleek, minimal interface displaying a task list for an AI agent, including ‘triage_agent,’ ‘guardrail,’ and ‘update_salesforce_record,’ over a fluid blue abstract background.\" src=\"/media/acd543510fd846cc59298734.webp\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new27_agent_tools-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Today, we’re releasing the first set of building blocks that will help developers and enterprises build useful and reliable agents. We view agents as systems that independently accomplish tasks on behalf of users. Over the past year, we’ve introduced new model capabilities—such as advanced reasoning, multimodal interactions, and new safety techniques—that have laid the foundation for our models to handle the complex, multi-step tasks required to build agents. However, customers have shared that turning these capabilities into production-ready agents can be challenging, often requiring extensive prompt iteration and custom orchestration logic without sufficient visibility or built-in support.</span></p>",
+      "zh": "<p>今天，我们发布首批基础组件，帮助开发者和企业构建有用且可靠的 Agent。我们将 Agent 视为能够代表用户独立完成任务的系统。在过去一年中，我们推出了新的模型能力，包括高级推理、多模态交互和新的安全技术，为模型处理构建 Agent 所需的复杂多步骤任务奠定了基础。不过，客户反馈，将这些能力转化为可投入生产的 Agent 仍然充满挑战：往往需要反复迭代提示词、编写定制编排逻辑，却缺乏足够的可见性和内置支持。</p>"
+    },
+    {
+      "id": "new27_agent_tools-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>To address these challenges, we’re launching a new set of APIs and tools specifically designed to simplify the development of agentic applications:</span></p>",
+      "zh": "<p>为应对这些挑战，我们推出了一组专门用于简化 Agent 应用开发的新 API 和工具：</p>"
+    },
+    {
+      "id": "new27_agent_tools-003",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><p><span>The new </span><a href=\"https://platform.openai.com/docs/quickstart?api-mode=responses\" rel=\"noopener noreferrer\"><u><span>Responses API</span></u>⁠</a><span>, combining the simplicity of the Chat Completions API with the tool use capabilities of the Assistants API for building agents</span></p></li><li><p><span>Built-in tools including </span><a href=\"https://platform.openai.com/docs/guides/tools-web-search\" rel=\"noopener noreferrer\"><u><span>web search</span></u>⁠</a><span>, </span><a href=\"https://platform.openai.com/docs/guides/tools-file-search\" rel=\"noopener noreferrer\"><u><span>file search</span></u>⁠</a><span>, and </span><a href=\"https://platform.openai.com/docs/guides/tools-computer-use\" rel=\"noopener noreferrer\"><u><span>computer use</span></u>⁠</a></p></li><li><p><span>The new </span><a href=\"https://platform.openai.com/docs/guides/agents\" rel=\"noopener noreferrer\"><u><span>Agents SDK</span></u>⁠</a><span> to orchestrate single-agent and multi-agent workflows</span></p></li><li><p><span>Integrated </span><a href=\"https://platform.openai.com/docs/guides/agents#orchestration\" rel=\"noopener noreferrer\"><u><span>observability tools</span></u>⁠</a><span> to trace and inspect agent workflow execution</span></p></li></ul>",
+      "zh": "<ul><li><p>全新的 <a href=\"https://platform.openai.com/docs/quickstart?api-mode=responses\" rel=\"noopener noreferrer\">Responses API</a>，将 Chat Completions API 的简洁性与 Assistants API 用于构建 Agent 的工具使用能力相结合。</p></li><li><p>内置工具，包括<a href=\"https://platform.openai.com/docs/guides/tools-web-search\" rel=\"noopener noreferrer\">网页搜索</a>、<a href=\"https://platform.openai.com/docs/guides/tools-file-search\" rel=\"noopener noreferrer\">文件搜索</a>和<a href=\"https://platform.openai.com/docs/guides/tools-computer-use\" rel=\"noopener noreferrer\">计算机使用</a>。</p></li><li><p>全新的 <a href=\"https://platform.openai.com/docs/guides/agents\" rel=\"noopener noreferrer\">Agents SDK</a>，用于编排单 Agent 和多 Agent 工作流。</p></li><li><p>集成的<a href=\"https://platform.openai.com/docs/guides/agents#orchestration\" rel=\"noopener noreferrer\">可观测性工具</a>，用于追踪和检查 Agent 工作流的执行过程。</p></li></ul>"
+    },
+    {
+      "id": "new27_agent_tools-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>These new tools streamline core agent logic, orchestration, and interactions, making it significantly easier for developers to get started with building agents. Over the coming weeks and months, we plan to release additional tools and capabilities to further simplify and accelerate building agentic applications on our platform.</span></p>",
+      "zh": "<p>这些新工具简化了 Agent 的核心逻辑、编排和交互，大幅降低了开发者开始构建 Agent 的门槛。未来几周和几个月，我们计划发布更多工具和能力，进一步简化并加速在我们平台上构建 Agent 应用的过程。</p>"
+    },
+    {
+      "id": "new27_agent_tools-005",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Introducing the Responses API</h2>",
+      "zh": "<h2>介绍 Responses API</h2>"
+    },
+    {
+      "id": "new27_agent_tools-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The Responses API is our new API primitive for leveraging OpenAI’s built-in tools to build agents. It combines the simplicity of Chat Completions with the tool-use capabilities of the Assistants API. As model capabilities continue to evolve, we believe the Responses API will provide a more flexible foundation for developers building agentic applications. With a single Responses API call, developers will be able to solve increasingly complex tasks using multiple tools and model turns.</span></p>",
+      "zh": "<p>Responses API 是我们新的 API 基础接口，用于借助 OpenAI 的内置工具构建 Agent。它将 Chat Completions 的简洁性与 Assistants API 的工具使用能力相结合。随着模型能力不断演进，我们认为 Responses API 将为开发者构建 Agent 应用提供更灵活的基础。只需一次 Responses API 调用，开发者就能够通过多个工具和多轮模型交互解决越来越复杂的任务。</p>"
+    },
+    {
+      "id": "new27_agent_tools-007",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><a href=\"https://player.vimeo.com/video/1064514579?h=5c5aa01a53\" rel=\"noopener noreferrer\">OpenAI video on Vimeo</a></figure>"
+    },
+    {
+      "id": "new27_agent_tools-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>To start, the Responses API will support new built-in tools like web search, file search, and computer use. These tools are designed to work together to connect models to the real world, making them more useful in completing tasks. It also brings with it several usability improvements including a unified item-based design, simpler polymorphism, intuitive streaming events, and SDK helpers like </span><code>response.output_text</code><span> to easily access the model’s text output.</span></p>",
+      "zh": "<p>初期，Responses API 将支持网页搜索、文件搜索和计算机使用等新的内置工具。这些工具被设计为可以协同工作，将模型与真实世界连接起来，从而更有效地完成任务。它还带来了一些易用性改进，包括统一的条目式设计、更简单的多态处理、直观的流式事件，以及 <code>response.output_text</code> 等 SDK 辅助接口，方便获取模型的文本输出。</p>"
+    },
+    {
+      "id": "new27_agent_tools-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The Responses API is designed for developers who want to easily combine OpenAI models and built-in tools into their apps, without the complexity of integrating multiple APIs or external vendors. The API also makes it easier to store data on OpenAI so developers can evaluate agent performance using features such as tracing and evaluations. As a reminder, we </span><a href=\"https://openai.com/enterprise-privacy/\" rel=\"noopener noreferrer\"><u><span>do not train</span></u></a><span> our models on business data by default, even when the data is stored on OpenAI. The API is available to all developers starting today and is not charged separately—tokens and tools are billed at standard rates specified on our </span><a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\"><u><span>pricing page</span></u>⁠</a><span>. Check out the Responses API </span><a href=\"https://platform.openai.com/docs/quickstart?api-mode=responses\" rel=\"noopener noreferrer\"><u><span>quickstart guide</span></u>⁠</a><span> to learn more.</span></p>",
+      "zh": "<p>Responses API 面向希望轻松将 OpenAI 模型和内置工具集成到应用中的开发者，免去了集成多个 API 或外部供应商所带来的复杂性。该 API 也让在 OpenAI 上存储数据变得更容易，开发者因而可以使用执行轨迹追踪和评测等功能来评估 Agent 的表现。提醒一下，默认情况下，我们<a href=\"https://openai.com/enterprise-privacy/\" rel=\"noopener noreferrer\">不会使用企业数据训练</a>模型，即使这些数据存储在 OpenAI 上也是如此。该 API 即日起向所有开发者开放，不单独收费；token 和工具按照<a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\">价格页面</a>列出的标准费率计费。参阅 Responses API <a href=\"https://platform.openai.com/docs/quickstart?api-mode=responses\" rel=\"noopener noreferrer\">快速入门指南</a>，了解更多信息。</p>"
+    },
+    {
+      "id": "new27_agent_tools-010",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What this means for existing APIs</h2>",
+      "zh": "<h2>这对现有 API 意味着什么</h2>"
+    },
+    {
+      "id": "new27_agent_tools-011",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><p><a href=\"https://platform.openai.com/docs/guides/text-generation\" rel=\"noopener noreferrer\"><u><span>Chat Completions API</span></u>⁠</a><span>: Chat Completions remains our most widely adopted API, and we’re fully committed to supporting it with new models and capabilities. Developers who don’t require built-in tools can confidently continue using Chat Completions. We’ll keep releasing new models to Chat Completions whenever their capabilities don’t depend on built-in tools or multiple model calls. However, the Responses API is a </span><a href=\"https://platform.openai.com/docs/guides/responses-vs-chat-completions\" rel=\"noopener noreferrer\"><u><span>superset</span></u>⁠</a><span> of Chat Completions with the same great performance, so for new integrations, we recommend starting with the Responses API.</span></p></li><li><p><a href=\"https://platform.openai.com/docs/assistants/overview\" rel=\"noopener noreferrer\"><u><span>Assistants API</span></u>⁠</a><span>: Based on developer feedback from the Assistants API beta, we’ve incorporated key improvements into the Responses API, making it more flexible, faster, and easier to use. We’re working to achieve full feature parity between the Assistants and the Responses API, including support for Assistant-like and Thread-like objects, and the Code Interpreter tool. Once this is complete, we plan to formally announce the deprecation of the Assistants API with a target sunset date in mid-2026. Upon deprecation, we will provide a clear migration guide from the Assistants API to the Responses API that allows developers to preserve all their data and migrate their applications. Until we formally announce the deprecation, we will continue delivering new models to the Assistants API. The Responses API represents the future direction for building agents on OpenAI.</span></p></li></ul>",
+      "zh": "<ul><li><p><a href=\"https://platform.openai.com/docs/guides/text-generation\" rel=\"noopener noreferrer\">Chat Completions API</a>：Chat Completions 仍然是我们使用最广泛的 API，我们会继续全力支持它，为其提供新模型和新能力。不需要内置工具的开发者可以放心继续使用 Chat Completions。只要新模型的能力不依赖内置工具或多次模型调用，我们就会继续向 Chat Completions 发布这些模型。不过，Responses API 是 Chat Completions 的<a href=\"https://platform.openai.com/docs/guides/responses-vs-chat-completions\" rel=\"noopener noreferrer\">超集</a>，具有同样出色的性能，因此对于新的集成，我们建议从 Responses API 开始。</p></li><li><p><a href=\"https://platform.openai.com/docs/assistants/overview\" rel=\"noopener noreferrer\">Assistants API</a>：根据开发者在 Assistants API 测试版期间的反馈，我们已将关键改进纳入 Responses API，使其更灵活、更快、更易用。我们正在努力实现 Assistants API 与 Responses API 的完整功能对等，包括支持类似 Assistant 和 Thread 的对象，以及 Code Interpreter 工具。完成后，我们计划正式宣布弃用 Assistants API，目标是在 2026 年年中停止服务。宣布弃用时，我们将提供清晰的迁移指南，帮助开发者保留全部数据，并将应用从 Assistants API 迁移到 Responses API。在正式宣布弃用之前，我们仍会继续向 Assistants API 提供新模型。Responses API 代表了在 OpenAI 上构建 Agent 的未来方向。</p></li></ul>"
+    },
+    {
+      "id": "new27_agent_tools-012",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Introducing built-in tools in the Responses API</h2>",
+      "zh": "<h2>介绍 Responses API 的内置工具</h2>"
+    },
+    {
+      "id": "new27_agent_tools-013",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Web search</h2>",
+      "zh": "<h2>网页搜索</h2>"
+    },
+    {
+      "id": "new27_agent_tools-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Developers can now get fast, up-to-date answers with clear and relevant citations from the web. In the Responses API, web search is available as a tool when using gpt-4o and gpt-4o-mini, and can be paired with other tools or function calls.</span></p>",
+      "zh": "<p>开发者现在能够从网页中获取快速、及时的答案，并附带清晰且相关的引用。在 Responses API 中，使用 gpt-4o 和 gpt-4o-mini 时可以调用网页搜索工具，也可以将它与其他工具或函数调用搭配使用。</p>"
+    },
+    {
+      "id": "new27_agent_tools-015",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>JavaScript</h4>",
+      "zh": "<h4>JavaScript</h4>"
+    },
+    {
+      "id": "new27_agent_tools-016",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>const response = await openai.responses.create({\n    model: \"gpt-4o\",\n    tools: [ { type: \"web_search_preview\" } ],\n    input: \"What was a positive news story that happened today?\",\n});\n\nconsole.log(response.output_text);</code></pre>"
+    },
+    {
+      "id": "new27_agent_tools-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>During early testing, we’ve seen developers build with web search for a variety of use cases including shopping assistants, research agents, and travel booking agents—any application that requires timely information from the web.</span></p>",
+      "zh": "<p>在早期测试中，我们看到开发者将网页搜索用于购物助手、研究 Agent 和旅行预订 Agent 等多种场景，也就是各种需要及时获取网络信息的应用。</p>"
+    },
+    {
+      "id": "new27_agent_tools-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>For example, </span><a href=\"https://www.hebbia.com/\" rel=\"noopener noreferrer\"><u><span>Hebbia</span></u>⁠</a><span> leverages the web search tool to help asset managers, private equity and credit firms, and law practices quickly extract actionable insights from extensive public and private datasets. By integrating real-time search capabilities into their research workflows, Hebbia delivers richer, context-specific market intelligence and continuously improves the precision and relevance of their analyses, outperforming current benchmarks.</span></p>",
+      "zh": "<p>例如，<a href=\"https://www.hebbia.com/\" rel=\"noopener noreferrer\">Hebbia</a> 利用网页搜索工具，帮助资产管理公司、私募股权与信贷机构以及律师事务所，从大量公开和私有数据集中快速提取可用于行动的洞见。通过将实时搜索能力集成到研究工作流中，Hebbia 能够提供更丰富、更贴合具体情境的市场情报，持续提高分析的准确性与相关性，并超越当前基准表现。</p>"
+    },
+    {
+      "id": "new27_agent_tools-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Web search in the API is powered by the same model used for ChatGPT search. On SimpleQA, a benchmark that evaluates the accuracy of LLMs in answering short, factual questions, GPT‑4o search preview and GPT‑4o mini search preview score 90% and 88% respectively.</span></p>",
+      "zh": "<p>API 中的网页搜索使用与 ChatGPT 搜索相同的模型。在 SimpleQA 上，GPT‑4o search preview 和 GPT‑4o mini search preview 的得分分别为 90% 和 88%。SimpleQA 是一个评估大语言模型回答简短事实性问题准确度的基准。</p>"
+    },
+    {
+      "id": "new27_agent_tools-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><div><div><div><div><h5><div>SimpleQA Accuracy (higher is better)</div></h5></div><div><div><div><figure><img alt=\"SimpleQA benchmark — original chart\" src=\"/media/dde932548a424b8a7017ff75.svg\" loading=\"lazy\" decoding=\"async\"></figure></div></div></div></div></div></div></div></figure>"
+    },
+    {
+      "id": "new27_agent_tools-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Responses generated with web search in the API include links to sources, such as news articles and blog posts, giving users a way to learn more. With these clear, inline citations, users can engage with information in a new way, while content owners gain new opportunities to reach a broader audience.</span></p>",
+      "zh": "<p>通过 API 中的网页搜索生成的回答会包含新闻文章、博客文章等来源的链接，让用户能够进一步了解相关信息。这些清晰的行内引用为用户提供了接触信息的新方式，也为内容所有者创造了触达更广泛受众的新机会。</p>"
+    },
+    {
+      "id": "new27_agent_tools-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Any website or publisher can </span><a href=\"https://platform.openai.com/docs/bots\" rel=\"noopener noreferrer\"><u><span>choose to appear</span></u>⁠</a><span> in web search in the API.</span></p>",
+      "zh": "<p>任何网站或出版机构都可以<a href=\"https://platform.openai.com/docs/bots\" rel=\"noopener noreferrer\">选择出现在</a> API 的网页搜索结果中。</p>"
+    },
+    {
+      "id": "new27_agent_tools-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The web search tool is available to all developers in preview in the Responses API. We are also giving developers direct access to our fine-tuned search models in the Chat Completions API via </span><code>gpt-4o-search-preview</code><span> and </span><code>gpt-4o-mini-search-preview</code><span>. </span><a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\"><u><span>Pricing</span></u>⁠</a><span> starts respectively at $30 and $25 per thousand queries for GPT‑4o search and 4o-mini search respectively. Check out web search in the </span><a href=\"https://platform.openai.com/playground/chat?preset=17UUXulQ970dEE3jgRfyzSFQ\" rel=\"noopener noreferrer\"><u><span>Playground</span></u>⁠</a><span> and learn more in our </span><a href=\"https://platform.openai.com/docs/guides/tools-web-search\" rel=\"noopener noreferrer\"><u><span>docs</span></u>⁠</a><span>.</span></p>",
+      "zh": "<p>网页搜索工具现已在 Responses API 中以预览版形式向所有开发者开放。我们还通过 Chat Completions API 中的 <code>gpt-4o-search-preview</code> 和 <code>gpt-4o-mini-search-preview</code>，让开发者直接使用经过微调的搜索模型。GPT‑4o search 和 4o-mini search 的<a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\">价格</a>分别为每千次查询 30 美元起和 25 美元起。你可以在 <a href=\"https://platform.openai.com/playground/chat?preset=17UUXulQ970dEE3jgRfyzSFQ\" rel=\"noopener noreferrer\">Playground</a> 中体验网页搜索，并在<a href=\"https://platform.openai.com/docs/guides/tools-web-search\" rel=\"noopener noreferrer\">文档</a>中了解更多。</p>"
+    },
+    {
+      "id": "new27_agent_tools-024",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>File search</h2>",
+      "zh": "<h2>文件搜索</h2>"
+    },
+    {
+      "id": "new27_agent_tools-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Developers can now easily retrieve relevant information from large volumes of documents using the improved file search tool. With support for multiple file types, query optimization, metadata filtering, and custom reranking, it can deliver fast, accurate search results. And again, with the Responses API, it takes only a few lines of code to integrate.</span></p>",
+      "zh": "<p>借助改进后的文件搜索工具，开发者现在能够轻松从大量文档中检索相关信息。它支持多种文件类型、查询优化、元数据过滤和自定义重排序，可以快速提供准确的搜索结果。同样，使用 Responses API，只需几行代码就能完成集成。</p>"
+    },
+    {
+      "id": "new27_agent_tools-026",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>JavaScript</h4>",
+      "zh": "<h4>JavaScript</h4>"
+    },
+    {
+      "id": "new27_agent_tools-027",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>const productDocs = await openai.vectorStores.create({\n    name: \"Product Documentation\",\n    file_ids: [file1.id, file2.id, file3.id],\n});\n\nconst response = await openai.responses.create({\n    model: \"gpt-4o-mini\",\n    tools: [{\n        type: \"file_search\",\n        vector_store_ids: [productDocs.id],\n    }],\n    input: \"What is deep research by OpenAI?\",\n});\n\nconsole.log(response.output_text);</code></pre>"
+    },
+    {
+      "id": "new27_agent_tools-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The file search tool can be used for a variety of real-world use cases, including enabling a customer support agent to easily access FAQs, helping a legal assistant to quickly reference past cases for a qualified professional, and assisting a coding agent to query technical documentation. For example, </span><a href=\"https://navan.com/\" rel=\"noopener noreferrer\"><u><span>Navan</span></u>⁠</a><span> uses file search in its AI-powered travel agent to quickly provide their users with precise answers from knowledge-base articles (like their company’s travel policy). With built-in query optimization and reranking, they are able to set up a powerful RAG (retrieval-augmented generation) pipeline without extra tuning or configuration. With dedicated vector stores for each user group, Navan is able to tailor answers to individual account settings and user roles, saving time for customers and their staff while helping provide accurate, personalized support.</span></p>",
+      "zh": "<p>文件搜索工具可用于多种实际场景，包括让客服 Agent 轻松访问常见问题、帮助法律助手为具备资质的专业人士快速查阅过往案例，以及协助编程 Agent 查询技术文档。例如，<a href=\"https://navan.com/\" rel=\"noopener noreferrer\">Navan</a> 在其 AI 旅行 Agent 中使用文件搜索，根据知识库文章（例如公司的差旅政策）快速向用户提供准确答案。借助内置的查询优化和重排序，他们可以建立强大的 RAG（检索增强生成）流程，无须额外调优或配置。通过为不同用户群体设置专用向量存储，Navan 能够根据各账户设置和用户角色定制答案，在帮助提供准确、个性化支持的同时，为客户和员工节省时间。</p>"
+    },
+    {
+      "id": "new27_agent_tools-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>This tool is available in the Responses API to all developers. Usage is </span><a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\"><u><span>priced</span></u>⁠</a><span> at $2.50 per thousand queries and file storage at $0.10/GB/day, with the first GB free. The tool continues to be available in the Assistants API. Finally, we’ve also added a new search endpoint to Vector Store API objects to directly query your data for use in other applications and APIs. Learn more in our </span><a href=\"https://platform.openai.com/docs/guides/tools-file-search\" rel=\"noopener noreferrer\"><u><span>docs</span></u>⁠</a><span> and start testing in the </span><a href=\"https://platform.openai.com/playground/chat\" rel=\"noopener noreferrer\"><u><span>Playground</span></u>⁠</a><span>.</span></p>",
+      "zh": "<p>该工具现已在 Responses API 中向所有开发者开放。使用<a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\">价格</a>为每千次查询 2.50 美元，文件存储价格为每 GB 每天 0.10 美元，首个 GB 免费。该工具仍然可以在 Assistants API 中使用。此外，我们还为 Vector Store API 对象新增了一个搜索端点，可以直接查询你的数据，供其他应用和 API 使用。参阅<a href=\"https://platform.openai.com/docs/guides/tools-file-search\" rel=\"noopener noreferrer\">文档</a>了解更多，并在 <a href=\"https://platform.openai.com/playground/chat\" rel=\"noopener noreferrer\">Playground</a> 中开始测试。</p>"
+    },
+    {
+      "id": "new27_agent_tools-030",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Computer use</h2>",
+      "zh": "<h2>计算机使用</h2>"
+    },
+    {
+      "id": "new27_agent_tools-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>To build agents capable of completing tasks on a computer, developers can now use the computer use tool in the Responses API, powered by the same </span><a href=\"https://openai.com/index/computer-using-agent/\" rel=\"noopener noreferrer\"><u><span>Computer-Using Agent (CUA) model</span></u></a><span> that enables </span><a href=\"https://openai.com/index/introducing-operator/\" rel=\"noopener noreferrer\"><u><span>Operator</span></u></a><span>. This research preview model set a new state-of-the-art record, achieving 38.1% success on </span><a href=\"https://os-world.github.io/\" rel=\"noopener noreferrer\"><u><span>OSWorld</span></u>⁠</a><span> for full computer use tasks, 58.1% on </span><a href=\"https://webarena.dev/\" rel=\"noopener noreferrer\"><u><span>WebArena</span></u>⁠</a><span>, and 87% on </span><a href=\"https://arxiv.org/abs/2401.13919\" rel=\"noopener noreferrer\"><u><span>WebVoyager</span></u>⁠</a><span> for web-based interactions.</span></p>",
+      "zh": "<p>要构建能够在计算机上完成任务的 Agent，开发者现在可以使用 Responses API 中的计算机使用工具。它由支持 <a href=\"https://openai.com/index/introducing-operator/\" rel=\"noopener noreferrer\">Operator</a> 的同一个<a href=\"https://openai.com/index/computer-using-agent/\" rel=\"noopener noreferrer\">计算机使用 Agent（CUA）模型</a>驱动。这个研究预览模型创下了新的最先进水平纪录：在面向完整计算机使用任务的 <a href=\"https://os-world.github.io/\" rel=\"noopener noreferrer\">OSWorld</a> 上成功率达到 38.1%，在面向网页交互的 <a href=\"https://webarena.dev/\" rel=\"noopener noreferrer\">WebArena</a> 和 <a href=\"https://arxiv.org/abs/2401.13919\" rel=\"noopener noreferrer\">WebVoyager</a> 上分别达到 58.1% 和 87%。</p>"
+    },
+    {
+      "id": "new27_agent_tools-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The built-in computer use tool captures mouse and keyboard actions generated by the model, making it possible for developers to automate computer use tasks by directly translating these actions into executable commands within their environments.</span></p>",
+      "zh": "<p>内置的计算机使用工具会捕获模型生成的鼠标和键盘操作，让开发者可以直接将这些操作转换成各自环境中的可执行命令，从而自动完成计算机使用任务。</p>"
+    },
+    {
+      "id": "new27_agent_tools-033",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>JavaScript</h4>",
+      "zh": "<h4>JavaScript</h4>"
+    },
+    {
+      "id": "new27_agent_tools-034",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>const response = await openai.responses.create({\n    model: \"computer-use-preview\",\n    tools: [{\n        type: \"computer_use_preview\",\n        display_width: 1024,\n        display_height: 768,\n        environment: \"browser\",\n    }],\n    truncation: \"auto\",\n    input: \"I'm looking for a new camera. Help me find the best one.\",\n});\n\nconsole.log(response.output);</code></pre>"
+    },
+    {
+      "id": "new27_agent_tools-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Developers can use the computer use tool to automate browser-based workflows like performing quality assurance on web apps or executing data-entry tasks across legacy systems. For example, </span><a href=\"https://www.unifygtm.com/\" rel=\"noopener noreferrer\"><u><span>Unify</span></u>⁠</a><span> is a system of action for growing revenue that uses agents to identify intent, research accounts, and engage with buyers. Using OpenAI’s computer use tool, Unify’s agents can access information that was previously unreachable via APIs—such as enabling a property management company to verify through online maps if a business has expanded its real estate footprint. This research acts as a custom signal to trigger personalized outreach—empowering go-to-market teams to engage buyers with precision and scale.</span></p>",
+      "zh": "<p>开发者可以使用计算机使用工具，自动执行基于浏览器的工作流，例如对 Web 应用进行质量保证测试，或在遗留系统之间执行数据录入任务。例如，<a href=\"https://www.unifygtm.com/\" rel=\"noopener noreferrer\">Unify</a> 是一个推动收入增长的行动执行系统，通过 Agent 识别意向、研究客户并与买家互动。借助 OpenAI 的计算机使用工具，Unify 的 Agent 能够访问过去无法通过 API 获取的信息，例如帮助物业管理公司通过在线地图核实某家企业是否扩大了其房地产布局。这项研究结果可以作为触发个性化客户触达的定制信号，让市场拓展团队精准且大规模地与买家互动。</p>"
+    },
+    {
+      "id": "new27_agent_tools-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>As another example, </span><a href=\"https://www.luminai.com/\" rel=\"noopener noreferrer\"><u><span>Luminai</span></u>⁠</a><span> integrated the computer use tool to automate complex operational workflows for large enterprises with legacy systems that lack API availability and standardized data. In a recent pilot with a major community service organization, Luminai automated the application processing and user enrollment process in just days—something traditional robotic process automation (RPA) struggled to achieve after months of effort.</span></p>",
+      "zh": "<p>另一个例子是 <a href=\"https://www.luminai.com/\" rel=\"noopener noreferrer\">Luminai</a>：它集成了计算机使用工具，为大型企业自动执行复杂的运营工作流，这些企业的遗留系统缺乏可用的 API 和标准化数据。在最近与一家大型社区服务组织开展的试点中，Luminai 仅用几天就实现了申请处理和用户注册流程的自动化，而传统机器人流程自动化（RPA）在投入数月努力后仍难以做到这一点。</p>"
+    },
+    {
+      "id": "new27_agent_tools-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Before launching CUA in Operator last year, we conducted extensive safety testing and red teaming, addressing three key areas of risk: misuse, model errors, and frontier risks. To address risks associated with expanding Operator’s capabilities to local operating systems through CUA in the API, we performed additional safety evaluations and red teaming. We also added mitigations for developers, including safety checks to guard against prompt injections, confirmation prompts for sensitive tasks, tools to help developers isolate their environments, and enhanced detection of potential policy violations. While these mitigations help reduce risk, the model is still susceptible to inadvertent mistakes, especially in non-browser environments. For example, CUA’s performance on OSWorld, a benchmark designed to measure the performance of AI agents on real-world tasks, is currently at 38.1%, indicating that the model is not yet highly reliable for automating tasks on operating systems. Human oversight is recommended in these scenarios. More details about our API-specific safety work can be found in our updated </span><a href=\"https://openai.com/index/operator-system-card/\" rel=\"noopener noreferrer\"><u><span>system card</span></u></a><span>.</span></p>",
+      "zh": "<p>去年在 Operator 中推出 CUA 之前，我们进行了广泛的安全测试和红队测试，重点应对三类风险：滥用、模型错误和前沿风险。为了应对通过 API 中的 CUA 将 Operator 能力扩展到本地操作系统所带来的风险，我们又进行了额外的安全评估和红队测试。我们还为开发者添加了缓解措施，包括防范提示词注入的安全检查、敏感任务的确认提示、帮助开发者隔离环境的工具，以及更强的潜在政策违规检测。虽然这些措施有助于降低风险，但模型仍可能无意中犯错，尤其是在浏览器之外的环境中。例如，CUA 在 OSWorld 上目前的表现为 38.1%；这一基准用于衡量 AI Agent 执行真实世界任务的能力，而这个成绩说明，模型在自动执行操作系统任务方面还不够可靠。我们建议在这些场景下保留人工监督。有关 API 专项安全工作的更多细节，请参阅更新后的<a href=\"https://openai.com/index/operator-system-card/\" rel=\"noopener noreferrer\">系统卡</a>。</p>"
+    },
+    {
+      "id": "new27_agent_tools-038",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table><thead><tr><th>Benchmark type</th><th>Benchmark</th><th colspan=\"2\">Computer use (universal interface)</th><th>Web browsing agents</th><th>Human</th></tr><tr><td></td><td></td><td>OpenAI CUA</td><td>Previous SOTA</td><td>Previous SOTA</td><td></td></tr></thead><tbody><tr><th>Computer use</th><td>OSWorld</td><td>38.1%</td><td><a href=\"https://www.anthropic.com/news/3-5-models-and-computer-use\" rel=\"noopener noreferrer\">22.0%<span></span></a></td><td><span>-</span></td><td><a href=\"https://arxiv.org/abs/2404.07972\" rel=\"noopener noreferrer\">72.4%<span></span></a></td></tr><tr><th rowspan=\"2\">Browser use</th><td>WebArena</td><td>58.1%</td><td><a href=\"https://huggingface.co/spaces/ServiceNow/browsergym-leaderboard\" rel=\"noopener noreferrer\">36.2%<span></span></a></td><td><a href=\"https://docs.google.com/spreadsheets/d/1M801lEpBbKSNwP-vDBkC_pF7LdyGU1f_ufZb_NWNBZQ\" rel=\"noopener noreferrer\">57.1%<span></span></a></td><td><a href=\"https://arxiv.org/abs/2307.13854\" rel=\"noopener noreferrer\">78.2%<span></span></a></td></tr><tr><td>WebVoyager</td><td>87.0%</td><td><a href=\"https://www.trykura.com/benchmarks\" rel=\"noopener noreferrer\">56.0%<span></span></a></td><td><a href=\"https://www.trykura.com/benchmarks\" rel=\"noopener noreferrer\">87.0%<span></span></a></td><td><span>-</span></td></tr></tbody></table>"
+    },
+    {
+      "id": "new27_agent_tools-039",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><figcaption>Evaluation details are described <a href=\"https://cdn.openai.com/cua/CUA_eval_extra_information.pdf\" rel=\"noopener noreferrer\">here<span></span></a></figcaption></figure>"
+    },
+    {
+      "id": "new27_agent_tools-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Starting today, the computer use tool is available as a research preview in the Responses API for select developers in </span><a href=\"https://platform.openai.com/docs/guides/rate-limits#usage-tiers\" rel=\"noopener noreferrer\"><u><span>usage tiers 3-5</span></u>⁠</a><span>. Usage is </span><a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\"><u><span>priced</span></u>⁠</a><span> at $3/1M input tokens and $12/1M output tokens. Learn more in our </span><a href=\"https://platform.openai.com/docs/guides/tools-computer-use\" rel=\"noopener noreferrer\"><u><span>docs</span></u>⁠</a><span> and check out the </span><a href=\"https://github.com/openai/openai-cua-quickstart\" rel=\"noopener noreferrer\"><u><span>sample application</span></u>⁠</a><span> illustrating how to build with this tool.</span></p>",
+      "zh": "<p>即日起，计算机使用工具作为研究预览版，在 Responses API 中向<a href=\"https://platform.openai.com/docs/guides/rate-limits#usage-tiers\" rel=\"noopener noreferrer\">使用等级 3–5</a> 的部分开发者开放。其<a href=\"https://platform.openai.com/docs/pricing\" rel=\"noopener noreferrer\">价格</a>为每百万输入 token 3 美元、每百万输出 token 12 美元。参阅<a href=\"https://platform.openai.com/docs/guides/tools-computer-use\" rel=\"noopener noreferrer\">文档</a>了解更多，并查看展示如何使用该工具构建应用的<a href=\"https://github.com/openai/openai-cua-quickstart\" rel=\"noopener noreferrer\">示例应用</a>。</p>"
+    },
+    {
+      "id": "new27_agent_tools-041",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Agents SDK</h2>",
+      "zh": "<h2>Agents SDK</h2>"
+    },
+    {
+      "id": "new27_agent_tools-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>In addition to building the core logic of agents and giving them access to tools so they are useful, developers also need to orchestrate agentic workflows. Our new open-source Agents SDK simplifies orchestrating multi-agent workflows and offers significant improvements over </span><a href=\"https://github.com/openai/swarm\" rel=\"noopener noreferrer\"><u><span>Swarm</span></u>⁠</a><span>, an experimental SDK we released last year that was widely adopted by the developer community and successfully deployed by multiple customers.</span></p>",
+      "zh": "<p>除了构建 Agent 的核心逻辑，并让它们能够使用工具来发挥作用外，开发者还需要编排 Agent 工作流。我们新推出的开源 Agents SDK 简化了多 Agent 工作流的编排，并在 <a href=\"https://github.com/openai/swarm\" rel=\"noopener noreferrer\">Swarm</a> 的基础上做出了显著改进。Swarm 是我们去年发布的实验性 SDK，得到了开发者社区的广泛采用，并已被多家客户成功部署。</p>"
+    },
+    {
+      "id": "new27_agent_tools-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>Improvements include:</span></p>",
+      "zh": "<p>改进包括：</p>"
+    },
+    {
+      "id": "new27_agent_tools-044",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><p><b><span>Agents</span></b><span>: Easily configurable LLMs with clear instructions and built-in tools.</span></p></li><li><p><b><span>Handoffs</span></b><span>: Intelligently transfer control between agents.</span></p></li><li><p><b><span>Guardrails</span></b><span>: Configurable safety checks for input and output validation.</span></p></li><li><p><b><span>Tracing &amp; Observability</span></b><span>: Visualize agent execution traces to debug and optimize performance.</span></p></li></ul>",
+      "zh": "<ul><li><p><b>Agents：</b>易于配置的大语言模型，配有明确指令和内置工具。</p></li><li><p><b>Handoffs（交接）：</b>在 Agent 之间智能转移控制权。</p></li><li><p><b>Guardrails（护栏）：</b>用于验证输入和输出的可配置安全检查。</p></li><li><p><b>执行轨迹追踪与可观测性：</b>将 Agent 的执行轨迹可视化，以便调试并优化表现。</p></li></ul>"
+    },
+    {
+      "id": "new27_agent_tools-045",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4>Python</h4>",
+      "zh": "<h4>Python</h4>"
+    },
+    {
+      "id": "new27_agent_tools-046",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import Agent, Runner, WebSearchTool, function_tool, guardrail\n\n@function_tool\ndef submit_refund_request(item_id: str, reason: str):\n    # Your refund logic goes here\n    return \"success\"\n\nsupport_agent = Agent(\n    name=\"Support &amp; Returns\",\n    instructions=\"You are a support agent who can submit refunds [...]\",\n    tools=[submit_refund_request],\n)\n\nshopping_agent = Agent(\n    name=\"Shopping Assistant\",\n    instructions=\"You are a shopping assistant who can search the web [...]\",\n    tools=[WebSearchTool()],\n)\n\ntriage_agent = Agent(\n    name=\"Triage Agent\",\n    instructions=\"Route the user to the correct agent.\",\n    handoffs=[shopping_agent, support_agent],\n)\n\noutput = Runner.run_sync(\n    starting_agent=triage_agent,\n    input=\"What shoes might work best with my outfit so far?\",\n)</code></pre>"
+    },
+    {
+      "id": "new27_agent_tools-047",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><a href=\"https://player.vimeo.com/video/1064494070?h=d51a56dda8\" rel=\"noopener noreferrer\">OpenAI video on Vimeo</a></figure>"
+    },
+    {
+      "id": "new27_agent_tools-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The Agents SDK is suitable for various real-world applications, including customer support automation, multi-step research, content generation, code review, and sales prospecting. For instance, </span><a href=\"https://www.coinbase.com/\" rel=\"noopener noreferrer\"><u><span>Coinbase</span></u>⁠</a><span> used the Agents SDK to quickly prototype and deploy AgentKit, a toolkit enabling AI agents to interact seamlessly with crypto wallets and various on-chain activities. In just a few hours, Coinbase integrated custom actions from their Developer Platform SDK into a fully functional agent. AgentKit’s streamlined architecture simplified the process of adding new agent actions, letting developers focus more on meaningful integrations and less on navigating complex agent setups. </span></p>",
+      "zh": "<p>Agents SDK 适合多种实际应用，包括客服自动化、多步骤研究、内容生成、代码审查和销售潜客挖掘。例如，<a href=\"https://www.coinbase.com/\" rel=\"noopener noreferrer\">Coinbase</a> 使用 Agents SDK 快速开发原型并部署了 AgentKit。该工具包让 AI Agent 能够与加密钱包和各类链上活动无缝交互。仅用了几个小时，Coinbase 就将其开发者平台 SDK 中的自定义操作集成进了一个功能完整的 Agent。AgentKit 的精简架构简化了添加新 Agent 操作的过程，让开发者更多关注有意义的集成，减少处理复杂 Agent 配置的时间。</p>"
+    },
+    {
+      "id": "new27_agent_tools-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>In a couple of days, </span><a href=\"http://box.com\" rel=\"noopener noreferrer\"><u><span>Box</span></u>⁠</a><span> was able to quickly create agents that leverage web search and the Agents SDK to enable enterprises to search, query, and extract insights from unstructured data stored within Box and public internet sources. This approach allows customers to not only access the latest information, but also search their internal, proprietary data in a safe and secure way that obeys their internal permissions and security policies. For example, a financial services firm can build a custom agent that calls on the Box AI agent to integrate their internal market analysis stored in Box with real-time news and economic data from the web, providing their analysts with a comprehensive view for investment decisions.</span></p>",
+      "zh": "<p>在短短几天内，<a href=\"http://box.com\" rel=\"noopener noreferrer\">Box</a> 就快速创建了利用网页搜索和 Agents SDK 的 Agent，让企业能够搜索、查询并从 Box 中存储的非结构化数据以及公开互联网来源中提取洞见。这种方式不仅让客户能够获取最新信息，还能以遵守内部权限与安全策略的安全方式搜索其内部专有数据。例如，一家金融服务公司可以构建定制 Agent，调用 Box AI Agent，将 Box 中存储的内部市场分析与网络上的实时新闻和经济数据结合起来，为分析师提供全面视角，支持投资决策。</p>"
+    },
+    {
+      "id": "new27_agent_tools-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>The Agents SDK works with the Responses API and Chat Completions API. The SDK will also work with models from other providers, as long as they provide a Chat Completions style API endpoint. Developers can immediately integrate it into their Python codebases, with Node.js support coming soon. Learn more in our </span><a href=\"https://platform.openai.com/docs/guides/agents\" rel=\"noopener noreferrer\"><u><span>docs</span></u>⁠</a><span>.</span></p>",
+      "zh": "<p>Agents SDK 可与 Responses API 和 Chat Completions API 配合使用。只要其他提供商的模型提供 Chat Completions 风格的 API 端点，SDK 也能够与其协同工作。开发者可以立即将其集成到 Python 代码库中，Node.js 支持即将推出。参阅<a href=\"https://platform.openai.com/docs/guides/agents\" rel=\"noopener noreferrer\">文档</a>了解更多。</p>"
+    },
+    {
+      "id": "new27_agent_tools-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>In designing the Agents SDK, our team was inspired by the excellent work of others in the community including </span><a href=\"https://pydantic.dev/\" rel=\"noopener noreferrer\"><u><span>Pydantic</span></u>⁠</a><span>, </span><a href=\"https://mkdocstrings.github.io/griffe/\" rel=\"noopener noreferrer\"><u><span>Griffe</span></u>⁠</a><span> and </span><a href=\"https://www.mkdocs.org/\" rel=\"noopener noreferrer\"><u><span>MkDocs</span></u>⁠</a><span>. We’re committed to continuing to build the Agents SDK as an open source framework so others in the community can expand on our approach.</span></p>",
+      "zh": "<p>在设计 Agents SDK 时，我们的团队受到了社区其他优秀工作的启发，包括 <a href=\"https://pydantic.dev/\" rel=\"noopener noreferrer\">Pydantic</a>、<a href=\"https://mkdocstrings.github.io/griffe/\" rel=\"noopener noreferrer\">Griffe</a> 和 <a href=\"https://www.mkdocs.org/\" rel=\"noopener noreferrer\">MkDocs</a>。我们承诺继续将 Agents SDK 作为开源框架进行建设，让社区中的其他人能够在我们的方法之上进一步扩展。</p>"
+    },
+    {
+      "id": "new27_agent_tools-052",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What’s next: building the platform for agents</h2>",
+      "zh": "<h2>下一步：构建 Agent 平台</h2>"
+    },
+    {
+      "id": "new27_agent_tools-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>We believe agents will soon become integral to the workforce, significantly enhancing productivity across industries. As companies increasingly seek to leverage AI for complex tasks, we’re committed to providing the building blocks that enable developers and enterprises to effectively create autonomous systems that deliver real-world impact.</span></p>",
+      "zh": "<p>我们相信，Agent 很快将成为劳动力中不可或缺的一部分，大幅提升各行各业的生产率。随着企业越来越希望利用 AI 处理复杂任务，我们致力于提供基础组件，让开发者和企业能够有效构建自主系统，并在真实世界中产生实际影响。</p>"
+    },
+    {
+      "id": "new27_agent_tools-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><span>With today’s releases, we’re introducing the first building blocks to empower developers and enterprises to more easily build, deploy, and scale reliable, high-performing AI agents. As model capabilities become more and more agentic, we’ll continue investing in deeper integrations across our APIs and new tools to help deploy, evaluate, and optimize agents in production. Our goal is to give developers a seamless platform experience for building agents that can help with a variety of tasks across any industry. We’re excited to see what developers build next. To get started, explore our </span><a href=\"https://platform.openai.com/docs/overview\" rel=\"noopener noreferrer\"><u><span>docs</span></u>⁠</a><span> and stay tuned for more updates soon.</span></p>",
+      "zh": "<p>通过今天的发布，我们推出了首批基础组件，让开发者和企业能够更轻松地构建、部署和扩展可靠且表现出色的 AI Agent。随着模型越来越具备自主执行任务的能力，我们将继续投入，深化 API 之间的集成，并开发新工具，帮助在生产环境中部署、评测和优化 Agent。我们的目标是为开发者提供流畅一致的平台体验，让他们构建的 Agent 能够帮助任何行业处理各种任务。我们期待看到开发者接下来会创造什么。请从我们的<a href=\"https://platform.openai.com/docs/overview\" rel=\"noopener noreferrer\">文档</a>开始探索，并关注即将到来的更多更新。</p>"
+    },
+    {
+      "id": "new27_agent_tools-055",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><a href=\"https://www.youtube-nocookie.com/embed/hciNKcLwSes?autoplay=0&amp;mute=0&amp;controls=1&amp;origin=https%3A%2F%2Fopenai.com&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;iv_load_policy=3&amp;modestbranding=1&amp;enablejsapi=1&amp;hl=en-US&amp;widgetid=1&amp;forigin=https%3A%2F%2Fopenai.com%2Findex%2Fnew-tools-for-building-agents%2F&amp;aoriginsup=1&amp;vf=1\" rel=\"noopener noreferrer\">New tools for building agents with the API</a></figure>"
+    },
+    {
+      "id": "new27_agent_tools-056",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"Livestream replay - new tools for building agents with the API\" src=\"/media/c9dc755d872bf312eb6ff994.webp\" loading=\"lazy\" decoding=\"async\">"
+    }
+  ],
+  "description": "今天，我们发布首批基础组件，帮助开发者和企业构建有用且可靠的 Agent。我们将 Agent 视为能够代表用户独立完成任务的系统。在过去一年中，我们推出了新的模型能力，包括高级推理、多模态交互和新的安全技术，为模型处理构建 Agent 所需的复杂多步…",
+  "reading_minutes": 14,
+  "downloads": {
+    "zh": "/downloads/agent-tools-zh.pdf",
+    "en": "/downloads/agent-tools-en.pdf"
+  }
+}

@@ -1,0 +1,579 @@
+{
+  "title": "Agent 改进循环始于执行轨迹",
+  "original_title": "The agent improvement loop starts with a trace",
+  "url": "https://www.langchain.com/blog/traces-start-agent-improvement-loop",
+  "date": "2026-03-31",
+  "publisher": "LangChain",
+  "source_order": 6,
+  "slug": "improvement",
+  "source_id": "improvement",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "improvement-000",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Key Takeaways</h2>",
+      "zh": "<h2>核心要点</h2>"
+    },
+    {
+      "id": "improvement-001",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>An agent is a system around a model with several layers you can update: the model weights, the orchestration code, and the context (prompts, instructions, skills). Knowing what to change requires evidence from traces.</li><li>Traces can come from anywhere: staging, test runs, benchmarks, local development, and especially from production. The improvement loop is the same regardless of source.</li><li>The loop requires enriching traces with evals and human feedback, identifying failure patterns, making targeted changes, and validating before shipping. Each cycle generates better data and more reliable iteration.</li><li><a href=\"https://www.langchain.com/langsmith-platform\" rel=\"noopener noreferrer\">LangSmith</a> connects every step of this loop, from the first trace to the CI/CD gate that prevents regressions from shipping.</li></ul>",
+      "zh": "<ul><li>Agent 是围绕模型构建的系统，其中有几个可以更新的层次：模型权重、编排代码，以及上下文（提示词、指令、技能）。要知道该改什么，需要从执行轨迹中寻找证据。</li><li>执行轨迹可以来自任何地方：预发布环境、测试运行、基准评测、本地开发，尤其是生产环境。无论轨迹来自哪里，改进循环都是一样的。</li><li>这个循环需要通过评测和人工反馈丰富执行轨迹，识别失败模式，有针对性地修改，并在发布前验证。每一轮循环都会产生更好的数据，使迭代更可靠。</li><li><a href=\"https://www.langchain.com/langsmith-platform\" rel=\"noopener noreferrer\">LangSmith</a> 将循环的各个环节连接起来，从第一条执行轨迹，到防止回归问题随版本发布的 CI/CD 检查关卡。</li></ul>"
+    },
+    {
+      "id": "improvement-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The agent improvement loop is simple in principle: get traces, enrich them, improve from them, repeat. This guide walks through how to do that in practice.</p>",
+      "zh": "<p>Agent 改进循环的原理很简单：获取执行轨迹，丰富轨迹信息，从中改进，再重复这一过程。本指南介绍如何在实践中做到这一点。</p>"
+    },
+    {
+      "id": "improvement-003",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "improvement-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Improving an agent systematically requires a feedback loop. You collect traces of agent behavior, enrich them with evaluations and human feedback, identify what's failing and why, make targeted changes, and validate that those changes worked before shipping. Then you repeat from a higher baseline.</p>",
+      "zh": "<p>系统性地改进 Agent 需要一个反馈循环。你收集 Agent 的行为轨迹，通过评测和人工反馈丰富这些轨迹，识别哪里失败、为什么失败，进行有针对性的修改，并在发布之前验证这些修改是否奏效。然后，从更高的基线开始下一轮循环。</p>"
+    },
+    {
+      "id": "improvement-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This loop is powered by traces. These traces can come from many places – from staging environments, benchmark runs, local development, and especially from production. What matters is collecting these traces, enriching them, and using that data to improve the system.</p>",
+      "zh": "<p>执行轨迹驱动着这个循环。轨迹可以来自许多地方，例如预发布环境、基准评测、本地开发，尤其是生产环境。重要的是收集这些轨迹，丰富其中的信息，并利用这些数据改进系统。</p>"
+    },
+    {
+      "id": "improvement-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This guide walks through each step of that feedback loop.</p>",
+      "zh": "<p>本指南将逐一介绍这一反馈循环的各个步骤。</p>"
+    },
+    {
+      "id": "improvement-007",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Traces are the raw material</h2>",
+      "zh": "<h2>执行轨迹是原材料</h2>"
+    },
+    {
+      "id": "improvement-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harrison put it directly: <a href=\"https://blog.langchain.com/in-software-the-code-documents-the-app-in-ai-the-traces-do/\" rel=\"noopener noreferrer\">\"In software, the code documents the app; in AI, the traces do.\"</a></p>",
+      "zh": "<p>Harrison 说得很直接：<a href=\"https://blog.langchain.com/in-software-the-code-documents-the-app-in-ai-the-traces-do/\" rel=\"noopener noreferrer\">“在软件中，代码记录了应用的行为；在 AI 中，承担这个角色的是执行轨迹。”</a></p>"
+    },
+    {
+      "id": "improvement-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In a traditional application, the code is the authoritative record of what the system does. You can read it, reason about it, test against it, and understand every behavior in principle.</p>",
+      "zh": "<p>在传统应用中，代码是系统行为的权威记录。你可以阅读代码、推理其行为、据此测试，原则上能够理解系统的每一种行为。</p>"
+    },
+    {
+      "id": "improvement-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In an agentic system, the code tells you what the agent is <em>allowed</em> to do. The traces tell you what it actually <em>did</em> in this run, with this input, under these conditions.</p>",
+      "zh": "<p>在 Agent 系统中，代码告诉你 Agent <em>被允许</em>做什么；执行轨迹则告诉你，它在这次运行中，面对这个输入、处于这些条件下，实际上<em>做了什么</em>。</p>"
+    },
+    {
+      "id": "improvement-011",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/f4e9e027a2ee9d56ada5c80b.svg\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "improvement-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A trace captures the full execution of an agent run: every LLM call, every tool invocation, every retrieval step, every intermediate output, and the sequence of decisions connecting them. It's the record of what the agent actually did with this input, under these conditions, in this run.</p>",
+      "zh": "<p>一条执行轨迹会记录 Agent 一次运行的完整执行过程：每次 LLM 调用、每次工具调用、每个检索步骤、每项中间输出，以及串联这些环节的决策序列。它记录了 Agent 在这次运行中，面对这个输入、处于这些条件下，实际采取的行动。</p>"
+    },
+    {
+      "id": "improvement-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A raw trace tells you what happened. An enriched trace, scored by evaluators and annotated by reviewers, tells you what to do about it. The rest of this loop is about building that enrichment layer and using it to make targeted, validated improvements.</p>",
+      "zh": "<p>原始轨迹告诉你发生了什么。经过评估器评分、由审核者标注的轨迹，则为你指出该如何处理。循环的其余部分，就是建立这一信息补充层，并利用它进行有针对性、经过验证的改进。</p>"
+    },
+    {
+      "id": "improvement-014",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>The agent improvement loop</h2>",
+      "zh": "<h2>Agent 改进循环</h2>"
+    },
+    {
+      "id": "improvement-015",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/87920acd4a534283429b0223.svg\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "improvement-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once you have traces, improving an agent becomes concrete and repeatable. The loop looks like this:</p>",
+      "zh": "<p>有了执行轨迹，Agent 的改进就变得具体且可重复。这个循环如下：</p>"
+    },
+    {
+      "id": "improvement-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>1. Build and improve:</strong> Start with what you know – an agent, a task, and a hypothesis about what could be better. Developers review traces with negative scores, filter for failure patterns, and inspect the trajectory that produced a bad outcome. Instead of guessing at what to fix, they work backward from observed behavior. The failure modes that emerge from real traces become the input to code and prompt changes.</p>",
+      "zh": "<p><strong>1. 构建与改进：</strong>从你已知的内容出发：一个 Agent、一项任务，以及一个关于哪里可以做得更好的假设。开发者查看获得负面评分的轨迹，筛查失败模式，并检查导致不良结果的执行过程。他们从观察到的行为反向追查，而不是猜测该修什么。真实轨迹中呈现的失败模式，成为修改代码和提示词的依据。</p>"
+    },
+    {
+      "id": "improvement-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>2. Observe and debug (pre-production):</strong> Developers run the updated agent in a staging environment. Traces reveal whether the fix behaves as intended before any formal evaluation.</p>",
+      "zh": "<p><strong>2. 观察与调试（上线前）：</strong>开发者在预发布环境中运行更新后的 Agent。在正式评测之前，执行轨迹就能显示修复后的行为是否符合预期。</p>"
+    },
+    {
+      "id": "improvement-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>3. Offline evals: </strong>Enriched traces get converted into reproducible test cases. A recurring failure mode becomes an evaluator. A set of real inputs that exposed a problem becomes a dataset. Before shipping, developers run the offline eval suite against the updated agent, producing a concrete before-and-after comparison. If the fix works, scores improve. If it introduces a regression, that surfaces before it reaches users. Passing evaluations get added to the permanent test suite.</p>",
+      "zh": "<p><strong>3. 离线评测：</strong>信息得到补充的轨迹被转换成可复现的测试用例。反复出现的失败模式会转化为一个评估器；一组暴露问题的真实输入会成为一个数据集。发布之前，开发者针对更新后的 Agent 运行离线评测套件，形成具体的前后对比。如果修复有效，分数就会提高；如果引入回归，问题会在影响用户之前暴露出来。通过的评测会加入长期保留的测试套件。</p>"
+    },
+    {
+      "id": "improvement-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>4. Deploy:</strong> The fix ships, and new traces start accumulating. The next cycle begins from a higher starting point.</p>",
+      "zh": "<p><strong>4. 部署：</strong>修复发布后，新的执行轨迹开始积累。下一轮循环从更高的起点开始。</p>"
+    },
+    {
+      "id": "improvement-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>5. Observe (in production):</strong> Every agent run in production generates a trace: inputs, outputs, trajectory, tool calls, token usage, latency. This is the raw material for the next cycle, and the source of truth for what the agent actually did.</p>",
+      "zh": "<p><strong>5. 观察（生产环境中）：</strong>Agent 在生产环境中的每次运行都会产生一条轨迹，包含输入、输出、执行过程、工具调用、token 用量和延迟。这些是下一轮循环的原材料，也是判断 Agent 实际做了什么的事实依据。</p>"
+    },
+    {
+      "id": "improvement-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>6. Online evals and Insights:</strong> Raw traces become more useful when they carry additional signals. Automated evaluators score outputs continuously. Insights reports surface usage patterns, failure modes, and edge cases across large volumes of traces.</p>",
+      "zh": "<p><strong>6. 在线评测与 Insights：</strong>原始轨迹带上更多信号后，就会变得更有用。自动评估器持续为输出评分；Insights 报告则从大量轨迹中揭示使用模式、失败模式和边界情况。</p>"
+    },
+    {
+      "id": "improvement-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>7. Annotations</strong> Human reviewers annotate selected traces with ratings, corrections, and comments. Each enrichment layer adds context to the raw behavioral record, building the labeled data that feeds back into the next build cycle.</p>",
+      "zh": "<p><strong>7. 标注：</strong>人工审核者对选中的轨迹添加评分、纠正和评论。每一层补充信息都为原始行为记录增加上下文，形成标注数据，并反馈到下一轮构建过程。</p>"
+    },
+    {
+      "id": "improvement-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The loop compounds because each cycle generates better data. More traces mean more examples of failure modes. More examples mean more precise evaluations. More precise evaluations mean more reliable iteration.</p>",
+      "zh": "<p>这一循环会产生累积效应，因为每轮都会生成更好的数据。更多轨迹意味着更多失败模式的实例；更多实例意味着更精确的评测；更精确的评测意味着更可靠的迭代。</p>"
+    },
+    {
+      "id": "improvement-025",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>How LangSmith generates data from traces automatically</h2>",
+      "zh": "<h2>LangSmith 如何从执行轨迹中自动生成数据</h2>"
+    },
+    {
+      "id": "improvement-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are two categories of data that drive agent improvement: automatically generated and human generated. LangSmith helps you create both. To generate data automatically, you can use online evaluators and Insights Agent. </p>",
+      "zh": "<p>驱动 Agent 改进的数据分为两类：自动生成的数据和人工生成的数据。LangSmith 可以帮助你生成这两类数据。要自动生成数据，可以使用在线评估器和 Insights Agent。</p>"
+    },
+    {
+      "id": "improvement-027",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/92ef7c03fbfd89f1f4e13eff.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "improvement-028",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Online evaluators</h3>",
+      "zh": "<h3>在线评估器</h3>"
+    },
+    {
+      "id": "improvement-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Online evaluators run automatically on production traces, scoring outputs against configurable quality criteria. You can configure them to run on all traces, a sampled subset, or filtered subsets based on specific criteria.</p>",
+      "zh": "<p>在线评估器会自动处理生产环境中的轨迹，按照可配置的质量标准为输出评分。你可以配置它们处理全部轨迹、抽样得到的子集，或按特定条件筛选出的子集。</p>"
+    },
+    {
+      "id": "improvement-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The grading method depends on what you're evaluating.</p>",
+      "zh": "<p>评分方法取决于你要评估什么。</p>"
+    },
+    {
+      "id": "improvement-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For qualitative dimensions without deterministic ground truth, helpfulness, tone, relevance, policy adherence, factual plausibility, use an LLM-as-a-judge. The evaluator calls an LLM to assess not just the final response but the full trajectory: did the agent use the right tools, in the right order, with the right parameters?</p>",
+      "zh": "<p>对于没有确定性标准答案的定性维度，例如有用性、语气、相关性、政策遵循情况和事实上的可信程度，可以使用 LLM 作为裁判。评估器调用 LLM，检查的不仅是最终回答，还有完整执行轨迹：Agent 是否使用了正确的工具、调用顺序是否正确、参数是否正确？</p>"
+    },
+    {
+      "id": "improvement-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For behaviors with clear right answers, use code-based checks. Schema validation, exact-match conditions, format conformity, business rule compliance, and tool correctness can all be evaluated deterministically, and doing so is faster and cheaper than routing them through an LLM judge.</p>",
+      "zh": "<p>对于有明确正确答案的行为，可以使用基于代码的检查。Schema 校验、精确匹配条件、格式符合性、业务规则遵循情况和工具使用的正确性，都可以用确定性方式评估；这比交给 LLM 裁判更快，也更便宜。</p>"
+    },
+    {
+      "id": "improvement-033",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Recurring insights and reports</h3>",
+      "zh": "<h3>持续洞察与报告</h3>"
+    },
+    {
+      "id": "improvement-034",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/1b2830cbdb3dad79f47443c1.svg\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "improvement-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangSmith's <a href=\"https://docs.langchain.com/langsmith/insights\" rel=\"noopener noreferrer\">Insights Agent</a> runs automated clustering over production traces to surface usage patterns, failure modes, and edge cases. This is different from monitoring: you're not tracking metrics you already defined, you're discovering patterns you didn't know to look for.</p>",
+      "zh": "<p>LangSmith 的 <a href=\"https://docs.langchain.com/langsmith/insights\" rel=\"noopener noreferrer\">Insights Agent</a> 会对生产轨迹进行自动聚类，以发现使用模式、失败模式和边界情况。这与监控有所不同：你不是在追踪事先定义好的指标，而是在发现此前不知道应该关注的模式。</p>"
+    },
+    {
+      "id": "improvement-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A team managing a customer-facing agent might ask: \"What are users actually trying to do with this agent?\" Insights Agent can analyze thousands of traces, group them by intent, and surface the top categories, including ones no one anticipated. The same analysis applied to traces with negative feedback or low scores reveals where the agent is consistently falling short and why.</p>",
+      "zh": "<p>一个负责面向客户的 Agent 的团队可能会问：“用户究竟想用这个 Agent 做什么？”Insights Agent 可以分析数千条轨迹，按意图分组，并找出最主要的类别，其中也包括此前没有人预料到的类别。对收到负面反馈或低分的轨迹进行同样的分析，则可以揭示 Agent 经常在哪些方面表现不足，以及原因是什么。</p>"
+    },
+    {
+      "id": "improvement-037",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Where automation stops: human judgment still matters</h2>",
+      "zh": "<h2>自动化的边界：人工判断仍然重要</h2>"
+    },
+    {
+      "id": "improvement-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Automated evaluators and insights scale well, but they don't replace human judgment.</p>",
+      "zh": "<p>自动评估器与自动洞察能够很好地扩展到大规模场景，但无法取代人工判断。</p>"
+    },
+    {
+      "id": "improvement-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Some agent behaviors can only be assessed by someone with domain expertise. A legal research agent that cites plausible-sounding but inaccurate precedents might fool an LLM judge. A medical information agent that gives technically correct but clinically inappropriate guidance looks fine to an automated check. Nuanced failures in specialized domains require reviewers who understand what \"correct\" actually means.</p>",
+      "zh": "<p>有些 Agent 行为只有具备领域知识的人才能评估。法律研究 Agent 引用听起来可信、实际上不准确的判例，可能骗过 LLM 裁判；医疗信息 Agent 提供技术上正确、但临床上不适当的指导，在自动检查中看起来也没有问题。专业领域里细微的失败，需要真正理解何谓“正确”的审核者来识别。</p>"
+    },
+    {
+      "id": "improvement-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That's where annotation queues come in.</p>",
+      "zh": "<p>这时就需要标注队列。</p>"
+    },
+    {
+      "id": "improvement-041",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/ca0f3672d0e48cb0ca33be8e.svg\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "improvement-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Teams can route selected production traces into annotation queues using filters: traces with low automated scores, traces from a specific feature area, traces that received thumbs-down feedback from end users. Reviewers see the full context and can leave ratings, corrections, comments, and edited outputs.</p>",
+      "zh": "<p>团队可以通过筛选条件，将选中的生产轨迹送入标注队列，例如自动评分较低的轨迹、来自特定功能领域的轨迹，以及被最终用户点踩的轨迹。审核者可以查看完整上下文，并添加评分、纠正、评论以及修改后的输出。</p>"
+    },
+    {
+      "id": "improvement-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are four main ways teams use annotation queues in practice:</p>",
+      "zh": "<p>实际工作中，团队使用标注队列主要有四种方式：</p>"
+    },
+    {
+      "id": "improvement-044",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><a href=\"https://docs.langchain.com/langsmith/improve-judge-evaluator-feedback\" rel=\"noopener noreferrer\"><strong>Aligning</strong></a><strong> online evaluators</strong>: Reviewers label traces to calibrate LLM-as-a-judges. When reviewers and the automated evaluator disagree, those labeled examples help tune the grader until its scores reflect human judgement.</li><li><strong>Creating ground truth for offline </strong><a href=\"https://docs.langchain.com/langsmith/manage-datasets-in-application#from-examples-in-an-annotation-queue\" rel=\"noopener noreferrer\"><strong>datasets</strong></a>: Reviewers label the correct final output for a trace. These become the expected answers in your offline eval suite, letting you test future versions for correctness against production inputs.</li><li><strong>Scoring open-ended outputs</strong>: When there's no single correct answer, reviewers label the criteria that define a good response. This structured feedback becomes the basis for evaluators on dimensions that are too nuanced for exact-match checks.</li><li><strong>Natural language annotations</strong>: Reviewers attach freeform comments and corrections to traces. These flow into Insights Agent analysis, surfacing patterns that scores alone won't show.</li></ul>",
+      "zh": "<ul><li><a href=\"https://docs.langchain.com/langsmith/improve-judge-evaluator-feedback\" rel=\"noopener noreferrer\"><strong>校准</strong></a><strong>在线评估器</strong>：审核者为轨迹打标签，用于校准 LLM 裁判。当人工审核者与自动评估器意见不一致时，这些标注样本可以帮助调整评分器，直到评分能够反映人的判断。</li><li><strong>为离线</strong><a href=\"https://docs.langchain.com/langsmith/manage-datasets-in-application#from-examples-in-an-annotation-queue\" rel=\"noopener noreferrer\"><strong>数据集</strong></a><strong>建立标准答案</strong>：审核者标注一条轨迹应该得到的正确最终输出。这些内容成为离线评测套件中的预期答案，让你可以用生产环境的输入检验后续版本的正确性。</li><li><strong>为开放式输出评分</strong>：当不存在唯一正确答案时，审核者标注定义优质回答的标准。对于过于细腻、无法通过精确匹配检查的维度，这类结构化反馈可以成为评估器的依据。</li><li><strong>自然语言标注</strong>：审核者为轨迹添加自由形式的评论和纠正。这些内容会进入 Insights Agent 的分析，从而揭示仅凭分数无法发现的模式。</li></ul>"
+    },
+    {
+      "id": "improvement-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It's worth distinguishing between the first use case and the rest. Annotating to align online evaluators improves your live monitoring: you're making continuous, automated scoring more accurate. The other three are primarily about building offline datasets, creating the ground truth and quality labels that let you test a fix before it ships.</p>",
+      "zh": "<p>第一种用途值得与其余几种区分开来。用于校准在线评估器的标注，会改善实时监控，使持续进行的自动评分更加准确。另外三种用途主要是构建离线数据集，建立标准答案和质量标签，使你能在发布之前测试修复。</p>"
+    },
+    {
+      "id": "improvement-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Two reviewer profiles are common in practice.</p>",
+      "zh": "<p>实际工作中常见两类审核者。</p>"
+    },
+    {
+      "id": "improvement-047",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>General reviewers:</strong> Contractors, annotators, customer success teams can assess surface-level quality signals. They judge if the response was helpful, if it was accurate relative to visible information, and if the tone was appropriate.</li><li><strong>Domain experts:</strong> Product managers, SMEs, and specialists in the field the agent serves can judge whether the agent behaved correctly in context, including failures that automation will miss entirely.</li></ul>",
+      "zh": "<ul><li><strong>通用审核者：</strong>外包人员、标注人员和客户成功团队可以评估表层的质量信号。他们判断回答是否有帮助、相对于可见信息是否准确，以及语气是否恰当。</li><li><strong>领域专家：</strong>产品经理、领域专家（SME），以及 Agent 所服务领域的专业人员，可以判断 Agent 在具体上下文中的行为是否正确，包括自动化完全无法发现的失败。</li></ul>"
+    },
+    {
+      "id": "improvement-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Often, at this point in time, you still need a human-in-the-loop.</p>",
+      "zh": "<p>在现阶段，你往往仍然需要让人参与循环。</p>"
+    },
+    {
+      "id": "improvement-049",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What to do with enriched traces: build and improve</h2>",
+      "zh": "<h2>如何使用补充了信息的轨迹：构建与改进</h2>"
+    },
+    {
+      "id": "improvement-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Enriched traces become the raw material for understanding where an agent consistently fails.</p>",
+      "zh": "<p>补充了信息的执行轨迹，是理解 Agent 在哪些地方反复失败的原材料。</p>"
+    },
+    {
+      "id": "improvement-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The pattern that emerges across multiple traces is more actionable than any individual example. You’ll start to see that your agent consistently misunderstands queries of a certain type or always selects the wrong tool in a particular context.</p>",
+      "zh": "<p>多条轨迹中共同出现的模式，比任何单个例子都更有助于采取行动。你会开始发现，Agent 总是误解某类查询，或者总是在某种上下文中选错工具。</p>"
+    },
+    {
+      "id": "improvement-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Pattern-level understanding is hard to gain by spot-checking individual runs. It requires data at scale, with consistent labels, from real production behavior.</p>",
+      "zh": "<p>只抽查个别运行，很难形成对模式的认识。这需要大规模、标注一致、来自真实生产行为的数据。</p>"
+    },
+    {
+      "id": "improvement-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The fix depends on what the traces reveal. If the agent is selecting the wrong tool for a class of queries, that might mean updating tool descriptions or adding routing logic. If the reasoning drifts partway through a multi-step task, a more constrained system prompt or breaking the task into smaller, more focused steps. If the agent produces outputs that are factually correct but miss the user's actual intent, that's usually a prompt-level issue and requires clarifying what \"good\" looks like in the instructions. And sometimes the trace reveals a structural problem: the agent needs a different tool entirely, or the workflow needs a human-in-the-loop checkpoint at a specific decision point.</p>",
+      "zh": "<p>具体如何修复，取决于轨迹揭示了什么。如果 Agent 对某类查询选错工具，可能需要更新工具说明，或者增加路由逻辑。如果它在多步骤任务进行到一半时推理偏离方向，可能需要约束更明确的系统提示词，或把任务拆成更小、更聚焦的步骤。如果输出在事实层面正确，却没有回应用户的真实意图，这通常是提示词层面的问题，需要在指令中明确什么才是“好”。有时，轨迹还会揭示结构性问题：Agent 需要一种完全不同的工具，或者工作流需要在特定决策点设置人工参与的检查环节。</p>"
+    },
+    {
+      "id": "improvement-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Each of these changes is informed by specific, observed behavior rather than hypothetical failure modes. A developer is rewriting a prompt because they can see exactly which traces failed, how they failed, and what the annotated feedback says about why.</p>",
+      "zh": "<p>每一项这样的改动，都依据具体观察到的行为，而不是假想的失败模式。开发者之所以重写提示词，是因为他们能明确看到哪些轨迹失败了、如何失败，以及标注反馈如何解释失败原因。</p>"
+    },
+    {
+      "id": "improvement-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Offline evaluations then make these prompt and code changes measurable.</p>",
+      "zh": "<p>随后，离线评测让这些提示词和代码改动的效果变得可以衡量。</p>"
+    },
+    {
+      "id": "improvement-056",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Turning production failures into offline evaluations</h2>",
+      "zh": "<h2>将生产环境中的失败转化为离线评测</h2>"
+    },
+    {
+      "id": "improvement-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once you've identified what to fix, you need a way to test that the fix actually works. That's where <a href=\"https://docs.langchain.com/langsmith/evaluation\" rel=\"noopener noreferrer\">offline evaluations</a> come in.</p>",
+      "zh": "<p>确定需要修复什么之后，你需要一种方法来测试修复是否真正奏效。这就是<a href=\"https://docs.langchain.com/langsmith/evaluation\" rel=\"noopener noreferrer\">离线评测</a>发挥作用的地方。</p>"
+    },
+    {
+      "id": "improvement-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The dataset for those evals should come from production: real traces, real queries, real failures.</p>",
+      "zh": "<p>这些评测所用的数据集应来自生产环境：真实轨迹、真实查询和真实失败。</p>"
+    },
+    {
+      "id": "improvement-059",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>What those evaluations actually measure depends on what the annotation work produced. There are two distinct approaches:</p>",
+      "zh": "<p>评测实际衡量什么，取决于标注工作产出了什么。有两种不同的方法：</p>"
+    },
+    {
+      "id": "improvement-060",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Ground truth correctness</strong>: When reviewers have labeled the correct final output for a trace, you can test directly for correctness. Run your refined agent against the dataset and compare the agent's output to the labeled ground truth. If the fix works, scores improve. If it introduces a regression, the eval catches it before it reaches users.</li><li><strong>Criteria-based scoring</strong>: Not every output has a single correct answer. For open-ended tasks, reviewers label the criteria that define a good response rather than the response itself. Offline evals use those criteria to score outputs from updated versions, letting you measure improvement on dimensions like relevance, completeness, or tone without requiring an exact match.</li></ul>",
+      "zh": "<ul><li><strong>依据标准答案判断正确性</strong>：如果审核者已经标注了某条轨迹的正确最终输出，就可以直接测试正确性。在数据集上运行改进后的 Agent，将其输出与标注的标准答案比较。如果修复有效，分数会提高；如果引入回归，评测会在问题影响用户之前发现它。</li><li><strong>基于标准评分</strong>：并非每个输出都有唯一正确答案。对于开放式任务，审核者标注的是定义优质回答的标准，而非回答本身。离线评测使用这些标准对更新后版本的输出评分，让你无需精确匹配，也能衡量相关性、完整性或语气等维度上的改进。</li></ul>"
+    },
+    {
+      "id": "improvement-061",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every failure mode you encode as an eval should stay in your test suite permanently. That creates a durable record of what your agent has learned to handle, and a gate that ensures future changes don't reintroduce problems you already solved.</p>",
+      "zh": "<p>每一种被你编码为评测用例的失败模式，都应该永久保留在测试套件中。这样既能长期记录 Agent 已经学会处理的问题，也能形成一道关卡，确保未来的改动不会重新引入已经解决的问题。</p>"
+    },
+    {
+      "id": "improvement-062",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Online + offline evals together</h2>",
+      "zh": "<h2>结合在线评测与离线评测</h2>"
+    },
+    {
+      "id": "improvement-063",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/3f7014fc7555a5648dd21374.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "improvement-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Online evaluators monitor live behavior continuously. They catch quality drift, surface emerging failure patterns, and flag traces for human review. But they don't let you validate a change before it ships.</p>",
+      "zh": "<p>在线评估器持续监控实际运行行为。它们捕捉质量漂移，发现新出现的失败模式，并标记需要人工审核的轨迹。但它们不能让你在发布之前验证某项改动。</p>"
+    },
+    {
+      "id": "improvement-065",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Offline evaluations help with that. They're controlled experiments you run on curated datasets in development, before any change reaches production.</p>",
+      "zh": "<p>离线评测可以解决这个问题。它是在开发阶段、任何改动进入生产环境之前，在经过整理的数据集上运行的受控实验。</p>"
+    },
+    {
+      "id": "improvement-066",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Together, they create a bridge between production observation and safe iteration. Online evals tell you what's going wrong. Offline evals confirm whether your fix actually addresses it.</p>",
+      "zh": "<p>两者结合，就在生产观察与安全迭代之间架起了一座桥梁。在线评测告诉你哪里出了问题；离线评测确认你的修复是否真正解决了问题。</p>"
+    },
+    {
+      "id": "improvement-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every failure mode you encode as an eval should stay in your test suite permanently. That creates a durable record of what your agent has learned to handle, and a gate that ensures future changes don't reintroduce problems you already solved.</p>",
+      "zh": "<p>每一种被你编码为评测用例的失败模式，都应该永久保留在测试套件中。这样既能长期记录 Agent 已经学会处理的问题，也能形成一道关卡，确保未来的改动不会重新引入已经解决的问题。</p>"
+    },
+    {
+      "id": "improvement-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every prompt change, model update, workflow modification, or architecture change should run against the accumulated eval suite before shipping. Running the same eval sets continuously and comparing scores across versions and model configurations turns the improvement loop into something measurable. You can demonstrate that each iteration produced a better agent, not just a different one.</p>",
+      "zh": "<p>每次提示词修改、模型更新、工作流调整或架构变更，都应在发布之前使用累积起来的评测套件进行评测。持续运行相同的评测集，比较不同版本和模型配置的分数，就能让改进循环变得可以衡量。你可以证明，每轮迭代都产生了更好的 Agent，而不只是一个不同的 Agent。</p>"
+    },
+    {
+      "id": "improvement-069",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Coding agents in the loop</h2>",
+      "zh": "<h2>让编码 Agent 参与循环</h2>"
+    },
+    {
+      "id": "improvement-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The improvement loop is becoming more automated, and tracing stays at the center of that too..</p>",
+      "zh": "<p>改进循环正在变得更加自动化，而执行轨迹记录仍然处于其核心位置。</p>"
+    },
+    {
+      "id": "improvement-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <a href=\"https://blog.langchain.com/langsmith-cli-skills/\" rel=\"noopener noreferrer\">LangSmith CLI and Skills</a> give coding agents expert-level access to LangSmith data directly from the terminal. When equipped with LangSmith Skills, on our eval set, Claude Code's performance jumped from 17% to 92%.</p>",
+      "zh": "<p><a href=\"https://blog.langchain.com/langsmith-cli-skills/\" rel=\"noopener noreferrer\">LangSmith CLI 和 Skills</a> 使编码 Agent 可以直接从终端以专家级方式访问 LangSmith 数据。配备 LangSmith Skills 后，在我们的评测集上，Claude Code 的表现从 17% 提升到了 92%。</p>"
+    },
+    {
+      "id": "improvement-072",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In practice, a developer can instruct a coding agent to pull the last 30 days of production traces, isolate traces with thumbs-down feedback, identify the failure patterns they represent, draft evaluations from those examples, and propose prompt or code changes to address them. All of that happens within a single terminal session, grounded in real behavioral data.</p>",
+      "zh": "<p>实际操作时，开发者可以指示编码 Agent 拉取最近 30 天的生产轨迹，筛选被点踩的轨迹，识别它们体现的失败模式，根据这些例子起草评测，并提出相应的提示词或代码修改。所有这些工作都可以在一次终端会话中完成，并以真实行为数据为依据。</p>"
+    },
+    {
+      "id": "improvement-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But a coding agent without trace data makes changes based on incomplete information. It will propose fixes that look reasonable from a code-review perspective but miss the actual failure mode because they can't see the execution trajectory that produced it. A coding agent working from enriched traces is working from the same information a senior engineer would use. </p>",
+      "zh": "<p>但没有轨迹数据的编码 Agent，只能依据不完整的信息进行修改。它会提出从代码审查角度看似合理、却没有针对实际失败模式的修复，因为它看不到导致失败的执行过程。使用补充了信息的轨迹工作的编码 Agent，所依据的信息与资深工程师会使用的信息相同。</p>"
+    },
+    {
+      "id": "improvement-074",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Tracing is the cornerstone of your agent improvement loop</h2>",
+      "zh": "<h2>执行轨迹记录是 Agent 改进循环的基石</h2>"
+    },
+    {
+      "id": "improvement-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Reliable agents aren't built from debugging individual traces. They're built from a trace-centered improvement loop.</p>",
+      "zh": "<p>可靠的 Agent 并不是靠调试个别轨迹构建起来的，而是来自以轨迹为中心的改进循环。</p>"
+    },
+    {
+      "id": "improvement-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The loop begins with tracing and returns to tracing. Every evaluator runs on traces. Every annotation is attached to a trace. Every offline dataset is built from traces. Every regression test validates against what was observed in real traces. The coding agent that proposes the next fix reads from traces to do it.</p>",
+      "zh": "<p>这个循环始于轨迹记录，也回到轨迹记录。每个评估器都针对轨迹运行；每项标注都附着于一条轨迹；每个离线数据集都由轨迹构建；每次回归测试都针对真实轨迹中观察到的情况进行验证。提出下一项修复的编码 Agent，也要读取轨迹来完成这项工作。</p>"
+    },
+    {
+      "id": "improvement-077",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That is why tracing is not just a debugging tool. It's the primitive that makes the entire improvement loop possible, the foundation from which all evaluation, all human feedback, and all systematic improvement is derived.</p>",
+      "zh": "<p>因此，执行轨迹记录不仅是一种调试工具。它是使整个改进循环成为可能的基本构件，是所有评测、所有人工反馈和所有系统性改进的基础。</p>"
+    },
+    {
+      "id": "improvement-078",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The loop starts with a trace. And the next loop starts with the trace that comes back.</p>",
+      "zh": "<p>循环始于一条执行轨迹。下一轮循环，则始于反馈回来的那条轨迹。</p>"
+    },
+    {
+      "id": "improvement-079",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Additional reading</h2>",
+      "zh": "<h2>延伸阅读</h2>"
+    },
+    {
+      "id": "improvement-080",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><a href=\"https://www.langchain.com/conceptual-guides/agent-observability-powers-agent-evaluation\" rel=\"noopener noreferrer\">\"Agent observability powers agent evaluation\"</a></li><li><a href=\"https://www.langchain.com/conceptual-guides/production-monitoring\" rel=\"noopener noreferrer\">\"You don't know what your agent will do until it's in production\"</a></li><li>LangSmith Docs - <a href=\"https://docs.langchain.com/langsmith/evaluation-types#offline-evaluation-types\" rel=\"noopener noreferrer\">\"Offline evaluation types\"</a></li><li>LangSmith Docs - <a href=\"https://docs.langchain.com/langsmith/evaluation-types#online-evaluation-types\" rel=\"noopener noreferrer\">\"Online evaluation types\"</a></li><li>LangSmith Docs - <a href=\"https://docs.langchain.com/langsmith/annotation-queues\" rel=\"noopener noreferrer\">\"Annotation queues\"</a></li><li>LangSmith Docs - <a href=\"https://docs.langchain.com/langsmith/insights\" rel=\"noopener noreferrer\">\"Insights\"</a></li></ul>",
+      "zh": "<ul><li><a href=\"https://www.langchain.com/conceptual-guides/agent-observability-powers-agent-evaluation\" rel=\"noopener noreferrer\">《Agent 可观测性如何支撑 Agent 评测》</a></li><li><a href=\"https://www.langchain.com/conceptual-guides/production-monitoring\" rel=\"noopener noreferrer\">《Agent 上线之前，你无法知道它究竟会做什么》</a></li><li>LangSmith 文档：<a href=\"https://docs.langchain.com/langsmith/evaluation-types#offline-evaluation-types\" rel=\"noopener noreferrer\">《离线评测类型》</a></li><li>LangSmith 文档：<a href=\"https://docs.langchain.com/langsmith/evaluation-types#online-evaluation-types\" rel=\"noopener noreferrer\">《在线评测类型》</a></li><li>LangSmith 文档：<a href=\"https://docs.langchain.com/langsmith/annotation-queues\" rel=\"noopener noreferrer\">《标注队列》</a></li><li>LangSmith 文档：<a href=\"https://docs.langchain.com/langsmith/insights\" rel=\"noopener noreferrer\">《Insights》</a></li></ul>"
+    }
+  ],
+  "description": "Agent 改进循环的原理很简单：获取执行轨迹，丰富轨迹信息，从中改进，再重复这一过程。本指南介绍如何在实践中做到这一点",
+  "reading_minutes": 13,
+  "downloads": {
+    "zh": "/downloads/improvement-zh.pdf",
+    "en": "/downloads/improvement-en.pdf"
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "title": "动态发现上下文",
+  "original_title": "Dynamic context discovery",
+  "url": "https://cursor.com/blog/dynamic-context-discovery",
+  "date": "2026-01-06",
+  "publisher": "Cursor",
+  "author": "Jediah Katz",
+  "source_order": 37,
+  "slug": "cursor-context",
+  "source_id": "new37_cursor_context",
+  "category": "上下文工程",
+  "blocks": [
+    {
+      "id": "new37_cursor_context-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Coding agents are quickly changing how software is built. Their rapid improvement comes from both improved agentic models and better context engineering to steer them.</p>",
+      "zh": "<p>编程 Agent 正在迅速改变软件的构建方式。它们的快速进步，既来自更强的 Agent 模型，也来自更好的上下文工程对模型的引导。</p>"
+    },
+    {
+      "id": "new37_cursor_context-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Cursor's agent harness, the instructions and tools we provide the model, is optimized individually for every new frontier model we support. However, there are context engineering improvements we can make, such as how we gather context and optimize token usage over a long trajectory, that apply to all models inside our harness.</p>",
+      "zh": "<p>Cursor 的 Agent 运行框架，也就是我们提供给模型的指令和工具，会针对每个新支持的前沿模型单独优化。不过，有些上下文工程改进适用于框架中的所有模型，例如如何收集上下文，以及如何在漫长的执行轨迹中优化 token 使用。</p>"
+    },
+    {
+      "id": "new37_cursor_context-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As models have become better as agents, we've found success by providing fewer details up front, making it easier for the agent to pull relevant context on its own. We're calling this pattern <strong>dynamic context discovery</strong>, in contrast to <em>static context</em> which is always included.</p>",
+      "zh": "<p>随着模型作为 Agent 的能力增强，我们发现，预先提供更少细节、让 Agent 更容易自行获取相关上下文，能够取得良好效果。我们将这种模式称为<strong>动态上下文发现</strong>，与始终包含在输入中的<em>静态上下文</em>相对。</p>"
+    },
+    {
+      "id": "new37_cursor_context-003",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-files-for-dynamic-context-discovery\">Files for dynamic context discovery</h2>",
+      "zh": "<h2 id=\"zh-source-files-for-dynamic-context-discovery\">用文件实现动态上下文发现</h2>"
+    },
+    {
+      "id": "new37_cursor_context-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Dynamic context discovery is far more token-efficient, as only the necessary data is pulled into the context window. It can also improve the agent's response quality by reducing the amount of potentially confusing or contradictory information in the context window.</p>",
+      "zh": "<p>动态上下文发现只将必要数据放入上下文窗口，因此 token 效率高得多。它还能减少窗口内可能造成困惑或相互矛盾的信息，从而改善 Agent 的回答质量。</p>"
+    },
+    {
+      "id": "new37_cursor_context-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here's how we've used dynamic context discovery in Cursor:</p>",
+      "zh": "<p>我们在 Cursor 中这样运用动态上下文发现：</p>"
+    },
+    {
+      "id": "new37_cursor_context-006",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>Turning long tool responses into files</li>\n<li>Referencing chat history during summarization</li>\n<li>Supporting the Agent Skills open standard</li>\n<li>Efficiently loading only the MCP tools needed</li>\n<li>Treating all integrated terminal sessions as files</li>\n</ol>",
+      "zh": "<ol><li>将冗长的工具响应转为文件。</li><li>在总结上下文时引用聊天历史。</li><li>支持 Agent Skills 开放标准。</li><li>高效地只加载需要的 MCP 工具。</li><li>将所有集成终端会话视为文件。</li></ol>"
+    },
+    {
+      "id": "new37_cursor_context-007",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-1-turning-long-tool-responses-into-files\">1. Turning long tool responses into files</h2>",
+      "zh": "<h2 id=\"zh-source-1-turning-long-tool-responses-into-files\">1. 将冗长的工具响应转为文件</h2>"
+    },
+    {
+      "id": "new37_cursor_context-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tool calls can dramatically increase the context window by returning a large JSON response.</p>",
+      "zh": "<p>工具调用可能返回庞大的 JSON 响应，使上下文窗口占用急剧增加。</p>"
+    },
+    {
+      "id": "new37_cursor_context-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For first-party tools in Cursor, like editing files and searching the codebase, we can prevent context bloat with intelligent tool definitions and minimal response formats, but third-party tools (i.e. shell commands or MCP calls) don't natively get this same treatment.</p>",
+      "zh": "<p>对于 Cursor 的第一方工具，例如文件编辑和代码库搜索，我们可以通过合理的工具定义和精简响应格式，防止上下文膨胀；但第三方工具，例如 Shell 命令或 MCP 调用，原生并没有得到同样的处理。</p>"
+    },
+    {
+      "id": "new37_cursor_context-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The common approach coding agents take is to truncate long shell commands or MCP results. This can lead to data loss, which could include important information you wanted in the context. In Cursor, we instead write the output to a file and give the agent the ability to read it. The agent calls <code>tail</code> to check the end, and then read more if it needs to.</p>",
+      "zh": "<p>编程 Agent 常见的做法，是截断冗长的 Shell 命令输出或 MCP 结果。这会导致数据丢失，其中可能就包含你希望保留在上下文中的重要信息。Cursor 则将输出写入文件，并赋予 Agent 读取它的能力。Agent 先调用 <code>tail</code> 查看末尾，如果有需要，再读取更多内容。</p>"
+    },
+    {
+      "id": "new37_cursor_context-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This has resulted in fewer unnecessary summarizations when reaching context limits.</p>",
+      "zh": "<p>这样，在接近上下文上限时，就能减少不必要的总结操作。</p>"
+    },
+    {
+      "id": "new37_cursor_context-012",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-2-referencing-chat-history-during-summarization\">2. Referencing chat history during summarization</h2>",
+      "zh": "<h2 id=\"zh-source-2-referencing-chat-history-during-summarization\">2. 在总结上下文时引用聊天历史</h2>"
+    },
+    {
+      "id": "new37_cursor_context-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When the model's context window fills up, Cursor triggers a summarization step to give the agent a fresh context window with a summary of its work so far.</p>",
+      "zh": "<p>当模型的上下文窗口填满时，Cursor 会触发总结步骤，让 Agent 获得一个新的上下文窗口，其中包含此前工作进展的摘要。</p>"
+    },
+    {
+      "id": "new37_cursor_context-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But the agent's knowledge can degrade after summarization since it's a lossy compression of the context. The agent might have forgotten crucial details about its task. In Cursor, we use the chat history as files to improve the quality of summarization.</p>",
+      "zh": "<p>但总结是一种有损上下文压缩，因此总结后，Agent 掌握的信息可能退化。它可能遗忘任务中的关键细节。在 Cursor 中，我们将聊天历史作为文件保存，以提高总结后的效果。</p>"
+    },
+    {
+      "id": "new37_cursor_context-015",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/29861780bdf861f524583f5d.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new37_cursor_context-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>After the context window limit is reached, or the user decides to summarize manually, we give the agent a reference to the history file. If the agent knows that it needs more details that are missing from the summary, it can search through the history to recover them.</p>",
+      "zh": "<p>当达到上下文窗口上限，或用户决定手动总结时，我们会向 Agent 提供历史文件的引用。如果 Agent 意识到自己需要摘要中缺失的更多细节，就可以搜索历史记录，将它们找回来。</p>"
+    },
+    {
+      "id": "new37_cursor_context-017",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-3-supporting-the-agent-skills-open-standard\">3. Supporting the Agent Skills open standard</h2>",
+      "zh": "<h2 id=\"zh-source-3-supporting-the-agent-skills-open-standard\">3. 支持 Agent Skills 开放标准</h2>"
+    },
+    {
+      "id": "new37_cursor_context-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Cursor supports <a href=\"https://cursor.com/docs/skills\" rel=\"noopener noreferrer\">Agent Skills</a>, an open standard for extending coding agents with specialized capabilities. Similar to other types of <a href=\"https://cursor.com/docs/rules\" rel=\"noopener noreferrer\">Rules</a>, Skills are defined by files that tell the agent how to perform on a domain-specific task.</p>",
+      "zh": "<p>Cursor 支持 <a href=\"https://cursor.com/docs/skills\" rel=\"noopener noreferrer\">Agent Skills</a>，这是一项为编程 Agent 扩展专业能力的开放标准。与其他类型的<a href=\"https://cursor.com/docs/rules\" rel=\"noopener noreferrer\">规则</a>类似，技能由文件定义，告诉 Agent 如何执行特定领域的任务。</p>"
+    },
+    {
+      "id": "new37_cursor_context-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills also include a name and description which can be included as \"static context\" in the system prompt. The agent can then do dynamic context discovery to pull in relevant skills, using tools like grep and Cursor's <a href=\"https://cursor.com/blog/semsearch\" rel=\"noopener noreferrer\">semantic search</a>.</p>",
+      "zh": "<p>技能还包含名称和描述，可以作为“静态上下文”加入系统提示词。随后，Agent 可以借助 grep、Cursor 的<a href=\"https://cursor.com/blog/semsearch\" rel=\"noopener noreferrer\">语义搜索</a>等工具，动态发现上下文并引入相关技能。</p>"
+    },
+    {
+      "id": "new37_cursor_context-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Skills can also bundle executables or scripts relevant to the task. Since they're just files, the agent can easily find what's relevant to a particular skill.</p>",
+      "zh": "<p>技能还可以打包与任务相关的可执行程序或脚本。因为它们都只是文件，Agent 很容易找到与某项技能相关的内容。</p>"
+    },
+    {
+      "id": "new37_cursor_context-021",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-4-efficiently-loading-only-the-mcp-tools-needed\">4. Efficiently loading only the MCP tools needed</h2>",
+      "zh": "<h2 id=\"zh-source-4-efficiently-loading-only-the-mcp-tools-needed\">4. 高效地只加载需要的 MCP 工具</h2>"
+    },
+    {
+      "id": "new37_cursor_context-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>MCP is helpful for accessing secured resources behind OAuth. That could be production logs, external design files, or internal context and documentation for an enterprise.</p>",
+      "zh": "<p>MCP 有助于访问受 OAuth 保护的资源，例如生产日志、外部设计文件，或企业内部上下文和文档。</p>"
+    },
+    {
+      "id": "new37_cursor_context-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Some MCP servers include many tools, often with long descriptions, which can significantly bloat the context window. Most of these tools go unused even though they are always included in the prompt. This compounds if you use multiple MCP servers.</p>",
+      "zh": "<p>一些 MCP 服务器包含很多工具，而且描述通常很长，会显著占用上下文窗口。这些工具虽然始终放在提示词中，大部分却从未被使用。如果接入多个 MCP 服务器，问题还会进一步累积。</p>"
+    },
+    {
+      "id": "new37_cursor_context-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It's not feasible to expect every MCP server to optimize for this. We believe it's the responsibility of the coding agents to reduce context usage. In Cursor, we support dynamic context discovery for MCP by syncing tool descriptions to a folder.<sup id=\"en-source-fnref-1\"><a href=\"#en-source-fn-1\">1</a></sup></p>",
+      "zh": "<p>指望每个 MCP 服务器都为此做优化并不现实。我们认为，减少上下文占用是编程 Agent 的责任。Cursor 通过将工具描述同步到文件夹，支持对 MCP 进行动态上下文发现。<sup id=\"zh-source-fnref-1\"><a href=\"#zh-source-fn-1\">1</a></sup></p>"
+    },
+    {
+      "id": "new37_cursor_context-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The agent now only receives a small bit of static context, including names of the tools, prompting it to look up tools when the task calls for it. In an A/B test, we found that in runs that called an MCP tool, this strategy <strong>reduced total agent tokens by 46.9%</strong> (statistically significant, with high variance based on the number of MCPs installed).</p>",
+      "zh": "<p>现在，Agent 只会收到包含工具名称在内的少量静态上下文，并被提示在任务需要时查找工具。在一项 A/B 测试中，我们发现，对于调用了 MCP 工具的运行，这种策略<strong>将 Agent 的总 token 消耗降低了 46.9%</strong>；这一结果具有统计显著性，但方差较大，取决于安装的 MCP 数量。</p>"
+    },
+    {
+      "id": "new37_cursor_context-026",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/f50998eb5eca08726b7eb8da.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new37_cursor_context-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This file approach also unlocks the ability to communicate the status of MCP tools to the agent. For example, previously if an MCP server needed re-authentication, the agent would forget about those tools entirely, leaving the user confused. Now, it can actually let the user know to re-authenticate proactively.</p>",
+      "zh": "<p>文件方式还让我们能够向 Agent 传达 MCP 工具的状态。例如，过去如果某个 MCP 服务器需要重新验证身份，Agent 就会完全忘掉这些工具，让用户感到困惑。现在，它可以主动告诉用户需要重新验证身份。</p>"
+    },
+    {
+      "id": "new37_cursor_context-028",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-5-treating-all-integrated-terminal-sessions-as-files\">5. Treating all integrated terminal sessions as files</h2>",
+      "zh": "<h2 id=\"zh-source-5-treating-all-integrated-terminal-sessions-as-files\">5. 将所有集成终端会话视为文件</h2>"
+    },
+    {
+      "id": "new37_cursor_context-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Rather than needing to copy/paste the output of a terminal session into the agent input, Cursor now syncs the integrated terminal outputs to the local filesystem.</p>",
+      "zh": "<p>现在，Cursor 会将集成终端的输出同步到本地文件系统，无需再把终端会话输出复制粘贴到 Agent 的输入中。</p>"
+    },
+    {
+      "id": "new37_cursor_context-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This makes it easy to ask \"why did my command fail?\" and allow the agent to understand what you're referencing. Since terminal history can be long, the agent can grep for only the relevant outputs, which is useful for logs from a long-running process like a server.</p>",
+      "zh": "<p>这样，你可以直接问“我的命令为什么失败了？”，Agent 就能理解你指的是什么。由于终端历史可能很长，Agent 可以用 grep 只找出相关输出；对于服务器等长时间运行进程的日志，这一点尤其有用。</p>"
+    },
+    {
+      "id": "new37_cursor_context-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This mirrors what CLI-based coding agents see, with prior shell output in context, but discovered dynamically rather than injected statically.</p>",
+      "zh": "<p>这与命令行编程 Agent 能看到此前 Shell 输出的方式相似，但这些内容是动态发现的，而不是静态注入的。</p>"
+    },
+    {
+      "id": "new37_cursor_context-032",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-simple-abstractions\">Simple abstractions</h2>",
+      "zh": "<h2 id=\"zh-source-simple-abstractions\">简单的抽象</h2>"
+    },
+    {
+      "id": "new37_cursor_context-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It's not clear if files will be the final interface for LLM-based tools.</p>",
+      "zh": "<p>文件是否会成为基于大语言模型的工具的最终接口，目前还不清楚。</p>"
+    },
+    {
+      "id": "new37_cursor_context-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But as coding agents quickly improve, files have been a simple and powerful primitive to use, and a safer choice than yet another abstraction that can't fully account for the future. Stay tuned for lots more exciting work to share in this space.</p>",
+      "zh": "<p>但在编程 Agent 快速进步的过程中，文件是一种简单而强大的基础机制。与其再创造一个无法充分预见未来的新抽象，文件是更稳妥的选择。我们还将在这个方向分享更多令人兴奋的工作，敬请关注。</p>"
+    },
+    {
+      "id": "new37_cursor_context-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These improvements will be live for all users in the coming weeks. The techniques described in this blog post are the work of many Cursor employees including Lukas Moller, Yash Gaitonde, Wilson Lin, Jason Ma, Devang Jhabakh, and Jediah Katz. If you are interested in solving the hardest and most ambitious coding tasks using AI, we'd love to hear from you. Reach out to us at <a href=\"mailto:hiring@cursor.com\">hiring@cursor.com</a>.</p>",
+      "zh": "<p>这些改进将在未来几周内向所有用户上线。本文介绍的技术，是包括 Lukas Moller、Yash Gaitonde、Wilson Lin、Jason Ma、Devang Jhabakh 和 Jediah Katz 在内的许多 Cursor 员工共同努力的成果。如果你有兴趣使用 AI 解决最困难、最有雄心的编程任务，我们很乐意与你交流。请通过 <a href=\"mailto:hiring@cursor.com\">hiring@cursor.com</a> 联系我们。</p>"
+    },
+    {
+      "id": "new37_cursor_context-036",
+      "tag": "hr",
+      "preserve": true,
+      "en": "<hr>"
+    },
+    {
+      "id": "new37_cursor_context-037",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li id=\"en-source-fn-1\"><div>We considered a tool search approach, but that would scatter tools across a flat index. Instead, we create one folder per server, keeping each server's tools logically grouped. When the model lists a folder, it sees all tools from that server together and can understand them as a cohesive unit. Files also enable more powerful searching. The agent can use full <code>rg</code> parameters or even <code>jq</code> to filter tool descriptions. <a href=\"#en-source-fnref-1\">↩</a></div></li></ol>",
+      "zh": "<ol><li id=\"zh-source-fn-1\"><div>我们考虑过工具搜索的方式，但那会把工具散布在一个扁平索引中。我们选择为每个服务器创建一个文件夹，保持该服务器的工具在逻辑上成组。当模型列出一个文件夹时，会一起看到该服务器的全部工具，并能够将它们理解为一个协调的整体。文件还支持更强大的搜索：Agent 可以使用 <code>rg</code> 的完整参数，甚至使用 <code>jq</code> 过滤工具描述。<a href=\"#zh-source-fnref-1\">↩</a></div></li></ol>"
+    }
+  ],
+  "description": "编程 Agent 正在迅速改变软件的构建方式。它们的快速进步，既来自更强的 Agent 模型，也来自更好的上下文工程对模型的引导",
+  "reading_minutes": 6,
+  "downloads": {}
+}

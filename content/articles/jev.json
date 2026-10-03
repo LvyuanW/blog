@@ -1,0 +1,329 @@
+{
+  "title": "借助 Jev 构建运行框架",
+  "original_title": "Building a Harness with Jev",
+  "url": "https://www.langchain.com/blog/building-a-harness-with-jev",
+  "date": "2026-09-18",
+  "publisher": "LangChain",
+  "author": "Sydney Runkle, Hunter Lovell",
+  "source_order": 24,
+  "slug": "jev",
+  "source_id": "new24_jev",
+  "category": "基础与架构",
+  "blocks": [
+    {
+      "id": "new24_jev-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents run in a loop: an LLM decides what to do, a tool executes, a model evaluates the results, and then continues in that loop until the task is complete.</p>",
+      "zh": "<p>Agent 在循环中运行：LLM 决定做什么，工具执行操作，模型评估结果，然后继续循环，直到任务完成。</p>"
+    },
+    {
+      "id": "new24_jev-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents and LLMs were initially difficult to integrate into software applications, which depend on structured data and predictable interfaces. Two primitives emerged that made this much easier:</p>",
+      "zh": "<p>起初，Agent 和 LLM 很难集成到软件应用中，因为软件应用依赖结构化数据与可预测的接口。后来出现了两项基础能力，让集成容易了许多：</p>"
+    },
+    {
+      "id": "new24_jev-002",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><a href=\"https://openai.com/index/function-calling-and-other-api-updates/\" rel=\"noopener noreferrer\"><strong>Tool calling</strong></a> let models make structured requests and receive structured results.</li><li><a href=\"https://www.youtube.com/watch?v=yj-wSRJwrrc\" rel=\"noopener noreferrer\"><strong>Structured outputs</strong></a> let models return restructured results.</li></ul>",
+      "zh": "<ul><li><a href=\"https://openai.com/index/function-calling-and-other-api-updates/\" rel=\"noopener noreferrer\"><strong>工具调用</strong></a>让模型能够发出结构化请求，并接收结构化结果。</li><li><a href=\"https://www.youtube.com/watch?v=yj-wSRJwrrc\" rel=\"noopener noreferrer\"><strong>结构化输出</strong></a>让模型能够返回按结构组织的结果。</li></ul>"
+    },
+    {
+      "id": "new24_jev-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But even with those in place, the agent loop is still <strong>slow</strong> and <strong>costly</strong>: every decision requires another model call.</p>",
+      "zh": "<p>但即使具备了这些能力，Agent 循环仍然<strong>缓慢</strong>而且<strong>昂贵</strong>：每一次决策，都需要再调用一次模型。</p>"
+    },
+    {
+      "id": "new24_jev-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Enter, <a href=\"https://x.com/CompleteSkeptic/status/2099925682726002904\" rel=\"noopener noreferrer\">Jev</a>. Jev is a new model <a href=\"https://typesafe.ai/blog/introducing-system-one-models-and-jev\" rel=\"noopener noreferrer\">released from TypeSafe AI</a>. The company reports up to <strong>200x faster inference and 400x lower cost</strong> than comparable LLMs on classification tasks.</p>",
+      "zh": "<p>这时，<a href=\"https://x.com/CompleteSkeptic/status/2099925682726002904\" rel=\"noopener noreferrer\">Jev</a> 出现了。Jev 是 <a href=\"https://typesafe.ai/blog/introducing-system-one-models-and-jev\" rel=\"noopener noreferrer\">TypeSafe AI 发布</a>的一个新模型。该公司报告称，在分类任务上，相比同类 LLM，Jev 的<strong>推理速度最高可达 200 倍，成本可低至 1/400</strong>。</p>"
+    },
+    {
+      "id": "new24_jev-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This post covers how Jev works, where it fits into the agent loop, and how to use it with LangChain.</p>",
+      "zh": "<p>本文将介绍 Jev 如何工作、它适合放在 Agent 循环的哪个位置，以及如何与 LangChain 一起使用。</p>"
+    },
+    {
+      "id": "new24_jev-006",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>All about Jev</h2>",
+      "zh": "<h2>了解 Jev</h2>"
+    },
+    {
+      "id": "new24_jev-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Jev is actually not a traditional LLM, it doesn’t generate text. It’s what the TypeSafe AI team calls a System One model:</p>",
+      "zh": "<p>实际上，Jev 不是传统意义上的 LLM，它不会生成文本。TypeSafe AI 团队将其称为 System One 模型：</p>"
+    },
+    {
+      "id": "new24_jev-008",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>📖 System One models are a class of AI models built to make fast, structured decisions that software can use directly. A System One model evaluates a <a href=\"https://docs.typesafe.ai/concepts/state\" rel=\"noopener noreferrer\"><strong>state</strong></a> and returns typed answers and probabilities.</blockquote>",
+      "zh": "<blockquote>📖 System One 模型是一类 AI 模型，专门用于快速做出结构化决策，供软件直接使用。System One 模型评估一个<a href=\"https://docs.typesafe.ai/concepts/state\" rel=\"noopener noreferrer\"><strong>状态</strong></a>，并返回带类型的答案及概率。</blockquote>"
+    },
+    {
+      "id": "new24_jev-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>It’s trained using <a href=\"https://typesafe.ai/blog/introducing-system-one-models-and-jev\" rel=\"noopener noreferrer\">reinforcement learning for calibrated decisions (RLCD)</a>. Your code uses those results to guide what an agent does next, without a full chat LLM call for each decision.</p>",
+      "zh": "<p>它使用<a href=\"https://typesafe.ai/blog/introducing-system-one-models-and-jev\" rel=\"noopener noreferrer\">面向校准决策的强化学习（RLCD）</a>进行训练。你的代码可以利用这些结果，指导 Agent 接下来做什么，而不必为每次决策都进行一次完整的聊天 LLM 调用。</p>"
+    },
+    {
+      "id": "new24_jev-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To invoke a Jev model, you send it a <strong>state</strong> (the context) and <strong>questions</strong> about that state. Here’s a single-question version of the support-ticket example in <a href=\"https://docs.typesafe.ai/introduction/quickstart\" rel=\"noopener noreferrer\">their docs</a>:<code>‍</code></p>",
+      "zh": "<p>调用 Jev 模型时，你需要向它发送一个<strong>状态</strong>（即上下文），以及有关该状态的<strong>问题</strong>。下面是<a href=\"https://docs.typesafe.ai/introduction/quickstart\" rel=\"noopener noreferrer\">其文档</a>中客服工单示例的单问题版本：<code>‍</code></p>"
+    },
+    {
+      "id": "new24_jev-011",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code><span><span>{\n</span></span><span><span>  </span><span>\"model\"</span><span>: </span><span>\"jev-latest\"</span><span>,\n</span></span><span><span>  </span><span>\"state\"</span><span>: </span><span>\"Hi, I've been trying to connect my Stripe account for 3 days and it keeps failing. I'm losing sales. Please help ASAP.\"</span><span>,\n</span></span><span><span>  </span><span>\"questions\"</span><span>: {\n</span></span><span><span>    </span><span>\"is_urgent\"</span><span>: {\n</span></span><span><span>      </span><span>\"type\"</span><span>: </span><span>\"noul\"</span><span>,\n</span></span><span><span>      </span><span>\"instructions\"</span><span>: </span><span>\"The message conveys urgency or time-sensitivity\"</span><span>\n</span></span><span>    }\n</span><span>  }\n</span><span>}</span></code></pre>"
+    },
+    {
+      "id": "new24_jev-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The docs’ example gives this urgency answer, shown here without the rest of the response:<code>‍</code></p>",
+      "zh": "<p>文档示例给出了下面这个关于紧急程度的答案。这里省略了响应中的其他部分：<code>‍</code></p>"
+    },
+    {
+      "id": "new24_jev-013",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code><span><span>{\n</span></span><span><span>  </span><span>\"is_urgent\"</span><span>: {\n</span></span><span><span>    </span><span>\"type\"</span><span>: </span><span>\"noul\"</span><span>,\n</span></span><span><span>    </span><span>\"noul\"</span><span>: </span><span>0.999</span><span>\n</span></span><span>  }\n</span><span>}</span></code></pre>"
+    },
+    {
+      "id": "new24_jev-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That’s a 99.9% probability that the message is urgent, which your application can use to prioritize the ticket.</p>",
+      "zh": "<p>这表示该消息有 99.9% 的概率属于紧急事项，你的应用可以据此优先处理该工单。</p>"
+    },
+    {
+      "id": "new24_jev-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are three types of supported <a href=\"https://www.youtube.com/watch?si=L1qd4LT9W-W67mar&amp;t=216&amp;v=2Bs0Ink_-Uo&amp;feature=youtu.be\" rel=\"noopener noreferrer\">questions</a>:</p>",
+      "zh": "<p>它支持三种<a href=\"https://www.youtube.com/watch?si=L1qd4LT9W-W67mar&amp;t=216&amp;v=2Bs0Ink_-Uo&amp;feature=youtu.be\" rel=\"noopener noreferrer\">问题</a>类型：</p>"
+    },
+    {
+      "id": "new24_jev-016",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/7cf2c64c31a8437ad66c4931.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new24_jev-017",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Choice:</strong> Pick from a set of options. Returns a probability for each option and an overall confidence score.</li><li><strong>Score:</strong> Rate an input against ordered levels, such as low, medium, and high. Returns a continuous score, the underlying distribution, and a confidence value.</li><li><strong>Noul:</strong> Answer a yes-or-no question. Returns the probability that a statement is true.</li></ul>",
+      "zh": "<ul><li><strong>Choice：</strong>从一组选项中选择。返回每个选项的概率，以及一个总体置信度分数。</li><li><strong>Score：</strong>按照低、中、高等有序等级对输入评分。返回一个连续分数、其底层分布，以及一个置信度值。</li><li><strong>Noul：</strong>回答是非问题。返回某个陈述为真的概率。</li></ul>"
+    },
+    {
+      "id": "new24_jev-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>One key feature here is that you can ask multiple questions about the same state in one request.</p>",
+      "zh": "<p>这里有一个关键特性：你可以在一次请求中，针对同一个状态提出多个问题。</p>"
+    },
+    {
+      "id": "new24_jev-019",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>💡 System One models evaluate every question in a request in parallel. Adding questions barely changes the response time and costs only the tokens for the extra questions, which are cheap.</blockquote>",
+      "zh": "<blockquote>💡 System One 模型会并行评估请求中的所有问题。增加问题几乎不会改变响应时间，只会增加额外问题所消耗的 token 成本，而这部分成本很低。</blockquote>"
+    },
+    {
+      "id": "new24_jev-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For an example of asking multiple questions about a support ticket, see the <a href=\"https://docs.typesafe.ai/introduction/quickstart#request-body\" rel=\"noopener noreferrer\">TypeSafe Quickstart</a>.</p>",
+      "zh": "<p>如需查看针对一张客服工单提出多个问题的示例，请参阅 <a href=\"https://docs.typesafe.ai/introduction/quickstart#request-body\" rel=\"noopener noreferrer\">TypeSafe 快速入门</a>。</p>"
+    },
+    {
+      "id": "new24_jev-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In sum, unlike traditional LLMs, Jev is neither constrained by text generation or sequential decision making!</p>",
+      "zh": "<p>总之，与传统 LLM 不同，Jev 既不受文本生成过程的限制，也不受顺序决策的限制！</p>"
+    },
+    {
+      "id": "new24_jev-022",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>How to Use Jev with LangChain</h2>",
+      "zh": "<h2>如何结合 LangChain 使用 Jev</h2>"
+    },
+    {
+      "id": "new24_jev-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangChain's provider agnostic model is well suited for supporting Jev alongside thousands of other integrations and model providers.</p>",
+      "zh": "<p>LangChain 不依赖特定供应商的设计，非常适合在支持数千种其他集成和模型供应商的同时，支持 Jev。</p>"
+    },
+    {
+      "id": "new24_jev-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <a href=\"https://docs.langchain.com/oss/python/integrations/providers/typesafe#quickstart\" rel=\"noopener noreferrer\">LangChain integration</a> exposes Jev through <code>TypeSafeClassifier</code>. You pass your state and questions to <code>.invoke()</code>, and get classification results rather than a chat response.</p>",
+      "zh": "<p><a href=\"https://docs.langchain.com/oss/python/integrations/providers/typesafe#quickstart\" rel=\"noopener noreferrer\">LangChain 集成</a>通过 <code>TypeSafeClassifier</code> 提供 Jev。你将状态与问题传给 <code>.invoke()</code>，得到的会是分类结果，而不是聊天响应。</p>"
+    },
+    {
+      "id": "new24_jev-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Install <code>langchain-typesafe</code> and set your <code>TYPESAFE_API_KEY</code>, then make a call:<code>‍</code></p>",
+      "zh": "<p>安装 <code>langchain-typesafe</code>，设置 <code>TYPESAFE_API_KEY</code>，然后发起调用：<code>‍</code></p>"
+    },
+    {
+      "id": "new24_jev-026",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code><span><span>from</span><span> langchain_typesafe </span><span>import</span><span> Noul, TypeSafeClassifier\n</span></span><span>\n</span><span>classifier = TypeSafeClassifier()\n</span><span>\n</span><span>response = classifier.invoke({\n</span><span><span>    </span><span>\"state\"</span><span>: (\n</span></span><span><span>        </span><span>\"The deploy failed twice and customers are seeing 500s. \"</span><span>\n</span></span><span><span>        </span><span>\"Can someone look now?\"</span><span>\n</span></span><span>    ),\n</span><span><span>    </span><span>\"questions\"</span><span>: {\n</span></span><span><span>        </span><span>\"urgent\"</span><span>: Noul(\n</span></span><span><span>            instructions=</span><span>\"Does this need attention right now?\"</span><span>\n</span></span><span>        ),\n</span><span>    },\n</span><span>})\n</span><span>\n</span><span><span>urgency = response.nouls[</span><span>\"urgent\"</span><span>].noul</span></span></code></pre>"
+    },
+    {
+      "id": "new24_jev-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The state can be text, structured data, or LangChain messages. That makes it straightforward to call Jev from a node or middleware hook using the context your agent already has.</p>",
+      "zh": "<p>状态可以是文本、结构化数据，或者 LangChain 消息。因此，你可以在节点或中间件钩子中，直接利用 Agent 已有的上下文调用 Jev。</p>"
+    },
+    {
+      "id": "new24_jev-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can build this into custom middleware or tools!</p>",
+      "zh": "<p>你可以将这种能力加入自定义中间件或工具中！</p>"
+    },
+    {
+      "id": "new24_jev-029",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Use Cases</h2>",
+      "zh": "<h2>使用场景</h2>"
+    },
+    {
+      "id": "new24_jev-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Jev isn’t a drop-in replacement for an LLM. It doesn’t generate text, but it can handle classification tasks we often use LLMs for today, without the same latency and cost. That makes it a promising complement to the model driving your agent: use an LLM for open-ended reasoning and generation, and Jev for fast, structured decisions along the way.</p>",
+      "zh": "<p>Jev 并不能直接替代 LLM。它不会生成文本，但能以更低的时延与成本，处理我们如今经常交给 LLM 的分类任务。这使它有望成为驱动 Agent 的模型的有益补充：用 LLM 进行开放式推理和生成，用 Jev 在过程中快速做出结构化决策。</p>"
+    },
+    {
+      "id": "new24_jev-031",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3><strong>Model routing</strong></h3>",
+      "zh": "<h3><strong>模型路由</strong></h3>"
+    },
+    {
+      "id": "new24_jev-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A simple lookup doesn’t need the same model as a difficult debugging task. <a href=\"https://docs.langchain.com/oss/python/integrations/providers/typesafe#model-routing\" rel=\"noopener noreferrer\">Model-routing middleware</a> lets Jev assess the request and choose a model based on criteria you define, so fast and inexpensive for straightforward tasks, more capable for complex ones.<code>‍</code></p>",
+      "zh": "<p>简单查询与困难的调试任务，并不需要使用同一个模型。<a href=\"https://docs.langchain.com/oss/python/integrations/providers/typesafe#model-routing\" rel=\"noopener noreferrer\">模型路由中间件</a>让 Jev 评估请求，并根据你定义的标准选择模型：简单任务使用快速、便宜的模型，复杂任务则使用能力更强的模型。<code>‍</code></p>"
+    },
+    {
+      "id": "new24_jev-033",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code><span><span>from</span><span> langchain.agents </span><span>import</span><span> create_agent\n</span></span><span><span></span><span>from</span><span> langchain_typesafe.experimental.middleware </span><span>import</span><span> (\n</span></span><span>    ModelChoice,\n</span><span>    ModelRouterMiddleware,\n</span><span>)\n</span><span>\n</span><span>router = ModelRouterMiddleware(\n</span><span>    choices={\n</span><span><span>        </span><span>\"fast\"</span><span>: ModelChoice(\n</span></span><span><span>            model=</span><span>\"openai:luna\"</span><span>,\n</span></span><span><span>            criteria=</span><span>\"Direct lookups, extraction, and localized changes.\"</span><span>,\n</span></span><span>        ),\n</span><span><span>        </span><span>\"powerful\"</span><span>: ModelChoice(\n</span></span><span><span>            model=</span><span>\"openai:sol\"</span><span>,\n</span></span><span><span>            criteria=</span><span>\"Architecture and high-stakes decisions.\"</span><span>,\n</span></span><span>        ),\n</span><span>    },\n</span><span><span>    instructions=</span><span>\"Choose the least costly model that can complete the task.\"</span><span>,\n</span></span><span>)\n</span><span>\n</span><span><span>agent = create_agent(</span><span>\"openai:gpt-5.6-luna\"</span><span>, middleware=[router])</span></span></code></pre>"
+    },
+    {
+      "id": "new24_jev-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>‍</code>The router selects a model from the latest user message and uses it throughout the run. The probabilities and confidence remain available in agent state, too.</p>",
+      "zh": "<p><code>‍</code>路由器根据最新的用户消息选择模型，并在整个运行过程中使用它。相应的概率与置信度也会保留在 Agent 状态中，供后续使用。</p>"
+    },
+    {
+      "id": "new24_jev-035",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3><strong>Auto Mode</strong></h3>",
+      "zh": "<h3><strong>自动模式</strong></h3>"
+    },
+    {
+      "id": "new24_jev-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents are still inherently untrustworthy. An agent can receive bad instructions (either naturally or from a motivated enough attacker) which can persuade it into taking actions we didn’t want it to.</p>",
+      "zh": "<p>Agent 本质上仍然不值得完全信任。Agent 可能接收到不当指令，无论这些指令是自然出现的，还是由足够有动机的攻击者构造的；这些指令都可能诱使它采取我们不希望发生的行动。</p>"
+    },
+    {
+      "id": "new24_jev-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Coding harnesses like claude, codex, cursor have shipped some kind of way to classify dangerous actions <em>before</em> they’re taken which has slowly helped to build trust in agents. Up until now, this classifier step has been locked away in the closed source parts of the harness.</p>",
+      "zh": "<p>Claude、Codex、Cursor 等编程运行框架，已经提供了某种机制，在危险操作执行<em>之前</em>对其进行分类。这逐渐帮助人们建立起对 Agent 的信任。但直到现在，这个分类步骤一直封装在运行框架的闭源部分中。</p>"
+    },
+    {
+      "id": "new24_jev-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Now that a cheap and performant classifier model exists, we can take the same pattern and adopt it to all agents!<code>‍</code></p>",
+      "zh": "<p>如今，既便宜又高效的分类模型已经出现，我们就可以采用同样的模式，并将其应用到所有 Agent 上！<code>‍</code></p>"
+    },
+    {
+      "id": "new24_jev-039",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code><span><span>from</span><span> langchain.agents </span><span>import</span><span> create_agent\n</span></span><span><span></span><span>from</span><span> langchain_typesafe.experimental.middleware </span><span>import</span><span> (\n</span></span><span>    AutoModeMiddleware,\n</span><span>)\n</span><span>\n</span><span><span>guardrail = AutoModeMiddleware(tools=[</span><span>\"bash\"</span><span>])\n</span></span><span>\n</span><span><span>agent = create_agent(</span><span>\"openai:gpt-5.6-luna\"</span><span>, middleware=[guardrail])</span></span></code></pre>"
+    },
+    {
+      "id": "new24_jev-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>‍</code><a href=\"https://docs.langchain.com/oss/python/integrations/providers/typesafe#tool-risk-gating\" rel=\"noopener noreferrer\">AutoModeMiddleware</a> uses Jev to check tool calls for risky decisions it may take, and block calls before the tool executes.</p>",
+      "zh": "<p><code>‍</code><a href=\"https://docs.langchain.com/oss/python/integrations/providers/typesafe#tool-risk-gating\" rel=\"noopener noreferrer\">AutoModeMiddleware</a> 使用 Jev 检查工具调用中可能包含的高风险决策，并在工具执行前阻止这些调用。</p>"
+    },
+    {
+      "id": "new24_jev-041",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Get Started!</h2>",
+      "zh": "<h2>开始使用！</h2>"
+    },
+    {
+      "id": "new24_jev-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We're pretty thrilled about Jev and the possibilities that come with it. A few cool projects that we’ve seen already: <a href=\"https://x.com/kylejeong/status/2100622054945095934\" rel=\"noopener noreferrer\">Kyle Jeong</a> from Browserbase is powering browser use agents for fractions of a cent, <a href=\"https://x.com/jarrodwatts/status/2100356151468585346\" rel=\"noopener noreferrer\">Jarrod Watts</a> built a live trading agent, and <a href=\"https://x.com/ryanvogel/status/2100042788851101842\" rel=\"noopener noreferrer\">Ryan Vogel</a> is doing email triage at scale.</p>",
+      "zh": "<p>我们对 Jev 及其带来的可能性十分兴奋。我们已经看到了一些很有意思的项目：Browserbase 的 <a href=\"https://x.com/kylejeong/status/2100622054945095934\" rel=\"noopener noreferrer\">Kyle Jeong</a> 正在以不到一美分的成本驱动浏览器操作 Agent；<a href=\"https://x.com/jarrodwatts/status/2100356151468585346\" rel=\"noopener noreferrer\">Jarrod Watts</a> 构建了一个实时交易 Agent；<a href=\"https://x.com/ryanvogel/status/2100042788851101842\" rel=\"noopener noreferrer\">Ryan Vogel</a> 则在大规模进行邮件分类处理。</p>"
+    },
+    {
+      "id": "new24_jev-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>New models drop every week at this point, but this one had a pretty outsized response. We’re excited to see what you build with LangChain and Jev.</p>",
+      "zh": "<p>如今几乎每周都有新模型发布，但这个模型引起的反响格外强烈。我们很期待看到你用 LangChain 和 Jev 构建出什么。</p>"
+    },
+    {
+      "id": "new24_jev-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Let us know what you think on the <a href=\"https://forum.langchain.com/\" rel=\"noopener noreferrer\">forum</a>, tag us on <a href=\"https://x.com/LangChain?lang=en\" rel=\"noopener noreferrer\">X</a> and share what you’re building, or engage with <a href=\"https://github.com/langchain-ai/langchain\" rel=\"noopener noreferrer\">LangChain issues</a>!</p>",
+      "zh": "<p>欢迎在<a href=\"https://forum.langchain.com/\" rel=\"noopener noreferrer\">论坛</a>上分享你的想法，在 <a href=\"https://x.com/LangChain?lang=en\" rel=\"noopener noreferrer\">X</a> 上提及我们并展示你正在构建的东西，或者参与 <a href=\"https://github.com/langchain-ai/langchain\" rel=\"noopener noreferrer\">LangChain issues</a> 的讨论！</p>"
+    }
+  ],
+  "description": "Agent 在循环中运行：LLM 决定做什么，工具执行操作，模型评估结果，然后继续循环，直到任务完成",
+  "reading_minutes": 5,
+  "downloads": {
+    "zh": "/downloads/jev-zh.pdf",
+    "en": "/downloads/jev-en.pdf"
+  }
+}

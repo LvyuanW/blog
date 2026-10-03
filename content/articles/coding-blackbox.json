@@ -1,0 +1,260 @@
+{
+  "title": "编程 Agent 是黑箱：如何看清它们的内部运行过程",
+  "original_title": "Your coding agents are a black box. Here's how to crack them open.",
+  "url": "https://www.langchain.com/blog/your-coding-agents-are-a-black-box-heres-how-to-crack-them-open",
+  "date": "2026-07-14",
+  "publisher": "LangChain",
+  "author": "Hari Harish",
+  "source_order": 25,
+  "slug": "coding-blackbox",
+  "source_id": "new25_coding_blackbox",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new25_coding_blackbox-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Last week, I set out to build a CSV export for a reporting endpoint, and my coding agent split off a subagent to handle pagination. But it kept building the wrong thing. It’d page by offset when our data is cursor-based. I’d point it out, edit my instructions, re-run, and it’d come back in a slightly different way. I burnt time, tokens, and learned nothing from the confident but wrong answers swimming in my terminal.</p>",
+      "zh": "<p>上周，我着手为一个报表接口构建 CSV 导出功能。我的编程 Agent 派出一个子 Agent 处理分页，但它总是做错。我们的数据采用游标分页，它却使用偏移量分页。我指出问题、修改指令、重新运行，结果它又以略有不同的方式犯错。我消耗了时间和 token，看着终端里那些自信却错误的回答，却没弄明白任何事情。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Eventually I gave up and started fresh.</p>",
+      "zh": "<p>最终，我放弃了，重新开始。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But here’s the thing: if I’d looked at the trace, I would’ve seen the problem right away. During the handoff, the parent pointed the subagent at an old helper from another part of the codebase - one that paged by offset. Rather than re-explaining requirements, I just needed to emphasize the deprecated helper.</p>",
+      "zh": "<p>但问题是：如果我当时查看执行轨迹，就能立刻发现症结。在任务交接时，父 Agent 把子 Agent 引向了代码库另一处的一个旧辅助函数，而那个函数使用的是偏移量分页。我不需要重新解释需求，只需要强调那个辅助函数已经弃用这一点。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you’ve worked with coding agents, you’ve experienced similar frustration too. This is why we make your agent’s decisions, intermediary steps, and outputs, easy to observe with LangSmith.</p>",
+      "zh": "<p>如果你使用过编程 Agent，也一定经历过类似的挫折。这正是我们通过 LangSmith，让你轻松观察 Agent 决策、中间步骤和输出的原因。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>You can't debug what you can’t see</h2>",
+      "zh": "<h2>看不见，就无法调试</h2>"
+    },
+    {
+      "id": "new25_coding_blackbox-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Coding agents are now part of the engineering stack for most developers. They write code, call tools, and work longer sessions. And developers will keep choosing different agents in order to fit the task in front in front of them. You might have Claude running a shell, Cursor handling inline edits, Copilot reviewing a PR, and Codex drafting workflows. And each agent has its own way of recording what happened. Some expose hooks. Some emit OpenTelemetry. Some rely on plugins.</p>",
+      "zh": "<p>编程 Agent 如今已经成为大多数开发者工程工具栈的一部分。它们编写代码、调用工具，并在更长的会话中持续工作。开发者也会不断根据眼前的任务选择不同的 Agent。你可能让 Claude 运行 Shell，让 Cursor 处理行内编辑，让 Copilot 评审 PR，再让 Codex 起草工作流。而每个 Agent 都有自己的事件记录方式。有的开放钩子，有的输出 OpenTelemetry，有的依靠插件。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This fragmentation means your debugging workflow changes every time you switch tools. A tool call in Codex and a tool call in Cursor may represent the same kind of work, but each agent records it with different structure, metadata, and terminology. If you want to answer a simple question across all of them — like which sessions failed this week and why — you end up checking multiple places, with multiple mental models for the multiple event formats.</p>",
+      "zh": "<p>这种碎片化意味着，每次更换工具，你的调试流程也会改变。Codex 中的一次工具调用，与 Cursor 中的一次工具调用，可能代表同一类工作，但每个 Agent 都使用不同的结构、元数据和术语来记录。如果想跨这些工具回答一个简单问题——例如，本周哪些会话失败了，为什么失败——你最终就得查看多个地方，并用不同的理解方式应对多种事件格式。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangSmith gives teams one observability layer across all leading coding agents. We support tracing across Claude Code, Codex, Cursor, GitHub Copilot Chat, Pi, OpenCode, and <a href=\"https://docs.langchain.com/oss/python/deepagents/code/overview\" rel=\"noopener noreferrer\">DeepAgents Code</a> (dcode). Sessions from these tools land in LangSmith as traces, using a standardized structure you can inspect, query, and share. You can trace agentic workflows, follow subagent fanouts, inspect model calls, and share the results with secrets redacted.</p>",
+      "zh": "<p>LangSmith 为团队提供了一个覆盖主流编程 Agent 的统一可观测性层。我们支持追踪 Claude Code、Codex、Cursor、GitHub Copilot Chat、Pi、OpenCode，以及 <a href=\"https://docs.langchain.com/oss/python/deepagents/code/overview\" rel=\"noopener noreferrer\">DeepAgents Code</a>（dcode）。这些工具的会话会以执行轨迹的形式进入 LangSmith，采用统一的结构，供你检查、查询和分享。你可以追踪 Agent 工作流，跟踪子 Agent 的并行分支，检查模型调用，并在隐去密钥等敏感信息后分享结果。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-008",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What a traced session looks like</h2>",
+      "zh": "<h2>被追踪的会话是什么样的</h2>"
+    },
+    {
+      "id": "new25_coding_blackbox-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once configured, your session appears in LangSmith the same way any production agent run would. A trace can include:</p>",
+      "zh": "<p>配置完成后，你的会话会像其他生产环境中的 Agent 运行一样，出现在 LangSmith 中。一条执行轨迹可以包含：</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-010",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>User and assistant turns</li><li>Model calls with inputs, outputs, caches, tokens, and costs</li><li>Tool calls</li><li>Shell commands</li><li>MCP activity</li><li>Subagent invocations</li><li>Errors and retries</li><li>Timing and metadata</li></ul>",
+      "zh": "<ul><li>用户与助手的对话轮次</li><li>模型调用，以及其输入、输出、缓存、token 和成本</li><li>工具调用</li><li>Shell 命令</li><li>MCP 活动</li><li>子 Agent 调用</li><li>错误与重试</li><li>时间信息与元数据</li></ul>"
+    },
+    {
+      "id": "new25_coding_blackbox-011",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/a22647307b1a3e3ca3b259a4.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new25_coding_blackbox-012",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/970ce165f6bc30bf4a0646ec.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new25_coding_blackbox-013",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Looking under the hood</h2>",
+      "zh": "<h2>深入查看内部过程</h2>"
+    },
+    {
+      "id": "new25_coding_blackbox-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>From a debugging standpoint, this visibility is crucial. Instead of reviewing only the final diff, you can reconstruct the session, find the failures, and leverage that information for future runs.</p>",
+      "zh": "<p>从调试的角度看，这种可见性至关重要。你不必只审查最终的代码差异，而是能够还原会话、找出失败，并将这些信息用于后续运行。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here's what that actually looks like:</p>",
+      "zh": "<p>具体来说是这样的：</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-016",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Reconstruct:</strong> Filter by thread_id to see the whole run in order.<br>User request, assistant turns, model / tool calls, subagents, retries, timing, tokens, and cost.</li></ul>",
+      "zh": "<ul><li><strong>还原：</strong>按 thread_id 筛选，按顺序查看完整运行过程。<br>包括用户请求、助手对话轮次、模型／工具调用、子 Agent、重试、时间信息、token 和成本。</li></ul>"
+    },
+    {
+      "id": "new25_coding_blackbox-017",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/98b40078756244864d1c69ad.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new25_coding_blackbox-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Debug:</strong> Zoom into areas of interest. Here, it's a failed test run. We see the sequence:<br>test fail → agent reads assertion → agent edits file (not a re-run) → test passes.<br>Diffs only shows the green check at the end - traces show you the shortcuts that got there.</p>",
+      "zh": "<p><strong>调试：</strong>深入查看你关心的部分。这里关注的是一次失败的测试运行。我们看到的顺序是：<br>测试失败 → Agent 读取断言 → Agent 修改文件（而不是重新运行）→ 测试通过。<br>代码差异只展示最后那个绿色对勾，而执行轨迹会让你看到获得这个结果时走了什么捷径。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-019",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>test failed</li></ul>",
+      "zh": "<ul><li>测试失败</li></ul>",
+      "keep_next": true
+    },
+    {
+      "id": "new25_coding_blackbox-020",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/58f54723beb03375f52e0193.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new25_coding_blackbox-021",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>test edited instead of re-assessing functionality</li></ul>",
+      "zh": "<ul><li>修改了测试，而不是重新评估功能</li></ul>"
+    },
+    {
+      "id": "new25_coding_blackbox-022",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/79d65cfcea9c1cebb460d685.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new25_coding_blackbox-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Improve:</strong> Turn the mistake into a rule for the agent to follow.</p>",
+      "zh": "<p><strong>改进：</strong>把这次错误转化为 Agent 应当遵循的规则。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-024",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><div><img alt=\"\" src=\"/media/884eb3a1e70ad8fcc5f8465c.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new25_coding_blackbox-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This way, lessons you learn from each session apply everywhere. For example, Skills work across agents. You can save the failing sessions, use them for evals [<a href=\"https://www.langchain.com/langsmith/evaluation\" rel=\"noopener noreferrer\">learn more</a>], prove that your fixes actually hold - and catch them if they ever regress. More than just understanding a bad run, the goal is always to make sure the next runs cannot fail the same way again.</p>",
+      "zh": "<p>这样，每次会话中学到的经验就都能应用到其他地方。例如，Skills 可以跨 Agent 使用。你可以保存失败的会话，将其用于评测［<a href=\"https://www.langchain.com/langsmith/evaluation\" rel=\"noopener noreferrer\">了解更多</a>］，证明修复确实有效，并在出现回归时及时发现。目标不只是理解某次糟糕的运行，更要确保后续运行不会再次以同样的方式失败。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Beyond session replay, teams use traces to compare behavior across agents (<code>claude-code</code> vs. <code>openai-codex</code> on the same workflow), spot invisible subagent fanouts, and identify sessions that need review. Filtering by latency, cost, or token usage is also the starting point for <a href=\"https://www.langchain.com/blog/fix-your-coding-agent-bill\" rel=\"noopener noreferrer\">cost governance</a>.</p>",
+      "zh": "<p>除了回放会话，团队还会使用执行轨迹比较不同 Agent 的行为，例如同一工作流中的 <code>claude-code</code> 与 <code>openai-codex</code>，发现不易察觉的子 Agent 并行分支，并识别需要审查的会话。按时延、成本或 token 用量筛选，也是开展<a href=\"https://www.langchain.com/blog/fix-your-coding-agent-bill\" rel=\"noopener noreferrer\">成本治理</a>的起点。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-027",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>One debugging workflow across every coding agent</h2>",
+      "zh": "<h2>让所有编程 Agent 共用一套调试流程</h2>"
+    },
+    {
+      "id": "new25_coding_blackbox-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A single coding agent’s logs can help debug one run. But as soon as you adopt more than one coding agent, every debugging workflow starts over because every provider exposes different hooks, and emits differently shaped payloads.</p>",
+      "zh": "<p>单个编程 Agent 的日志，可以帮助你调试一次运行。但只要采用了不止一个编程 Agent，每套调试流程就得重新适配，因为各供应商开放的钩子不同，输出的数据结构也不同。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>LangSmith maps all those sessions into a singular shared trace schema. A Claude Code session, a Cursor session, and an OpenCode session all carry the same core fields, so you can search, filter, compare, and inspect them the same way. <a href=\"https://docs.langchain.com/langsmith/coding-agent-metadata-contract\" rel=\"noopener noreferrer\">Read more</a> about the trace metadata contract.</p>",
+      "zh": "<p>LangSmith 将所有这些会话映射到同一个共享的执行轨迹结构中。Claude Code、Cursor 与 OpenCode 的会话，都具有相同的核心字段，因此你可以用同样的方式搜索、筛选、比较和检查它们。有关执行轨迹元数据规范，请<a href=\"https://docs.langchain.com/langsmith/coding-agent-metadata-contract\" rel=\"noopener noreferrer\">阅读更多</a>。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That moves us beyond individual prompt fixes. Once every agent’s run lands in the same place, we can efficiently improve our fleet: which workflows agents handle well, where failures repeat, which skills or instructions need updates, and whether changes actually improve performance.</p>",
+      "zh": "<p>这让我们得以超越对单条提示词的修修补补。当每个 Agent 的运行记录都汇集到同一个地方，我们就能高效地改进整个 Agent 集合：了解它们擅长哪些工作流，哪些地方反复失败，哪些 Skills 或指令需要更新，以及改动是否真正改善了表现。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-031",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Getting started</h2>",
+      "zh": "<h2>开始使用</h2>"
+    },
+    {
+      "id": "new25_coding_blackbox-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We provide setup instructions for each coding agent. You can find the integration steps for: <a href=\"https://docs.langchain.com/langsmith/trace-claude-code\" rel=\"noopener noreferrer\">Claude Code</a>, <a href=\"https://docs.langchain.com/langsmith/trace-with-codex\" rel=\"noopener noreferrer\">Codex</a>, <a href=\"https://docs.langchain.com/langsmith/trace-with-cursor\" rel=\"noopener noreferrer\">Cursor</a>, <a href=\"https://docs.langchain.com/langsmith/trace-with-vscode-copilot\" rel=\"noopener noreferrer\">GitHub Copilot Chat</a>, <a href=\"https://docs.langchain.com/langsmith/trace-with-pi\" rel=\"noopener noreferrer\">Pi</a>, <a href=\"https://docs.langchain.com/langsmith/trace-with-opencode\" rel=\"noopener noreferrer\">OpenCode</a>, <a href=\"https://docs.langchain.com/langsmith/trace-deep-agents\" rel=\"noopener noreferrer\">dcode</a>.</p>",
+      "zh": "<p>我们为每种编程 Agent 都提供了设置说明。你可以查看以下工具的集成步骤：<a href=\"https://docs.langchain.com/langsmith/trace-claude-code\" rel=\"noopener noreferrer\">Claude Code</a>、<a href=\"https://docs.langchain.com/langsmith/trace-with-codex\" rel=\"noopener noreferrer\">Codex</a>、<a href=\"https://docs.langchain.com/langsmith/trace-with-cursor\" rel=\"noopener noreferrer\">Cursor</a>、<a href=\"https://docs.langchain.com/langsmith/trace-with-vscode-copilot\" rel=\"noopener noreferrer\">GitHub Copilot Chat</a>、<a href=\"https://docs.langchain.com/langsmith/trace-with-pi\" rel=\"noopener noreferrer\">Pi</a>、<a href=\"https://docs.langchain.com/langsmith/trace-with-opencode\" rel=\"noopener noreferrer\">OpenCode</a>、<a href=\"https://docs.langchain.com/langsmith/trace-deep-agents\" rel=\"noopener noreferrer\">dcode</a>。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Once configured, you don't need to change any instrumentation within your coding agent chats. Run your agent as usual, and sessions will appear in LangSmith as traces.</p>",
+      "zh": "<p>配置完成后，你无须在编程 Agent 对话中修改任何埋点或追踪配置。像平常一样运行 Agent，会话就会以执行轨迹的形式出现在 LangSmith 中。</p>"
+    },
+    {
+      "id": "new25_coding_blackbox-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Find your <a href=\"https://docs.langchain.com/langsmith/integrations#developer-tools\" rel=\"noopener noreferrer\">coding agent integration</a> and start tracing.</p>",
+      "zh": "<p>找到适合你的<a href=\"https://docs.langchain.com/langsmith/integrations#developer-tools\" rel=\"noopener noreferrer\">编程 Agent 集成</a>，开始追踪。</p>"
+    }
+  ],
+  "description": "上周，我着手为一个报表接口构建 CSV 导出功能。我的编程 Agent 派出一个子 Agent 处理分页，但它总是做错。我们的数据采用游标分页，它却使用偏移量分页。我指出问题、修改指令、重新运行，结果它又以略有不同的方式犯错。我消耗了时间和 toke…",
+  "reading_minutes": 5,
+  "downloads": {
+    "zh": "/downloads/coding-blackbox-zh.pdf",
+    "en": "/downloads/coding-blackbox-en.pdf"
+  }
+}

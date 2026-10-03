@@ -1,0 +1,404 @@
+{
+  "title": "代码是软件应用的文档，执行轨迹是 AI 应用的文档",
+  "original_title": "In software, the code documents the app. In AI, the traces do.",
+  "url": "https://www.langchain.com/blog/in-software-the-code-documents-the-app-in-ai-the-traces-do",
+  "date": "2026-01-10",
+  "publisher": "LangChain",
+  "author": "Harrison Chase",
+  "source_order": 4,
+  "slug": "traces-documentation",
+  "source_id": "traces_documentation",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "traces_documentation-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>TL;DR</strong></p>",
+      "zh": "<p><strong>要点速览</strong></p>"
+    },
+    {
+      "id": "traces_documentation-001",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>In traditional software, you read the code to understand what the app does - the decision logic lives in your codebase</strong></li><li><strong>In AI agents, the code is just scaffolding - the actual decision-making happens in the model at runtime</strong></li><li><strong>Because of this, the source of truth for what your app does shifts from code to traces - traces document what your agent actually did and why</strong></li><li><strong>This changes how we debug, test, optimize, monitor, collaborate, and understand product usage</strong></li><li><strong>If you're building agents without good observability, you're missing the source of truth for what your system actually does</strong></li></ul>",
+      "zh": "<ul><li><strong>在传统软件中，你通过阅读代码来了解应用的行为——决策逻辑存在于代码库中</strong></li><li><strong>在 AI Agent 中，代码只是脚手架——真正的决策由模型在运行时做出</strong></li><li><strong>因此，了解应用行为的可信依据从代码转向了执行轨迹——执行轨迹记录了 Agent 实际做了什么，以及为什么这样做</strong></li><li><strong>这改变了我们调试、测试、优化、监控、协作以及了解产品使用情况的方式</strong></li><li><strong>如果你构建 Agent 时没有建立良好的可观测性，就缺少了了解系统实际行为的可信依据</strong></li></ul>"
+    },
+    {
+      "id": "traces_documentation-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, when something goes wrong, you read the code. When you want to understand how a feature works, you read the code. When you want to improve performance, you profile the code. The code is the source of truth.</p>",
+      "zh": "<p>在传统软件中，出了问题，你会读代码。想弄清一个功能如何工作，你会读代码。想提升性能，你会对代码做性能分析。代码就是可信依据。</p>"
+    },
+    {
+      "id": "traces_documentation-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In AI agents, this doesn't work anymore.</p>",
+      "zh": "<p>在 AI Agent 中，这一套不再适用了。</p>"
+    },
+    {
+      "id": "traces_documentation-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Why Code Doesn't Document Agent Behavior</h2>",
+      "zh": "<h2>为什么代码无法记录 Agent 的行为</h2>"
+    },
+    {
+      "id": "traces_documentation-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, if you want to understand what happens when a user submits a form, you open <code>handleSubmit()</code> and read the function. The decision logic is right there: validate inputs, check authentication, call the API, handle errors. It's deterministic - same input, same code path, same output.</p>",
+      "zh": "<p>在传统软件中，如果你想了解用户提交表单时会发生什么，只需打开 <code>handleSubmit()</code> 并阅读这个函数。决策逻辑就在那里：验证输入、检查身份认证、调用 API、处理错误。它是确定性的——相同的输入、相同的代码执行路径、相同的输出。</p>"
+    },
+    {
+      "id": "traces_documentation-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>In AI agents, code is just scaffolding.</strong></p>",
+      "zh": "<p><strong>在 AI Agent 中，代码只是脚手架。</strong></p>"
+    },
+    {
+      "id": "traces_documentation-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here's a simplified version of what agent code actually looks like:</p>",
+      "zh": "<p>下面是 Agent 实际代码的一个简化版本：</p>"
+    },
+    {
+      "id": "traces_documentation-008",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code><span>agent = Agent(</span>\n<span>    model=<span>\"gpt-4\"</span>,</span>\n<span>    tools=[search_tool, analysis_tool, visualization_tool],</span>\n<span>    system_prompt=<span>\"You are a helpful data analyst...\"</span></span>\n<span>)</span>\n<span>result = agent.run(user_query)</span></code></pre>"
+    },
+    {
+      "id": "traces_documentation-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You've defined the pieces: which model, which tools, what instructions. But the decision logic isn't in your code. It just orchestrates LLM calls.</p>",
+      "zh": "<p>你定义了各个组成部分：使用哪个模型、哪些工具、什么指令。但决策逻辑并不在你的代码中。代码只是负责对大语言模型（LLM）调用进行编排。</p>"
+    },
+    {
+      "id": "traces_documentation-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The actual decisions - which tool to call when, how to reason through the problem, when to stop, what to prioritize - all of that happens in the model at runtime.</p>",
+      "zh": "<p>真正的决策——何时调用哪个工具、如何通过推理解决问题、何时停止、优先处理什么——这一切都由模型在运行时做出。</p>"
+    },
+    {
+      "id": "traces_documentation-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>💡</p>",
+      "zh": "<p>💡</p>"
+    },
+    {
+      "id": "traces_documentation-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As the LLM drives more and more of your app (as happens with agents), you have less and less visibility into what the app will actually do just by looking at the code.</p>",
+      "zh": "<p>随着 LLM 主导应用中越来越多的行为（Agent 就是这种情况），仅靠阅读代码，你能了解的应用实际行为就越来越少。</p>"
+    },
+    {
+      "id": "traces_documentation-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can still debug your orchestration code - whether tool calling works, whether parsing works. But you can't debug the intelligence. Whether the agent makes good decisions, whether it reasons effectively - that logic lives in the model, not in your codebase.</p>",
+      "zh": "<p>你仍然可以调试编排代码——工具调用是否正常、解析是否正常。但你无法调试智能本身。Agent 是否做出了好的决策、是否进行了有效的推理——这些逻辑存在于模型中，而不在你的代码库里。</p>"
+    },
+    {
+      "id": "traces_documentation-014",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Traces as the New Documentation</h2>",
+      "zh": "<h2>执行轨迹成为新的文档</h2>"
+    },
+    {
+      "id": "traces_documentation-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>So where does the actual behavior live? In the traces.</p>",
+      "zh": "<p>那么，实际行为记录在哪里？在执行轨迹中。</p>"
+    },
+    {
+      "id": "traces_documentation-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A trace is the sequence of steps an agent takes. It documents the logic of your app - the reasoning at each step, which tools were called and why, the outcomes and timing.</p>",
+      "zh": "<p>执行轨迹是 Agent 所采取的一系列步骤。它记录了应用的逻辑——每一步的推理、调用了哪些工具以及为什么调用、执行结果和耗时。</p>"
+    },
+    {
+      "id": "traces_documentation-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>💡</p>",
+      "zh": "<p>💡</p>"
+    },
+    {
+      "id": "traces_documentation-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This means that operations you would do on code in the software world, you now do on traces in the agent world. </p>",
+      "zh": "<p>这意味着，在软件世界中针对代码进行的操作，如今到了 Agent 世界中，就要针对执行轨迹来进行。</p>"
+    },
+    {
+      "id": "traces_documentation-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Debugging, testing, profiling, monitoring - all of these shift from operating on code to operating on traces.</p>",
+      "zh": "<p>调试、测试、性能分析、监控——所有这些操作的对象，都从代码转向了执行轨迹。</p>"
+    },
+    {
+      "id": "traces_documentation-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, if two runs produce different outputs, you assume different inputs or different code. In AI agents, the same input with the same code can produce different outputs. Different tool calls, different reasoning chains, different outcomes.</p>",
+      "zh": "<p>在传统软件中，如果两次运行产生不同的输出，你会认为输入或代码有所不同。在 AI Agent 中，相同的输入配合相同的代码，也可能产生不同的输出：不同的工具调用、不同的推理链、不同的结果。</p>"
+    },
+    {
+      "id": "traces_documentation-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The only way to understand what happened is to look at the trace. Why did Task A succeed but Task B fail? Compare the traces. Did your prompt change improve reasoning? Compare traces before and after. Why does the agent keep making the same mistake? Look at the pattern across traces.</p>",
+      "zh": "<p>要了解发生了什么，唯一的办法就是查看执行轨迹。为什么任务 A 成功了，任务 B 却失败了？比较它们的执行轨迹。对提示词的修改是否改善了推理？比较修改前后的执行轨迹。为什么 Agent 不断犯同样的错误？查看多条执行轨迹中呈现出的规律。</p>"
+    },
+    {
+      "id": "traces_documentation-022",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>How This Changes Building Agents</h2>",
+      "zh": "<h2>这如何改变 Agent 的构建方式</h2>"
+    },
+    {
+      "id": "traces_documentation-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When the source of truth for logic moves from code to traces, everything else follows. All the operations you used to do on code - debugging, testing, optimizing, monitoring - now need to center around traces. Let's look at what this means in practice.</p>",
+      "zh": "<p>当了解逻辑的可信依据从代码转移到执行轨迹时，其他一切也会随之改变。过去针对代码进行的所有操作——调试、测试、优化、监控——如今都需要以执行轨迹为中心。我们来看看这在实践中意味着什么。</p>"
+    },
+    {
+      "id": "traces_documentation-024",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Debugging Becomes Trace Analysis</h3>",
+      "zh": "<h3>调试变成执行轨迹分析</h3>"
+    },
+    {
+      "id": "traces_documentation-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When a user reports \"the agent failed,\" you don't open the code and look for a bug. You open the trace and look for where the reasoning went wrong. Did the agent misunderstand the task? Call the wrong tool? Get stuck in a loop?</p>",
+      "zh": "<p>当用户反馈“Agent 失败了”时，你不会打开代码寻找缺陷，而是会打开执行轨迹，查找推理在哪里出了问题。Agent 是误解了任务？调用了错误的工具？还是陷入了循环？</p>"
+    },
+    {
+      "id": "traces_documentation-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The \"bug\" isn't a logic error in your code. It's a reasoning error in what the agent actually did.</p>",
+      "zh": "<p>这个“缺陷”并不是代码中的逻辑错误，而是 Agent 实际执行过程中出现的推理错误。</p>"
+    },
+    {
+      "id": "traces_documentation-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Example: An agent keeps retrying the same failed API call five times before giving up. Your code has retry logic - that works fine. The bug is that the agent isn't learning from the error message. You only see this in the trace: same tool call, same parameters, same failure, repeated.</p>",
+      "zh": "<p>举个例子：某个 Agent 对同一个失败的 API 调用反复重试五次，然后才放弃。你的代码中有重试逻辑——它运行得完全正常。缺陷在于，Agent 没有从错误消息中吸取教训。只有查看执行轨迹，你才能看到这一点：相同的工具调用、相同的参数、相同的失败，不断重复。</p>"
+    },
+    {
+      "id": "traces_documentation-028",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>You Can't Set a Breakpoint in Reasoning</h3>",
+      "zh": "<h3>你无法在推理中设置断点</h3>"
+    },
+    {
+      "id": "traces_documentation-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, when you find a bug, you set a breakpoint in the code.</p>",
+      "zh": "<p>在传统软件中，发现缺陷后，你会在代码中设置一个断点。</p>"
+    },
+    {
+      "id": "traces_documentation-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In AI agents, you can't set a breakpoint in reasoning. The decision happens inside the model.</p>",
+      "zh": "<p>在 AI Agent 中，你无法在推理中设置断点。决策发生在模型内部。</p>"
+    },
+    {
+      "id": "traces_documentation-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But you can set a breakpoint in <em>logic</em> using traces + playgrounds. Open a trace at a particular point in time - right before the agent made the bad decision. Load that exact state into a playground. The playground is like a debugger, but for reasoning instead of code.</p>",
+      "zh": "<p>但你可以结合执行轨迹与交互调试环境（playground），在<em>逻辑</em>中设置断点。打开执行轨迹，将它定位到某个特定时刻——恰好在 Agent 做出错误决策之前。把那一刻的完整状态加载到交互调试环境中。交互调试环境就像调试器，只不过调试的对象是推理，而不是代码。</p>"
+    },
+    {
+      "id": "traces_documentation-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can see: What context did the agent have? What was in its memory? What tools were available? What did the prompt look like? Then you iterate - adjust the prompt, change the context, try different approaches - and see if the agent makes a better decision.</p>",
+      "zh": "<p>你可以看到：Agent 当时有哪些上下文？它的记忆中有什么？有哪些工具可用？提示词是什么样的？然后开始迭代——调整提示词、修改上下文、尝试不同方法——观察 Agent 是否做出了更好的决策。</p>"
+    },
+    {
+      "id": "traces_documentation-033",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Testing Becomes Eval-Driven</h3>",
+      "zh": "<h3>测试转向评测驱动</h3>"
+    },
+    {
+      "id": "traces_documentation-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Now that the source of truth for logic is in traces, you need to test those traces. This means two things:</p>",
+      "zh": "<p>既然了解逻辑的可信依据现在存在于执行轨迹中，你就需要测试这些执行轨迹。这意味着两件事：</p>"
+    },
+    {
+      "id": "traces_documentation-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>First: you need a pipeline to add traces to your test dataset. As your agent runs, you capture traces and add them to a dataset that you can eval against.</p>",
+      "zh": "<p>第一：你需要一套将执行轨迹加入测试数据集的流程。在 Agent 运行过程中，采集执行轨迹，将其加入可用于评测的数据集。</p>"
+    },
+    {
+      "id": "traces_documentation-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Second: you need to eval traces in production. In traditional software, you test before deployment and ship. In AI, agents are non-deterministic, so you need to continuously eval in production to catch quality degradation and drift.</p>",
+      "zh": "<p>第二：你需要评测生产环境中的执行轨迹。在传统软件中，你在部署前完成测试，然后发布。在 AI 中，Agent 具有非确定性，因此你需要在生产环境中持续开展评测，以发现质量下降和漂移。</p>"
+    },
+    {
+      "id": "traces_documentation-037",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Performance Optimization Changes</h3>",
+      "zh": "<h3>性能优化发生变化</h3>"
+    },
+    {
+      "id": "traces_documentation-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, you profile the code to find hot loops and optimize algorithms. In AI agents, you profile traces to find decision patterns - unnecessary tool calls, redundant reasoning, inefficient paths. The bottleneck is in the agent's decisions, and those only exist in traces.</p>",
+      "zh": "<p>在传统软件中，你对代码做性能分析，找出热点循环并优化算法。在 AI Agent 中，你对执行轨迹做性能分析，找出决策模式——不必要的工具调用、冗余的推理、低效的执行路径。瓶颈在于 Agent 的决策，而这些决策只存在于执行轨迹中。</p>"
+    },
+    {
+      "id": "traces_documentation-039",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Monitoring Shifts from Uptime to Quality</h3>",
+      "zh": "<h3>监控从运行可用性转向质量</h3>"
+    },
+    {
+      "id": "traces_documentation-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>An agent can be \"up\" with 0 errors and still be performing terribly - succeeding at the wrong task, succeeding inefficiently at 10x the cost, or giving correct but unhelpful answers.</p>",
+      "zh": "<p>一个 Agent 可以处于“正常运行”状态，错误数为 0，表现却仍然糟糕透顶——成功完成了错误的任务、以 10 倍的成本低效地完成了任务，或给出正确却没什么帮助的回答。</p>"
+    },
+    {
+      "id": "traces_documentation-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You need to monitor <em>quality of decisions</em>, not just system health - task success rate, reasoning quality, tool usage efficiency. You can't monitor quality without sampling and analyzing traces.</p>",
+      "zh": "<p>你需要监控的是<em>决策质量</em>，而不仅仅是系统健康状况——包括任务成功率、推理质量、工具使用效率。不对执行轨迹进行采样和分析，就无法监控质量。</p>"
+    },
+    {
+      "id": "traces_documentation-042",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Collaboration Moves to Observability Platforms</h3>",
+      "zh": "<h3>协作转移到可观测性平台</h3>"
+    },
+    {
+      "id": "traces_documentation-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, collaboration happens in GitHub. You review code, leave comments on PRs, discuss implementation in issues. The code is the artifact everyone works with.</p>",
+      "zh": "<p>在传统软件中，协作发生在 GitHub 上。你审查代码、在拉取请求（PR）中留下评论、在 issue 中讨论实现方式。代码是所有人共同围绕的工作产物。</p>"
+    },
+    {
+      "id": "traces_documentation-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In AI agents, the logic isn't in the code - it's in the traces. So collaboration has to happen where the traces are too. Sure, you still use GitHub for the orchestration code. But when you're debugging why the agent made a bad decision, you need to share a trace, add comments on specific decision points, discuss why it chose this path. Your observability platform becomes a collaboration tool, not just a monitoring tool.</p>",
+      "zh": "<p>在 AI Agent 中，逻辑并不在代码里，而是在执行轨迹中。因此，协作也必须发生在执行轨迹所在的地方。当然，你仍然会使用 GitHub 来协作开发编排代码。但当你要调试 Agent 为什么做出了错误决策时，你需要分享一条执行轨迹，在特定的决策点添加评论，讨论它为什么选择这条路径。你的可观测性平台会成为协作工具，而不仅仅是监控工具。</p>"
+    },
+    {
+      "id": "traces_documentation-045",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Product Analytics Merges with Debugging</h3>",
+      "zh": "<h3>产品分析与调试融为一体</h3>"
+    },
+    {
+      "id": "traces_documentation-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, product analytics is separate from debugging. Mixpanel tells you what users clicked. Your error logs tell you what broke. They're different tools for different questions.</p>",
+      "zh": "<p>在传统软件中，产品分析与调试是分开的。Mixpanel 告诉你用户点击了什么，错误日志告诉你哪里出了故障。它们是用于回答不同问题的不同工具。</p>"
+    },
+    {
+      "id": "traces_documentation-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In AI agents, these merge. You can't understand user behavior without understanding agent behavior. When you see \"30% of users are frustrated\" in your analytics, you need to open traces to see what the agent did wrong. When you see \"users asking for data analysis features\", you need to look at traces to see which tools the agent is already choosing and what's working. The user experience is the agent's decisions, and those decisions are documented in traces - so product analytics has to be built on traces.</p>",
+      "zh": "<p>在 AI Agent 中，两者融为一体。不了解 Agent 的行为，就无法理解用户行为。当你在分析中看到“30% 的用户感到不满”时，你需要打开执行轨迹，看看 Agent 做错了什么。当你看到“用户在请求数据分析功能”时，你需要查看执行轨迹，了解 Agent 已经在选择哪些工具，以及哪些做法行之有效。用户体验就是 Agent 做出的决策，而这些决策记录在执行轨迹中——因此，产品分析必须建立在执行轨迹之上。</p>"
+    },
+    {
+      "id": "traces_documentation-048",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Make the shift</h2>",
+      "zh": "<h2>做出转变</h2>"
+    },
+    {
+      "id": "traces_documentation-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In traditional software, the code is your documentation. In AI agents, the trace is your documentation.</p>",
+      "zh": "<p>在传统软件中，代码就是你的文档。在 AI Agent 中，执行轨迹就是你的文档。</p>"
+    },
+    {
+      "id": "traces_documentation-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The shift is simple: when the decision logic moves from your codebase to the model, your source of truth moves from code to traces. </p>",
+      "zh": "<p>这一转变很简单：当决策逻辑从代码库转移到模型中时，你的可信依据也就从代码转移到了执行轨迹。</p>"
+    },
+    {
+      "id": "traces_documentation-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>💡</p>",
+      "zh": "<p>💡</p>"
+    },
+    {
+      "id": "traces_documentation-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Everything you used to do with code - debugging, testing, optimizing, monitoring, collaborating - you now do with traces.</p>",
+      "zh": "<p>过去围绕代码进行的一切——调试、测试、优化、监控、协作——如今都要围绕执行轨迹进行。</p>"
+    },
+    {
+      "id": "traces_documentation-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To make this work, you need good observability. Structured tracing that you can search, filter, and compare. The ability to see the full reasoning chain - which tools were called, how long things took, what it cost. The ability to run evals on historical data to monitor quality over time.</p>",
+      "zh": "<p>要做到这一点，你需要良好的可观测性。你需要能够搜索、筛选和比较的结构化执行轨迹；需要能够查看完整的推理链——调用了哪些工具、耗时多久、成本多少；还需要能够对历史数据运行评测，持续监控质量随时间的变化。</p>"
+    },
+    {
+      "id": "traces_documentation-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you're building agents and you don't have this, you're working blind. The logic that matters only exists in those traces.</p>",
+      "zh": "<p>如果你正在构建 Agent，却没有这些能力，那就是在盲目摸索。真正重要的逻辑，只存在于这些执行轨迹之中。</p>"
+    }
+  ],
+  "description": "在传统软件中，出了问题，你会读代码。想弄清一个功能如何工作，你会读代码。想提升性能，你会对代码做性能分析。代码就是可信依据",
+  "reading_minutes": 7,
+  "downloads": {
+    "zh": "/downloads/traces-documentation-zh.pdf",
+    "en": "/downloads/traces-documentation-en.pdf"
+  }
+}

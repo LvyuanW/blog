@@ -1,0 +1,600 @@
+{
+  "title": "我们如何在各产品中限制 Claude 的影响范围",
+  "original_title": "How we contain Claude across products",
+  "url": "https://www.anthropic.com/engineering/how-we-contain-claude",
+  "date": "2026-05-25",
+  "publisher": "Anthropic",
+  "source_order": 17,
+  "slug": "containment",
+  "source_id": "new17_containment",
+  "category": "安全与可靠性",
+  "blocks": [
+    {
+      "id": "new17_containment-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/4ea2cff1ef0aec8c044525b6.svg\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new17_containment-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As agents grow more capable, so does their potential blast radius. The engineering question is how to cap it. Here’s what we’ve learned building containment for claude.ai, Claude Code, and Cowork.\n</p>",
+      "zh": "<p>随着 Agent 能力增强，其潜在影响范围也在扩大。工程上的问题，是如何为这一范围设定上限。以下是我们为 claude.ai、Claude Code 和 Cowork 构建隔离约束机制时积累的经验。</p>"
+    },
+    {
+      "id": "new17_containment-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Twelve months ago, we'd have rejected out of hand the idea of granting Claude access sufficient to take down an internal Anthropic service. Today that level of access is routine, and Anthropic developers are more productive for it. The risk of these deployments has two components: how likely a failure is, and how much damage one could do. Progress on safeguards and model training has steadily driven down the first; the second—the theoretical blast radius—only grows as capabilities and access expand. Yet as agents become capable of doing work that once required a person or even a team, the cost of <em>not</em> deploying grows large enough that the risk-reward calculation tips heavily toward adoption, as long as products can be made safe. The engineering question becomes how to cap the blast radius.</p>",
+      "zh": "<p>十二个月前，如果有人提议给予 Claude 足以让 Anthropic 内部服务瘫痪的访问权限，我们会毫不犹豫地拒绝。如今，这种级别的访问已是常态，Anthropic 开发者也因此提高了生产力。这些部署的风险包含两部分：故障发生的可能性，以及一次故障可能造成的损害程度。安全保障和模型训练方面的进步，持续降低了前者；而后者，即理论上的影响范围，只会随着能力和访问权限的扩展而增长。然而，当 Agent 能够完成过去需要一个人、甚至一个团队才能完成的工作时，<em>不</em>部署的代价也越来越高。只要产品能够做得足够安全，风险收益权衡就会明显倾向于采用。于是，工程问题变成了如何为影响范围设定上限。</p>"
+    },
+    {
+      "id": "new17_containment-003",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/b4b6efe7ddcbbdbe1ce8e537.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>When bounds can be placed on the relative damage of an autonomous agent—such as through control over its environment—high-utility capabilities can motivate deployment. Claude Mythos Preview is an example of a model whose blast radius was deemed too high to ship in April 2026. However, we expect broader release of models with similar levels of capability to become appropriate as defenders harden critical systems and safeguards mature—even though some risk will always remain. Model capability is an important factor in the total risk of an agent’s deployment.</em></figcaption></figure>"
+    },
+    {
+      "id": "new17_containment-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There are broadly two ways to do this.</p>",
+      "zh": "<p>大体上有两种做法。</p>"
+    },
+    {
+      "id": "new17_containment-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The first is to supervise the agent’s behavior via a human-in-the-loop. Claude Code previously protected against agents taking unintended actions by asking users for permission at each turn. Theoretically that works, but we’ve found the approach to be fallible. Our telemetry showed users approved roughly 93% of permission prompts. The more approvals a user sees, the less attention they pay to each, becoming over time much less diligent in their supervision. We recently built Claude Code auto mode, which <a href=\"https://www.anthropic.com/engineering/claude-code-auto-mode\" rel=\"noopener noreferrer\">automates safer approvals</a> in order to reduce this approval fatigue. Still, vulnerabilities remain—any probabilistic defense has a non-zero miss rate.<sup>1</sup></p>",
+      "zh": "<p>第一种是让人参与流程，监督 Agent 的行为。此前，Claude Code 通过在每一步向用户请求许可，防止 Agent 采取非预期操作。理论上这行得通，但我们发现这种方法并不可靠。遥测数据显示，用户批准了大约 93% 的权限请求。用户看到的审批提示越多，对每条提示的关注就越少，久而久之，监督也会变得明显不够仔细。最近，我们构建了 Claude Code 自动模式，将<a href=\"https://www.anthropic.com/engineering/claude-code-auto-mode\" rel=\"noopener noreferrer\">更安全的审批自动化</a>，以减轻审批疲劳。但漏洞仍然存在：任何概率性防御都有非零的漏检率。<sup>1</sup></p>"
+    },
+    {
+      "id": "new17_containment-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The second approach to capping the blast radius—and the focus of much of this post—is containment. Rather than supervising what the agent does, we supervise what it’s <em>able</em> to do by enforcing access boundaries through, for example, sandboxes, virtual machines, and egress controls. This is where Anthropic engineering has devoted the most effort, and also where many of the most surprising security failures have occurred.</p>",
+      "zh": "<p>第二种限制影响范围的方法，也是本文大部分内容的重点，是隔离约束（containment）。我们不是监督 Agent 做什么，而是借助沙箱、虚拟机和出站流量控制等机制强制执行访问边界，约束它<em>能够</em>做什么。这是 Anthropic 工程团队投入最多的领域，也是许多最出人意料的安全失效发生的地方。</p>"
+    },
+    {
+      "id": "new17_containment-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Over the past two years, we’ve shipped three primary agentic products: <a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a>, Claude Code, and Claude Cowork. Each serves a different audience, requiring a different containment architecture. This article shares what’s held up, what’s broken, and what we’ve learned about agent security along the way.</p>",
+      "zh": "<p>过去两年，我们发布了三款主要的 Agent 产品：<a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a>、Claude Code 和 Claude Cowork。它们分别服务不同人群，因此需要不同的隔离约束架构。本文分享哪些设计经受住了考验、哪些出了问题，以及我们在这一过程中学到的 Agent 安全经验。</p>"
+    },
+    {
+      "id": "new17_containment-008",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-three-types-of-risk-three-components-of-defense\"><strong>Three types of risk, three components of defense</strong></h2>",
+      "zh": "<h2 id=\"zh-source-three-types-of-risk-three-components-of-defense\"><strong>三类风险，三个防御组成部分</strong></h2>"
+    },
+    {
+      "id": "new17_containment-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Security risks to agents fall into one of three categories:</p>",
+      "zh": "<p>Agent 的安全风险可以归为三类：</p>"
+    },
+    {
+      "id": "new17_containment-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><br><strong>User misuse: </strong>A user—either maliciously or through carelessness—directs the agent to do something harmful. This includes everything from asking the agent to bypass a check they find annoying, to running a destructive command they don’t understand, to specifying intentional harm.</p>",
+      "zh": "<p><br><strong>用户滥用或误用：</strong>用户出于恶意或疏忽，指示 Agent 做有害的事情。这涵盖了各种情况：要求 Agent 绕过自己觉得烦人的检查、运行自己不理解的破坏性命令，以及明确要求实施伤害。</p>"
+    },
+    {
+      "id": "new17_containment-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Model misbehavior: </strong>The agent takes a harmful action no one asked for. As our models have improved, they have become more aligned on most behavior evaluations, but this doesn’t mean risk necessarily shrinks. Less capable models are more likely to misread a situation and make obvious errors. More capable models make fewer mistakes, but they’re also better at finding unexpected paths to a goal, often by routing around restrictions nobody thought to write down.</p>",
+      "zh": "<p><strong>模型不当行为：</strong>Agent 执行了无人要求的有害操作。随着模型改进，它们在大多数行为评测中变得更加对齐，但这不意味着风险必然下降。能力较弱的模型更容易误读情境，犯下明显错误。能力较强的模型错误更少，但也更擅长找到通往目标的意外路径，往往会绕过那些没人想到要明确写下的限制。</p>"
+    },
+    {
+      "id": "new17_containment-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>At Anthropic, we’ve seen Claude models <a href=\"https://red.anthropic.com/2026/mythos-preview/\" rel=\"noopener noreferrer\">“helpfully” escape a sandbox</a> in order to complete a task, examine git history to <a href=\"https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf\" rel=\"noopener noreferrer\">find answers to a coding test</a>, and spontaneously identify the benchmark it was being run on in order to <a href=\"https://www.anthropic.com/engineering/eval-awareness-browsecomp\" rel=\"noopener noreferrer\">decrypt its answer key</a>. Each model brings a new set of capabilities that are sometimes put to work in unexpected ways.</p>",
+      "zh": "<p>在 Anthropic，我们见过 Claude 模型为了完成任务而<a href=\"https://red.anthropic.com/2026/mythos-preview/\" rel=\"noopener noreferrer\">“好心地”逃出沙箱</a>，翻查 git 历史以<a href=\"https://assets.anthropic.com/m/64823ba7485345a7/Claude-Opus-4-5-System-Card.pdf\" rel=\"noopener noreferrer\">寻找编程测试的答案</a>，以及自发识别正在运行的基准测试，以便<a href=\"https://www.anthropic.com/engineering/eval-awareness-browsecomp\" rel=\"noopener noreferrer\">解密其标准答案</a>。每个模型都会带来一组新能力，而这些能力有时会被用于出人意料的方向。</p>"
+    },
+    {
+      "id": "new17_containment-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>External attackers: </strong>The agent is attacked through external vectors such as tools, files, or network access. This category includes both prompt injection and conventional attacks on the agent's runtime, orchestration layer, or proxy.</p>",
+      "zh": "<p><strong>外部攻击者：</strong>Agent 通过工具、文件或网络访问等外部途径遭到攻击。这一类既包括提示注入，也包括针对 Agent 运行时、编排层或代理的传统攻击。</p>"
+    },
+    {
+      "id": "new17_containment-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When building containment and defense systems, we apply defenses to three main components:</p>",
+      "zh": "<p>在构建隔离约束和防御系统时，我们会在三个主要组成部分上施加防护：</p>"
+    },
+    {
+      "id": "new17_containment-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The environment in which the agent runs. </strong>We constrain where and how an agent can act with process sandboxes, VMs, filesystem boundaries, and egress controls. The goal is to set a hard boundary on what an agent can reach. For example, if credentials never enter the sandbox, they can't be exfiltrated, regardless of whether the cause is a user, a model finding a “creative” path, or an attacker.</p>",
+      "zh": "<p><strong>Agent 的运行环境。</strong>我们通过进程沙箱、虚拟机、文件系统边界和出站流量控制，限制 Agent 能在哪里、以何种方式行动。目标是为 Agent 可以触及的范围设定硬性边界。例如，只要凭据从未进入沙箱，就无法从中外传，无论诱因是用户指令、模型找到的“创意”路径，还是攻击者。</p>"
+    },
+    {
+      "id": "new17_containment-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A tight perimeter also means you can relax oversight. Claude Code’s <a href=\"https://code.claude.com/docs/en/devcontainer\" rel=\"noopener noreferrer\">reference devcontainer</a> exists precisely so that the agent can run unattended, without per-action approvals.</p>",
+      "zh": "<p>严密的边界也意味着可以适当放松监督。Claude Code 的<a href=\"https://code.claude.com/docs/en/devcontainer\" rel=\"noopener noreferrer\">参考开发容器</a>正是为此而存在：让 Agent 可以在无人值守的情况下运行，无需逐项审批。</p>"
+    },
+    {
+      "id": "new17_containment-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The model the agent consults.</strong> The mechanisms here include system prompts, classifiers, probes, and training modifications. Because models are probabilistic, these shape only what the agent <em>tends </em>to do, not what it is theoretically capable of doing.</p>",
+      "zh": "<p><strong>Agent 所调用的模型。</strong>这一层的机制包括系统提示词、分类器、探测器以及训练调整。由于模型具有概率性，这些措施只能塑造 Agent <em>倾向于</em>做什么，而不能决定它在理论上能够做什么。</p>"
+    },
+    {
+      "id": "new17_containment-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These defenses are strong. On Gray Swan's Agent Red Teaming benchmark, which tests susceptibility to prompt injection, <a href=\"https://cdn.sanity.io/files/4zrzovbb/website/037f06850df7fbe871e206dad004c3db5fd50340.pdf\" rel=\"noopener noreferrer\">Claude Opus 4.7</a> holds attack success to roughly 0.1% on single attempts, and around 5–6% after 100 adaptive attempts. Claude Code auto mode catches roughly 83% of overeager behaviors <a href=\"https://www.anthropic.com/engineering/claude-code-auto-mode\" rel=\"noopener noreferrer\">before they execute</a>. Yet even with best-in-class defenses, protection in the model layer will never be 100% effective, which is why it can't stand alone.</p>",
+      "zh": "<p>这些防御很强。在测试提示注入易感性的 Gray Swan Agent Red Teaming 基准中，<a href=\"https://cdn.sanity.io/files/4zrzovbb/website/037f06850df7fbe871e206dad004c3db5fd50340.pdf\" rel=\"noopener noreferrer\">Claude Opus 4.7</a> 将单次尝试的攻击成功率压到约 0.1%，在 100 次自适应尝试后，成功率约为 5% 至 6%。Claude Code 自动模式能在<a href=\"https://www.anthropic.com/engineering/claude-code-auto-mode\" rel=\"noopener noreferrer\">执行之前</a>拦住约 83% 的过于积极行为。然而，即便采用一流防御，模型层的保护也永远不可能达到 100% 有效，这正是它不能独立承担全部防护责任的原因。</p>"
+    },
+    {
+      "id": "new17_containment-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The external content the agent can reach. </strong>MCP servers, third-party plugins, and web search tools all feed content into the agent’s context from sources you don’t control. An audited connector isn’t the same as audited data—a GitHub connector, for instance, can load a poisoned README straight into the model’s context despite passing malware checks. Granularly limiting tool permissions can help limit the blast radius. An agent with read-only DB access, for instance, can be deployed far more broadly than one that writes to prod.</p>",
+      "zh": "<p><strong>Agent 可以访问的外部内容。</strong>MCP 服务器、第三方插件和网页搜索工具，都会把你无法控制的来源中的内容送入 Agent 上下文。经过审计的连接器，不等于经过审计的数据。例如，GitHub 连接器即使通过了恶意软件检查，也仍可能把一个被投毒的 README 直接加载进模型上下文。对工具权限进行细粒度限制，有助于限制影响范围。例如，只能读取数据库的 Agent，就比可以写入生产环境的 Agent 适合部署到广泛得多的场景中。</p>"
+    },
+    {
+      "id": "new17_containment-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Defenses should overlap and complement each other. When environmental defenses aren’t available, the model layer has to pick up the slack (this is precisely what Claude Code’s <a href=\"https://claude.com/blog/auto-mode\" rel=\"noopener noreferrer\">auto mode</a> is designed for). Locally, the environment and model defenses can guard against malicious tool outputs, but defenses can be added higher up the chain by limiting the tool’s capabilities and access.</p>",
+      "zh": "<p>防御措施应当相互重叠、彼此补充。当环境层防御不可用时，模型层就必须补位，这正是 Claude Code <a href=\"https://claude.com/blog/auto-mode\" rel=\"noopener noreferrer\">自动模式</a>的设计用途。在本地，环境和模型防御可以抵御恶意工具输出；但也可以沿调用链向上游增加防护，限制工具本身的能力和访问权限。</p>"
+    },
+    {
+      "id": "new17_containment-021",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/f6c853e53494806130c7850f.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Three components to defend: the model, the environment in which it runs, and the external content the agent can reach.</em></figcaption></figure>"
+    },
+    {
+      "id": "new17_containment-022",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-patterns-for-containing-agents\"><strong>Patterns for containing agents</strong></h2>",
+      "zh": "<h2 id=\"zh-source-patterns-for-containing-agents\"><strong>约束 Agent 的隔离模式</strong></h2>"
+    },
+    {
+      "id": "new17_containment-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Focusing on the environment layer, we describe three isolation patterns and how they’re tailored for each Claude platform—<a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a>, Claude Code, and Cowork. We arrived at each design gradually, after finding the balance between the capabilities we need from the agent and the degree of intervention required from the user. </p>",
+      "zh": "<p>聚焦环境层，我们将介绍三种隔离模式，以及它们如何分别针对 <a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a>、Claude Code 和 Cowork 进行调整。每一种设计，都是在 Agent 所需能力与用户必须介入的程度之间逐步寻找平衡后形成的。</p>"
+    },
+    {
+      "id": "new17_containment-024",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-pattern-1-the-ephemeral-container-claudeai-code-execution\"><strong>Pattern 1: The ephemeral container (claude.ai code execution)</strong></h3>",
+      "zh": "<h3 id=\"zh-source-pattern-1-the-ephemeral-container-claudeai-code-execution\"><strong>模式 1：临时容器（claude.ai 代码执行）</strong></h3>"
+    },
+    {
+      "id": "new17_containment-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Though best known as a chat interface, claude.ai also writes and runs code, generates files, and calls connectors. When Claude runs code inside claude.ai, it does so in a <a href=\"https://en.wikipedia.org/wiki/GVisor\" rel=\"noopener noreferrer\">gVisor</a> container on isolated infrastructure. The agent is entirely server-side; no code runs on the local machine, and the filesystem is ephemeral (per-session). The blast radius is minimal, but so is the ceiling on what Claude can do—there's no persistent workspace and no access to the user's filesystem.</p>",
+      "zh": "<p>虽然 claude.ai 最为人熟知的是聊天界面，但它也会编写和运行代码、生成文件，以及调用连接器。当 Claude 在 claude.ai 中运行代码时，它使用的是隔离基础设施上的 <a href=\"https://en.wikipedia.org/wiki/GVisor\" rel=\"noopener noreferrer\">gVisor</a> 容器。Agent 完全运行在服务端，本地机器不会执行任何代码，文件系统也是临时的，按会话存在。潜在影响范围很小，但 Claude 的能力上限同样受限：没有持久工作区，也无法访问用户的文件系统。</p>"
+    },
+    {
+      "id": "new17_containment-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This also makes <a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a> subject to a more traditional threat model. We're not protecting user machines from agents; we're protecting our own infrastructure and each tenant from one another. Our pre-launch work for <a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a> was dominated by traditional security work like network configuration, internal service auth, and orchestration.</p>",
+      "zh": "<p>这也意味着 <a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a> 面对的是更传统的威胁模型。我们不是要保护用户机器免受 Agent 影响，而是要保护自己的基础设施，并防止各租户相互影响。<a href=\"http://claude.ai/redirect/website.v1.04c64b26-5036-4dc5-9fba-0953c8e92b97\" rel=\"noopener noreferrer\">claude.ai</a> 上线前的大部分工作，都是网络配置、内部服务身份验证和编排等传统安全工作。</p>"
+    },
+    {
+      "id": "new17_containment-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That work reinforced the oldest lesson in security: the weakest layer is the one you built yourself. gVisor and <a href=\"https://en.wikipedia.org/wiki/Seccomp\" rel=\"noopener noreferrer\">seccomp</a> have been hardened against well-resourced adversaries for far longer than agentic AI has existed, so the review effort went into the newer pieces we'd built around them. We’ll come back to this later, since our custom proxy is also the piece that broke in our most consequential incident.</p>",
+      "zh": "<p>这项工作再次印证了安全领域最古老的一条经验：最薄弱的一层，往往是你自己构建的那层。gVisor 和 <a href=\"https://en.wikipedia.org/wiki/Seccomp\" rel=\"noopener noreferrer\">seccomp</a> 对抗资源充足攻击者的加固历史，比 Agent 型 AI 的存在时间长得多，因此我们的审查重点放在围绕它们构建的新组件上。后文会再次谈到这一点，因为在我们影响最重大的事件中，出问题的也正是自定义代理。</p>"
+    },
+    {
+      "id": "new17_containment-028",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-pattern-2-the-human-in-the-loop-sandbox-claude-code\"><strong>Pattern 2: The human-in-the-loop sandbox (Claude Code)</strong></h3>",
+      "zh": "<h3 id=\"zh-source-pattern-2-the-human-in-the-loop-sandbox-claude-code\"><strong>模式 2：人工参与的沙箱（Claude Code）</strong></h3>"
+    },
+    {
+      "id": "new17_containment-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Code runs on a user's machine and has access to their filesystem, shell, and network. Without this, coding agents have limited usefulness, so it’s imperative to find a way to grant that access safely.</p>",
+      "zh": "<p>Claude Code 运行在用户机器上，可以访问用户的文件系统、Shell 和网络。缺少这些能力，编程 Agent 的用处就很有限，因此必须找到安全授予这些访问权限的方法。</p>"
+    },
+    {
+      "id": "new17_containment-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>One approach is to rely on a human-in-the-loop. This is only a tractable solution for Claude Code because the average user is a developer who’s familiar with coding environments: they can read bash, they understand what rm -rf does, and they already run npm install from untrusted sources several times a week. All that means that when an “allow this” dialog pops up, they are highly likely to have the expertise to accurately evaluate what the agent is attempting to do and the risk involved. Given this, Claude Code launched with the simplest possible defense: allow reads, require approval for write, bash, and network access.</p>",
+      "zh": "<p>一种办法是依靠人工参与监督。之所以这种方案对 Claude Code 可行，是因为它的典型用户是熟悉编程环境的开发者：能够读懂 bash，知道 rm -rf 会做什么，也已经习惯每周多次从不可信来源运行 npm install。这意味着，当“是否允许此操作”的对话框弹出时，他们很可能具备所需知识，能够准确评估 Agent 正在尝试做什么，以及相关风险。基于这一点，Claude Code 发布时采用了尽可能简单的防御：允许读取，写入、bash 和网络访问则需要批准。</p>"
+    },
+    {
+      "id": "new17_containment-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>However, as mentioned, approval fatigue showed <a href=\"https://www.reddit.com/r/ClaudeAI/comments/1rru8zw/just_picked_up_a_new_keyboard_cant_wait_to_write/\" rel=\"noopener noreferrer\">up within weeks.</a> Ironically, this meant that a feature originally designed to provide oversight could arguably have the opposite effect—some users might simply stop paying attention. As a first step to mitigate incautious approvals, we shipped an OS-level sandbox (Seatbelt on macOS, bubblewrap on Linux) that hardens the boundary: reads are allowed, writes are allowed inside the workspace, but network is denied by default. Within the sandbox, the agent runs largely without interruption. The result was an 84% reduction in permission prompts, and we <a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">open-sourced the runtime</a>, so the boundary is auditable.</p>",
+      "zh": "<p>然而，如前所述，审批疲劳在<a href=\"https://www.reddit.com/r/ClaudeAI/comments/1rru8zw/just_picked_up_a_new_keyboard_cant_wait_to_write/\" rel=\"noopener noreferrer\">几周内就出现了</a>。讽刺的是，这意味着一个本来用于提供监督的功能，可能反而产生相反效果：一些用户可能干脆不再留意。为了减少草率批准，我们首先发布了操作系统级沙箱（macOS 上使用 Seatbelt，Linux 上使用 bubblewrap），以强化边界：允许读取，允许在工作区内写入，但默认禁止网络访问。在沙箱内部，Agent 基本上可以不受打断地运行。结果是权限提示减少了 84%；我们还<a href=\"https://github.com/anthropic-experimental/sandbox-runtime\" rel=\"noopener noreferrer\">开源了运行时</a>，让这一边界可以接受审计。</p>"
+    },
+    {
+      "id": "new17_containment-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our <a href=\"https://www.anthropic.com/news/measuring-agent-autonomy\" rel=\"noopener noreferrer\">anonymized usage data</a> also showed that experienced users auto-approve roughly twice as often as new users, but they also interrupt the agent mid-execution more frequently. Instead of gating individual steps, experienced users are more likely to supervise the agent only when it goes off track. While this may be a natural evolution in how people prefer to work with agents, this too is fallible, requiring users to be technical and attentive enough to notice drift in the first place. As model capabilities improve and agents begin writing increasingly ambitious bash, it becomes harder to notice any such drift. And as users move to multi-agent systems, this approach is also much less likely to be an effective oversight strategy.</p>",
+      "zh": "<p>我们的<a href=\"https://www.anthropic.com/news/measuring-agent-autonomy\" rel=\"noopener noreferrer\">匿名化使用数据</a>还显示，有经验用户自动批准操作的频率约为新用户的两倍，但他们也更常在执行过程中打断 Agent。与其逐步把关，有经验的用户更倾向于只在 Agent 偏离方向时介入监督。这也许是人们与 Agent 协作偏好的一种自然演变，但同样并不可靠，因为首先就要求用户有足够技术能力和注意力，能够察觉偏离。随着模型能力提升、Agent 开始编写越来越复杂大胆的 bash 命令，察觉这种偏离会更加困难。而当用户转向多 Agent 系统时，这种方式作为监督策略有效的可能性也会大幅下降。</p>"
+    },
+    {
+      "id": "new17_containment-033",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-risk-we-missed-everything-before-the-trust-dialog\"><strong>Risk we missed: Everything before the trust dialog</strong></h4>",
+      "zh": "<h4 id=\"zh-source-risk-we-missed-everything-before-the-trust-dialog\"><strong>我们遗漏的风险：信任对话框出现之前的一切</strong></h4>"
+    },
+    {
+      "id": "new17_containment-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Between mid-2025 and January 2026, we received reports of vulnerabilities in Claude Code through our responsible disclosure program. Three of these vulnerabilities targeted code that executes <em>before</em> the user has consented to anything. To understand how this is possible, consider the most direct case: a developer clones a repository to review a pull request, and that repository contains a .claude/settings.json which defines a hook. Because Claude Code reads project settings during startup—before presenting the standard \"Do you trust this folder?\" prompt—the hook the attacker had authored and committed would execute automatically. The remaining cases looked structurally similar, in which input from the not-yet-trusted directory was parsed before the trust boundary had been established.</p>",
+      "zh": "<p>从 2025 年年中到 2026 年 1 月，我们通过负责任披露计划收到了 Claude Code 的漏洞报告。其中三个漏洞针对的都是在用户尚未同意任何事项<em>之前</em>就会执行的代码。要理解这是如何发生的，可以看最直接的案例：开发者为了审查拉取请求而克隆了一个仓库，该仓库包含一个定义了钩子的 .claude/settings.json。由于 Claude Code 会在启动时读取项目设置，也就是在显示标准的“你信任此文件夹吗？”提示之前，攻击者编写并提交的钩子就会自动执行。其余案例在结构上类似：尚未建立信任边界，就已经解析了来自尚未获信任目录的输入。</p>"
+    },
+    {
+      "id": "new17_containment-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The fix in each case had the same shape: defer parsing and execution of project-local configuration until after the user accepts the trust prompt. If you're building something similar, treat project-open, config-load, and localhost listeners the way you'd treat any inbound request from the internet. They shouldn’t be implicitly trusted just because they feel local and arrive before the user has consented.</p>",
+      "zh": "<p>每个案例的修复方式都相同：将项目本地配置的解析和执行延后，直到用户接受信任提示。如果你正在构建类似产品，应当像对待任何来自互联网的入站请求一样，对待项目打开、配置加载和 localhost 监听服务。不能因为它们给人“就在本地”的感觉，而且在用户同意之前就已到达，就默认信任它们。</p>"
+    },
+    {
+      "id": "new17_containment-036",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-risk-we-missed-the-user-as-an-injection-vector\"><strong>Risk we missed: The user as an injection vector</strong></h4>",
+      "zh": "<h4 id=\"zh-source-risk-we-missed-the-user-as-an-injection-vector\"><strong>我们遗漏的风险：用户本身成为注入途径</strong></h4>"
+    },
+    {
+      "id": "new17_containment-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In February 2026, during a controlled internal red-team exercise, a researcher successfully phished an employee into launching Claude Code with a malicious prompt. The phish looked like ordinary collaboration—a \"can you run this for me?\" email with a ready-to-paste prompt attached—and the prompt itself read like routine task instructions. But somewhere among the setup steps, it gently asked Claude to read ~/.aws/credentials, encode the contents, and POST them to an external endpoint. Across 25 retries of that prompt, Claude completed the exfiltration 24 times.</p>",
+      "zh": "<p>2026 年 2 月，在一次受控的内部红队演练中，一位研究人员成功通过网络钓鱼，诱使一名员工用恶意提示启动 Claude Code。这封钓鱼邮件看起来像普通协作：邮件写着“能帮我运行一下这个吗？”，并附上可直接粘贴的提示；提示本身看起来也是日常任务指令。但在某个准备步骤中，它不露声色地要求 Claude 读取 ~/.aws/credentials，对内容编码，并将其 POST 到外部端点。对这条提示进行 25 次重复尝试，Claude 有 24 次完成了数据外传。</p>"
+    },
+    {
+      "id": "new17_containment-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is a <em>direct</em> prompt injection—the attacker's instructions arrived through the user, not through tool output or fetched content. Our model-layer defenses anchor on user intent—when the user is the one typing the instruction, there's nothing anomalous for a classifier to catch. A human contractor handed the same script would have done the same thing.</p>",
+      "zh": "<p>这是一次<em>直接</em>提示注入：攻击者的指令通过用户传入，而不是通过工具输出或抓取内容传入。我们的模型层防御以用户意图为依据；当指令由用户本人输入时，分类器就没有异常可抓。如果把同样的脚本交给一位人类外包人员，对方也会做同样的事。</p>"
+    },
+    {
+      "id": "new17_containment-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The only defense that holds in this situation is the environment, specifically egress controls that block the POST regardless of intent and filesystem boundaries that keep ~/.aws out of reach in the first place.</p>",
+      "zh": "<p>这种情况下，唯一有效的防御来自环境：具体而言，是不论意图如何都阻止该 POST 请求的出站流量控制，以及从一开始就让 ~/.aws 无法访问的文件系统边界。</p>"
+    },
+    {
+      "id": "new17_containment-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>(When we shared the working prompt in internal Slack for discussion, someone pointed out that some internal agents <em>read</em> Slack. The payload was now ambient. We added a <a href=\"https://www.fortinet.com/resources/cyberglossary/what-is-canary-in-cybersecurity\" rel=\"noopener noreferrer\">canary string</a> to the thread so we'd notice if anything picked it up. In a world where agents read everything, the investigation tooling is also an attack surface.)</p>",
+      "zh": "<p>（当我们在内部 Slack 中分享这条有效的提示进行讨论时，有人指出，一些内部 Agent 会<em>读取</em> Slack。于是，这个载荷已经散布在环境中。我们在讨论串里加入了一段<a href=\"https://www.fortinet.com/resources/cyberglossary/what-is-canary-in-cybersecurity\" rel=\"noopener noreferrer\">金丝雀字符串</a>，以便在任何系统接触它时察觉。在一个 Agent 会读取一切的世界里，调查工具本身也是攻击面。）</p>"
+    },
+    {
+      "id": "new17_containment-041",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-pattern-3-the-local-vm-claude-cowork\"><strong>Pattern 3: The local VM (Claude Cowork)</strong></h3>",
+      "zh": "<h3 id=\"zh-source-pattern-3-the-local-vm-claude-cowork\"><strong>模式 3：本地虚拟机（Claude Cowork）</strong></h3>"
+    },
+    {
+      "id": "new17_containment-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Claude Cowork runs on a user's desktop with access to a workspace folder selected by the user. Because the platform is built for general knowledge work, not software engineering, the average user is much less likely to be fluent in bash.</p>",
+      "zh": "<p>Claude Cowork 运行在用户桌面端，可以访问用户选择的工作区文件夹。由于该平台面向一般知识工作，而不是软件工程，典型用户熟练掌握 bash 的可能性要低得多。</p>"
+    },
+    {
+      "id": "new17_containment-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As a result, the human-in-the-loop sandbox strategy may not transfer; a non-technical knowledge worker shouldn’t be expected to judge bash incantations such as find . -name \"*.tmp\" -exec rm {} \\;. When approving an exception requires expertise the typical user doesn’t have, admins should set a boundary that is absolute and always-on.</p>",
+      "zh": "<p>因此，人工参与的沙箱策略未必能直接迁移；我们不应要求非技术知识工作者去判断 find . -name \"*.tmp\" -exec rm {} \\; 这样的 bash 命令。当批准例外所需的专业知识超出典型用户的能力时，管理员就应设置一个绝对且始终生效的边界。</p>"
+    },
+    {
+      "id": "new17_containment-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To enable this, our first version of Claude Cowork ran inside a full virtual machine using the platform's vendor hypervisor (Apple's Virtualization framework on macOS, HCS on Windows). The VM has its own Linux kernel, its own filesystem, and its own process table. The user's selected workspace and .claude folder are mounted; nothing else on the host is visible. Credentials stay in the host's keychain and never enter the guest machine. This design protects against the possibility that Claude will, at some point, behave in a misaligned manner. A compromised Claude could still damage what's inside the workspace folder, so the architecture is designed to make sure that's the <em>only</em> thing it can reach (until the user adds connectors), and that the user controls what's mounted there.</p>",
+      "zh": "<p>为此，第一版 Claude Cowork 运行在完整虚拟机中，使用平台厂商提供的虚拟机管理程序（macOS 上使用 Apple 的 Virtualization 框架，Windows 上使用 HCS）。虚拟机拥有自己的 Linux 内核、文件系统和进程表。用户选定的工作区和 .claude 文件夹会被挂载，宿主机上的其他内容都不可见。凭据保留在宿主机钥匙串中，从不进入来宾虚拟机。这种设计用于防范 Claude 在某个时刻表现出不对齐行为的可能性。遭到攻破的 Claude 仍然可能损坏工作区文件夹内的内容，因此架构的设计目标是：确保这就是它<em>唯一</em>能够触及的范围（直到用户添加连接器），并且由用户决定挂载哪些内容。</p>"
+    },
+    {
+      "id": "new17_containment-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In the original architecture—what we call full-VM mode—the agent loop itself ran inside the guest, so Claude executed as an ordinary Linux user with no awareness it was sandboxed. Compare this to Claude Code, where a privileged process sits outside the sandbox deciding per-command whether to enforce it; a persuasive injected prompt or a fatigued approval click can get that process to run something un-sandboxed. Here, there was no outer process holding an escape-hatch key, and so no component with the authority to grant an exception.</p>",
+      "zh": "<p>在最初的架构中，也就是我们所说的全虚拟机模式，Agent 循环本身也运行在来宾系统内，因此 Claude 以普通 Linux 用户身份执行，完全不知道自己处于沙箱中。相比之下，Claude Code 有一个位于沙箱外的特权进程，逐条命令决定是否施加沙箱约束；一条颇具说服力的注入提示，或一次因疲劳而草率点击的批准，都可能让该进程在沙箱外运行某些操作。而在这里，没有外层进程握着逃生通道的钥匙，因此也没有任何组件有权批准例外。</p>"
+    },
+    {
+      "id": "new17_containment-046",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/2c69db862cc9251cab98c3fd.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>The six main isolation mechanisms of Claude Cowork’s VM. Two are enforced outside the guest kernel and would thus survive the agent achieving root-level access within the VM. The other four are guest-enforced and kept deliberately minimal because the outer layers carry the rest.</em></figcaption></figure>"
+    },
+    {
+      "id": "new17_containment-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>However, we soon realized that running the whole agent in full-VM mode caused practical problems: any failure during VM startup made Cowork unusable. Moving the agent loop <em>outside</em> of the VM, while keeping code execution inside of it, allowed Claude to still respond to the user and help debug issues rather than freeze on an error. This change caused minimal security impact because the VM still enforces filesystem and network controls over code executed by the agent.</p>",
+      "zh": "<p>然而，我们很快意识到，将整个 Agent 放进全虚拟机模式，会造成实际问题：虚拟机启动期间的任何故障，都会让 Cowork 无法使用。将 Agent 循环移到虚拟机<em>外部</em>，同时把代码执行保留在内部，就能让 Claude 仍然回应用户并协助调试，而不是遇到错误就卡住。这个变化对安全的影响很小，因为虚拟机仍然对 Agent 执行的代码强制实施文件系统和网络控制。</p>"
+    },
+    {
+      "id": "new17_containment-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Separately, we also moved local MCP servers outside the VM. Running them inside the VM made them harder to audit, created brittle dependency issues when the VM updated, and didn’t support MCPs that required interaction with local processes such as databases—such servers had to run on the host regardless. The change brings Claude Cowork in line with how local MCP servers already work in Claude Desktop: treating them like any software a user might choose to install and entrusting admins to decide which local MCPs to enable (if any). Remote MCP servers are unaffected since they do not run on the user's machine.</p>",
+      "zh": "<p>另外，我们也将本地 MCP 服务器移到了虚拟机外部。把它们运行在虚拟机内部，会使审计更困难，虚拟机更新时容易出现脆弱的依赖问题，而且无法支持需要与数据库等本地进程交互的 MCP——这类服务器无论如何都必须运行在宿主机上。这项调整让 Claude Cowork 与 Claude Desktop 现有的本地 MCP 服务器处理方式一致：将它们视为用户可能选择安装的普通软件，并由管理员决定启用哪些本地 MCP，或者一个也不启用。远程 MCP 服务器不受影响，因为它们不运行在用户机器上。</p>"
+    },
+    {
+      "id": "new17_containment-049",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/e8b334ffb1335427a01c3065.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Having the agent loop inside the VM meant that any failure in the VM caused Cowork to become unusable. Host-mode is more reliable because the agent can still respond if the VM crashes, and it still provides important security guarantees by isolating code execution.</em></figcaption></figure>"
+    },
+    {
+      "id": "new17_containment-050",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Filesystem controls were another important architectural choice. Claude needs to be able to access <em>some</em> files on the host in order to be useful, but we wanted to minimize the blast radius and provide transparency to the user about local file access. We found that offering different file-mount modes helps to granularly control risk; Claude Cowork offers read-only, read-write, and read-write-no-delete. One potential gotcha here is that symlink resolution has to happen <em>before</em> path validation, not after, or a symlink inside an authorized folder can point outside and escape. For enterprise customers, we allow admins to control this via mount-path allowlists in MDM settings.</p>",
+      "zh": "<p>文件系统控制是另一项重要的架构选择。Claude 要发挥作用，就必须能够访问宿主机上的<em>某些</em>文件，但我们希望尽量缩小影响范围，并让用户清楚了解本地文件访问情况。我们发现，提供不同文件挂载模式有助于精细控制风险；Claude Cowork 提供只读、读写，以及可读写但不可删除三种模式。这里有一个潜在陷阱：必须在路径验证<em>之前</em>解析符号链接，而不是之后，否则授权文件夹中的符号链接可能指向外部，逃出边界。对于企业客户，我们允许管理员通过 MDM 设置中的挂载路径允许列表进行控制。</p>"
+    },
+    {
+      "id": "new17_containment-051",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-risk-we-missed-exfiltration-through-an-approved-domain\"><br><strong>Risk we missed: Exfiltration through an approved domain</strong></h4>",
+      "zh": "<h4 id=\"zh-source-risk-we-missed-exfiltration-through-an-approved-domain\"><br><strong>我们遗漏的风险：通过获准域名外传数据</strong></h4>"
+    },
+    {
+      "id": "new17_containment-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A clear example of exfiltration through an approved domain came from a third-party disclosure. Claude Cowork's egress allowlist correctly passed traffic to api.anthropic.com—the product can't function without calling our own API. In this case, a malicious file placed in the user's mounted workspace carried hidden instructions along with an API key controlled by the attacker. Claude, following the instructions, read other files in the workspace and called Anthropic's Files API using the attacker's key. The egress proxy checked the destination, saw api.anthropic.com, and let it through. The files were uploaded to the attacker's Anthropic account. The sandbox worked perfectly, and yet the data was exfiltrated.</p>",
+      "zh": "<p>一个通过获准域名外传数据的明确案例，来自第三方披露。Claude Cowork 的出站流量允许列表正确地放行了前往 api.anthropic.com 的流量，因为产品如果无法调用我们自己的 API，就不能正常工作。在这个案例中，用户挂载工作区内的一个恶意文件，携带了隐藏指令和攻击者控制的 API 密钥。Claude 遵循这些指令，读取工作区中的其他文件，并使用攻击者的密钥调用 Anthropic Files API。出站代理检查目标地址，看到 api.anthropic.com，就予以放行。于是，文件被上传到了攻击者的 Anthropic 账户。沙箱完美地完成了本职工作，但数据仍然被外传了。</p>"
+    },
+    {
+      "id": "new17_containment-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Previously, we’d conceptualized the allowlist as a destination filter, something that told Claude <em>these domains are okay to talk to.</em> But it may be better conceptualized as a capability grant. Every function reachable through any domain on an allowlist is now an attack surface. Allowing api.anthropic.com meant allowing file uploads to arbitrary Anthropic accounts.</p>",
+      "zh": "<p>此前，我们将允许列表理解为目标地址过滤器，也就是告诉 Claude：<em>这些域名可以通信。</em>但更合适的理解方式，可能是将它视为一种能力授权。允许列表中任意域名所能提供的每项功能，现在都成了攻击面。允许 api.anthropic.com，就意味着允许向任意 Anthropic 账户上传文件。</p>"
+    },
+    {
+      "id": "new17_containment-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We fixed it using a defensive man-in-the-middle proxy inside the VM that intercepts traffic to our API. It only passes requests carrying the VM's own provisioned session token; an attacker-embedded key is rejected by the proxy. It also blocks headers that would enable server-side fetch. The proxy sits inside the VM rather than on our servers because only the VM knows provenance—from the server's perspective, a Cowork request is indistinguishable from any other API client.<br></p>",
+      "zh": "<p>我们在虚拟机内部使用一个防御性的中间人代理，拦截发往我们 API 的流量，以此修复问题。它只放行携带该虚拟机自身已配置会话令牌的请求；攻击者嵌入的密钥会被代理拒绝。它还会阻止那些能够启用服务端抓取的请求头。代理之所以部署在虚拟机内，而不是我们的服务器上，是因为只有虚拟机知道请求来源；从服务器的角度看，Cowork 请求与任何其他 API 客户端请求并无区别。<br></p>"
+    },
+    {
+      "id": "new17_containment-055",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/9ca683187d2f21b94f06019d.png\" loading=\"lazy\" decoding=\"async\"><figcaption><em>Top: traffic to api.anthropic.com is let through, resulting in egress. Bottom: fix with a man-in-the-middle proxy intercepting traffic to our API.</em></figcaption></figure>"
+    },
+    {
+      "id": "new17_containment-056",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is also a second instance of the principle that the software you build yourself is often the weakest. The hypervisor, seccomp, and gVisor across our products have been dependable. Our custom allowlist proxy was the piece that failed.</p>",
+      "zh": "<p>这也是“自己编写的软件往往最薄弱”这一原则的第二个例子。我们各产品中的虚拟机管理程序、seccomp 和 gVisor 一直可靠。失效的恰恰是我们自定义的允许列表代理。</p>"
+    },
+    {
+      "id": "new17_containment-057",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-risk-we-missed-vm-isolation-kept-the-endpoint-detection-software-out-too\"><strong>Risk we missed: VM isolation kept the endpoint detection software out too</strong></h4>",
+      "zh": "<h4 id=\"zh-source-risk-we-missed-vm-isolation-kept-the-endpoint-detection-software-out-too\"><strong>我们遗漏的风险：虚拟机隔离也把端点检测软件挡在了外面</strong></h4>"
+    },
+    {
+      "id": "new17_containment-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When evaluating Claude Cowork, enterprise security teams asked, \"Why can't our EDR see inside?\" The answer was that the same isolation keeping Claude contained also kept host-based endpoint detection and response out. From the EDR's perspective, Claude Cowork is an opaque hypervisor process. It can't inspect the guest.</p>",
+      "zh": "<p>企业安全团队在评估 Claude Cowork 时问道：“为什么我们的 EDR 看不到里面？”答案是，将 Claude 约束在内部的同一层隔离，也把基于宿主机的端点检测与响应系统挡在了外面。从 EDR 的角度看，Claude Cowork 是一个不透明的虚拟机管理程序进程，它无法检查来宾系统。</p>"
+    },
+    {
+      "id": "new17_containment-059",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Isolation reduces visibility, and opacity is problematic for teams whose compliance posture depends on endpoint visibility. Our current mitigation is to use pull-based <a href=\"https://opentelemetry.io/docs/specs/otel/protocol/\" rel=\"noopener noreferrer\">OTLP</a> exports that let administrators retrieve event logs after the fact, but this is not the same as live monitoring. If you're building something similar, budget for this conversation early.</p>",
+      "zh": "<p>隔离降低了可见性，而对于合规工作依赖端点可见性的团队来说，这种不透明会带来问题。我们目前的缓解措施是使用基于拉取的 <a href=\"https://opentelemetry.io/docs/specs/otel/protocol/\" rel=\"noopener noreferrer\">OTLP</a> 导出，让管理员可以事后获取事件日志，但这与实时监控并不相同。如果你正在构建类似产品，应尽早为这类讨论预留时间和资源。</p>"
+    },
+    {
+      "id": "new17_containment-060",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table><tbody><tr><th><strong> Environment</strong></th><th>Ephemeral container (<a href=\"http://claude.ai\" rel=\"noopener noreferrer\">claude.ai</a>)<br></th><th>HITL sandbox (Claude Code)</th><th>Sealed VM (Claude Cowork)</th></tr><tr><td><strong>Cost: Isolation Overhead</strong></td><td>Container spin-up</td><td>Low-latency native sandbox</td><td>Full VM boot</td></tr><tr><td><strong>Cost: User Reliance</strong></td><td>N/A</td><td>Must interpret bash</td><td>N/A</td></tr><tr><td><strong>Risk: Blast Radius</strong></td><td>Server-side container (guarded by gVisor + host infra boundary)</td><td>Local workspace</td><td>Mounted workspace (guarded by vsock + hypervisor boundary)</td></tr></tbody></table>"
+    },
+    {
+      "id": "new17_containment-061",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-trusting-what-the-agent-reads\"><strong>Trusting what the agent reads</strong></h2>",
+      "zh": "<h2 id=\"zh-source-trusting-what-the-agent-reads\"><strong>如何信任 Agent 读取的内容</strong></h2>"
+    },
+    {
+      "id": "new17_containment-062",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Enterprises often ask us how to secure MCP connections. It's a good question, but the right one is broader than MCP specifically. Any external resource provided to an agent represents two risks at once: a code execution risk, in the traditional supply-chain sense, and a prompt injection vector. Traditional dependency auditing (pinning versions, verifying signatures, reviewing source) addresses the first, but misses the second.</p>",
+      "zh": "<p>企业经常问我们如何保障 MCP 连接安全。这是个好问题，但正确的问题范围比 MCP 本身更广。向 Agent 提供的任何外部资源，都同时带来两种风险：传统供应链意义上的代码执行风险，以及提示注入途径。传统依赖审计，例如锁定版本、验证签名和审查源码，能够应对第一种，却无法覆盖第二种。</p>"
+    },
+    {
+      "id": "new17_containment-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Remote versus local is more important than it seems.</strong> A locally installed tool is auditable. You can read the code, pin the version, and know it won't change under you. A remote tool—a hosted MCP server, a cloud connector—can change behavior at any point after you’ve approved it; your install-time trust decision may no longer apply. Our <a href=\"https://claude.com/connectors\" rel=\"noopener noreferrer\">connector directory</a> addresses this through ongoing review, but anything outside it should be treated as untrusted. Run it against fake data first, in an environment where the blast radius of a malicious tool is contained.</p>",
+      "zh": "<p><strong>远程与本地的区别，比看起来更重要。</strong>本地安装的工具可以审计。你可以阅读代码、锁定版本，并确定它不会在你不知情时变化。而远程工具，无论是托管的 MCP 服务器还是云连接器，都可能在你批准后的任何时刻改变行为；安装时作出的信任判断，可能已经不再适用。我们的<a href=\"https://claude.com/connectors\" rel=\"noopener noreferrer\">连接器目录</a>通过持续审查应对这一问题，但目录之外的任何工具都应被视为不可信。先用虚假数据测试，并将其放在一个能够限制恶意工具影响范围的环境中运行。</p>"
+    },
+    {
+      "id": "new17_containment-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Tool output is an attack surface even when the tool is trusted.</strong> The GitHub README example mentioned earlier is exactly this case; any input scanning applied to web pages needs to be applied to network-enabled tool results with the same rigor. Even though this adds latency and isn't a perfect defense, we err toward live inspection: once a poisoned tool return has steered the agent into exfiltrating data, the log just shows a successful, authorized API call. There's no after-the-fact signal to find.</p>",
+      "zh": "<p><strong>即便工具可信，工具输出也仍是攻击面。</strong>前文提到的 GitHub README 示例正是这种情况；任何用于网页的输入扫描，都应以同样严格的标准应用于联网工具的返回结果。虽然这会增加延迟，也并不是完美防御，但我们倾向于实时检查：一旦遭到投毒的工具返回内容诱导 Agent 外传了数据，日志中只会显示一次成功且经过授权的 API 调用。事后并没有异常信号可供寻找。</p>"
+    },
+    {
+      "id": "new17_containment-065",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In Claude Code and Claude Cowork, tool calls route through proxies that enforce network and file policy and can inspect return values before they enter the model's context. The classifier that does the inspection can be a small, fast model; it doesn't need to be the one doing the reasoning.</p>",
+      "zh": "<p>在 Claude Code 和 Claude Cowork 中，工具调用经过代理路由；代理强制执行网络和文件策略，并且可以在返回值进入模型上下文之前进行检查。负责检查的分类器可以是一个小而快的模型，无需与执行推理的模型相同。</p>"
+    },
+    {
+      "id": "new17_containment-066",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-looking-ahead\"><br><strong>Looking ahead</strong></h2>",
+      "zh": "<h2 id=\"zh-source-looking-ahead\"><br><strong>展望未来</strong></h2>"
+    },
+    {
+      "id": "new17_containment-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Models and products are advancing fast. As they do, risks morph and evolve, and our mitigations must keep pace to meet them.</p>",
+      "zh": "<p>模型和产品正在快速发展。与此同时，风险也在变形、演进，我们的缓解措施必须跟上步伐。</p>"
+    },
+    {
+      "id": "new17_containment-068",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Persistent memory poisoning. </strong>The share of agent context that persists across sessions keeps growing—this includes product memory, CLAUDE.md files, mounted workspaces, and the state directories of scheduled and long-running agents. An injection that lands in any of these is reloaded each time the agent starts. As more agent state survives the session, we are threatened by new persistence mechanisms in the classic post-exploitation sense. Good classifiers on session startup will need to become more commonplace.</p>",
+      "zh": "<p><strong>持久记忆投毒。</strong>Agent 上下文中会跨会话保留的部分正在不断增多，包括产品记忆、CLAUDE.md 文件、挂载工作区，以及定时运行和长时间运行 Agent 的状态目录。落入其中任何位置的注入，都会在 Agent 每次启动时重新加载。随着越来越多的 Agent 状态在会话结束后得以保留，我们面临着新的持久化机制威胁，类似于传统入侵后的持久驻留。会话启动时使用优秀分类器进行检查，需要变得更加普遍。</p>"
+    },
+    {
+      "id": "new17_containment-069",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Multi-agent trust escalation.</strong> On the one hand, sub-agents can isolate untrusted content, returning structured facts rather than raw text up to the main agent. On the other hand, this can be abused: if a sub-agent's output is treated as higher-trust than raw tool results, because such output came from “us,” a new vector for prompt injection is introduced. In multi-agent systems, there is a tradeoff between allocating differing trust levels and becoming liable to trust escalation.</p>",
+      "zh": "<p><strong>多 Agent 信任升级。</strong>一方面，子 Agent 可以隔离不可信内容，向主 Agent 返回结构化事实，而不是原始文本。另一方面，这也可能被滥用：如果仅仅因为输出来自“自己人”，就把子 Agent 的输出视为比原始工具结果更可信，那么就引入了一条新的提示注入途径。在多 Agent 系统中，为内容分配不同信任级别，与暴露于信任升级风险之间，存在取舍。</p>"
+    },
+    {
+      "id": "new17_containment-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Agent identity.</strong> Claude Cowork's answer to agent identity is concrete: credentials stay in the host keychain, the VM gets a per-session scoped-down token, and that token can be revoked independently of the user's. However, we are starting to grapple with the broader question of cross-platform agent identity. Should an agent possess its own principal identity, or should it act as an extension of the user and inherit the user’s permissions? Ultimately, the answer may be a blend of the two.</p>",
+      "zh": "<p><strong>Agent 身份。</strong>Claude Cowork 对 Agent 身份问题给出了具体方案：凭据留在宿主机钥匙串中，虚拟机获得按会话发放、权限范围缩小的令牌，而且这个令牌可以独立于用户令牌撤销。但我们也正开始面对跨平台 Agent 身份这一更广泛的问题。Agent 应该拥有自己独立的安全主体身份，还是应作为用户的延伸行事，继承用户权限？最终答案可能是二者的结合。</p>"
+    },
+    {
+      "id": "new17_containment-071",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As agents grow more capable, attack surfaces are constantly shifting. The types of failures we’ve seen are likely to be repeated across industries and labs. We need collective investment in agent-specific security posture, from shared benchmarks and disclosure norms to common identity standards and cross-vendor red-teaming. We focus on containment in this piece, but that's only one part of the security picture for agents. For governance, observability, and the rest of the stack, see <a href=\"https://www.nccoe.nist.gov/projects/software-and-ai-agent-identity-and-authorization\" rel=\"noopener noreferrer\">NIST's project on AI agent identity and authorization</a>, the <a href=\"https://media.defense.gov/2026/Apr/30/2003922823/-1/-1/0/CAREFUL%20ADOPTION%20OF%20AGENTIC%20AI%20SERVICES_FINAL.PDF\" rel=\"noopener noreferrer\">six-agency guidance on adopting agentic AI</a> led by Australia's ACSC with CISA and the UK's NCSC, and <a href=\"https://www.iso.org/standard/42001\" rel=\"noopener noreferrer\">ISO/IEC 42001</a>, the AI management standard. Our Glasswing initiative is one contribution, but we look forward to working with both partners and competitors on this critical issue.</p>",
+      "zh": "<p>随着 Agent 能力增强，攻击面也在持续变化。我们见过的这些失效类型，很可能在各行业和实验室中反复出现。我们需要共同投入，建立面向 Agent 的安全防护体系，从共享基准和披露规范，到通用身份标准与跨厂商红队测试。本文聚焦隔离约束，但它只是 Agent 安全全貌中的一部分。关于治理、可观测性和其余技术栈，可参阅 <a href=\"https://www.nccoe.nist.gov/projects/software-and-ai-agent-identity-and-authorization\" rel=\"noopener noreferrer\">NIST 的 AI Agent 身份与授权项目</a>、由澳大利亚 ACSC 牵头并由 CISA 和英国 NCSC 等参与的<a href=\"https://media.defense.gov/2026/Apr/30/2003922823/-1/-1/0/CAREFUL%20ADOPTION%20OF%20AGENTIC%20AI%20SERVICES_FINAL.PDF\" rel=\"noopener noreferrer\">六机构 Agent 型 AI 采用指南</a>，以及 AI 管理标准 <a href=\"https://www.iso.org/standard/42001\" rel=\"noopener noreferrer\">ISO/IEC 42001</a>。我们的 Glasswing 计划是其中一份贡献，但我们期待与合作伙伴和竞争对手共同应对这一关键问题。</p>"
+    },
+    {
+      "id": "new17_containment-072",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-summary\"><br><strong>Summary</strong></h2>",
+      "zh": "<h2 id=\"zh-source-summary\"><br><strong>总结</strong></h2>"
+    },
+    {
+      "id": "new17_containment-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In short, there are a few principles we keep returning to:</p>",
+      "zh": "<p>简而言之，有几条原则是我们反复回归的：</p>"
+    },
+    {
+      "id": "new17_containment-074",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Design for containment at the environment layer first, then steer behavior at the model layer.</strong> Two of the incidents that taught us the most—the employee phish and the third-party allowlist disclosure—were both cases of egress, in which data left through a permitted path. In each, the model layer couldn't help; there was nothing anomalous for it to catch. The deterministic boundary is what gets hit when everything probabilistic misses.</p>",
+      "zh": "<p><strong>先在环境层设计隔离约束，再在模型层引导行为。</strong>对我们启发最大的两个事件——员工遭遇钓鱼，以及第三方披露的允许列表问题——都属于出站事件，数据都是通过获准路径流出的。在这两个事件中，模型层都无能为力，因为没有可供它识别的异常。当所有概率性措施都漏检时，最终承受冲击的就是确定性的边界。</p>"
+    },
+    {
+      "id": "new17_containment-075",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Match isolation strength to the user's capacity for oversight.</strong> A developer who can read bash and a knowledge worker who can't are not running the same threat model. The question of whether a user can evaluate what an agent is about to do should help determine the containment strategy, and answering it wrong in either direction—too much friction for experts, too much trust for non-experts—is its own failure.</p>",
+      "zh": "<p><strong>让隔离强度与用户的监督能力相匹配。</strong>能够读懂 bash 的开发者，与不能读懂 bash 的知识工作者，面对的并不是同一种威胁模型。用户是否能够评估 Agent 即将执行的操作，应当帮助决定隔离约束策略。无论朝哪个方向判断错了——给专家制造过多阻力，或对非专家给予过多信任——本身都是一种失败。</p>"
+    },
+    {
+      "id": "new17_containment-076",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Be wary of custom components.</strong> Battle-tested hypervisors, syscall filters, and container runtimes have survived more adversarial attention than anything you'll build. Across every deployment described here, the standard primitives held while our own work around them exposed flaws.</p>",
+      "zh": "<p><strong>警惕自定义组件。</strong>经过实战检验的虚拟机管理程序、系统调用过滤器和容器运行时，承受过的对抗性考验，比你将构建的任何东西都多。在本文描述的每一种部署中，标准基础组件都经受住了考验，而我们围绕它们编写的部分却暴露出了缺陷。</p>"
+    },
+    {
+      "id": "new17_containment-077",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Ultimately, while agents may be a new category of software, their system-level interactions are not. They still read files, open sockets, and spawn processes; this makes containment with mature tooling a crucially viable defense. The risk-reward balance of deployments will keep shifting as AI develops, but placing a hard limit on blast radius often forces that balance into the right direction.</p>",
+      "zh": "<p>归根结底，Agent 也许是一类新软件，但它们在系统层面的交互并不新。它们依然读取文件、打开套接字、创建进程，因此借助成熟工具实施隔离约束，是一种至关重要且切实可行的防御。随着 AI 发展，部署的风险收益平衡会继续变化；但为影响范围设定硬性上限，往往能够让这一平衡朝正确方向倾斜。</p>"
+    },
+    {
+      "id": "new17_containment-078",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-acknowledgements\"><br>Acknowledgements</h3>",
+      "zh": "<h3 id=\"zh-source-acknowledgements\"><br>致谢</h3>"
+    },
+    {
+      "id": "new17_containment-079",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Written by Max McGuinness, Mikaela Grace, Jiri De Jonghe, Jake Eaton, and Abel Ribbink.</p>",
+      "zh": "<p>作者为 Max McGuinness、Mikaela Grace、Jiri De Jonghe、Jake Eaton 和 Abel Ribbink。</p>"
+    },
+    {
+      "id": "new17_containment-080",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We're also grateful to Hanah Ho, Hasnain Lakhani, Pedram Navid, Molly Villagra, Maya Nielan, Akila Srinivasan, Travis Szucs, Sam Attard, Alfred Xing, Mohamad El Hajj, Gabby Curtis, David Dworken, Adam Jones, Amie Rotherham, Christian Ryan, Lucas Smedley, Brett Andrews, and others for their contributions.</p>",
+      "zh": "<p>我们也感谢 Hanah Ho、Hasnain Lakhani、Pedram Navid、Molly Villagra、Maya Nielan、Akila Srinivasan、Travis Szucs、Sam Attard、Alfred Xing、Mohamad El Hajj、Gabby Curtis、David Dworken、Adam Jones、Amie Rotherham、Christian Ryan、Lucas Smedley、Brett Andrews 以及其他人的贡献。</p>"
+    },
+    {
+      "id": "new17_containment-081",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Special thanks to our security and product engineering teams, and to the individuals and organizations that have reported vulnerabilities in Claude products.</p>",
+      "zh": "<p>特别感谢我们的安全与产品工程团队，以及向我们报告 Claude 产品漏洞的个人和组织。</p>"
+    },
+    {
+      "id": "new17_containment-082",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-footnotes\"><br>Footnotes</h4>",
+      "zh": "<h4 id=\"zh-source-footnotes\"><br>脚注</h4>"
+    },
+    {
+      "id": "new17_containment-083",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Claude Code auto mode delegates command approvals to a model-based classifier; it minimizes friction (roughly 0.4% of benign commands blocked) at the cost of missing a fraction of risky ones (~17% of overeager actions get through), so it's one layer of defense-in-depth inside a sandbox, not a substitute for one.</li></ol>",
+      "zh": "<ol><li>Claude Code 自动模式将命令审批委托给基于模型的分类器；它将操作阻力降至很低（大约 0.4% 的无害命令会被拦截），代价是漏过一部分危险命令（约 17% 的过于积极操作会被放行）。因此，它是在沙箱内部实现纵深防御的一层，而不能替代沙箱。</li></ol>"
+    }
+  ],
+  "description": "随着 Agent 能力增强，其潜在影响范围也在扩大。工程上的问题，是如何为这一范围设定上限。以下是我们为 claude.ai、Claude Code 和 Cowork 构建隔离约束机制时积累的经验",
+  "reading_minutes": 23,
+  "downloads": {
+    "zh": "/downloads/containment-zh.pdf",
+    "en": "/downloads/containment-en.pdf"
+  }
+}

@@ -470,5 +470,14 @@
         "name": "Lilian Weng"
       }
     ]
+  },
+  "swe-bench-sonnet": {
+    "description": "Anthropic 介绍 Claude 3.5 Sonnet 在 SWE-bench Verified 上取得 49% 成绩的 Agent 设计：精简运行框架、Bash 与文件编辑工具、问题复现流程，以及隐藏测试和评测环境带来的挑战。本文为中文译文，保留原始代码、表格和英文对照。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Erik Schluntz"
+      }
+    ]
   }
 }

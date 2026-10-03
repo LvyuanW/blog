@@ -14,6 +14,7 @@ EXTENSIONS = {'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'im
 CATEGORIES = ['基础与架构', '上下文工程', '工具与技能', '评测与改进', '安全与可靠性']
 
 def category(a):
+    if a.get('category') in CATEGORIES: return a['category']
     s = a['slug']
     if any(t in s for t in ['containment', 'sandbox', 'auto_mode']): return '安全与可靠性'
     if any(t in s for t in ['context', 'retrieval', 'manus']): return '上下文工程'

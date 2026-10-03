@@ -21,3 +21,6 @@
 [data-mode=en] .article-header h1{line-height:1.3}
 [data-mode=en] .article-original-title{display:none}
 @media(max-width:1100px){.reading-both .article-toc{display:block;position:static;max-height:220px;overflow:auto;padding:0 0 19px;margin-bottom:24px;border-bottom:1px solid var(--line)}.reading-both .article-toc summary{cursor:pointer}.reading-both .article-toc summary:after{content:'⌄';margin-left:auto}.reading-both .article-toc summary span{margin-left:10px;margin-right:auto}.reading-both .toc-source{display:none}}
+
+.brand{white-space:nowrap;flex-shrink:0}.brand-label{font-family:var(--serif);font-size:.66em;font-weight:400;letter-spacing:0;margin-left:6px;color:var(--accent)}
+@media(max-width:420px){.header-inner{padding:0 16px;gap:12px}.brand{font-size:30px}.site-header nav{gap:18px}.site-header nav a{font-size:14px;white-space:nowrap}}

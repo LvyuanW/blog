@@ -1,0 +1,474 @@
+{
+  "building": {
+    "description": "Anthropic 工程文章的中文译文，区分预定义工作流与模型自主决策的 Agent，介绍提示链、路由、并行和编排等常见模式，并通过客服与编程案例讨论工具接口设计、复杂性、成本和适用场景。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Erik S."
+      },
+      {
+        "@type": "Person",
+        "name": "Barry Zhang"
+      }
+    ]
+  },
+  "evals": {
+    "description": "Anthropic Agent 评测指南的中文译文，解释任务、试验、执行轨迹与评分器，比较代码、模型和人工评分，讨论非确定性、能力评测与回归评测，并给出从真实失败案例建立和长期维护评测体系的方法。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Mikaela Grace"
+      },
+      {
+        "@type": "Person",
+        "name": "Jeremy Hadfield"
+      },
+      {
+        "@type": "Person",
+        "name": "Rodrigo Olivares"
+      },
+      {
+        "@type": "Person",
+        "name": "Jiri De Jonghe"
+      }
+    ]
+  },
+  "context": {
+    "description": "Anthropic 上下文工程文章的中文译文，解释上下文与提示词工程的关系，讨论系统提示、工具、检索和自主搜索的设计，以及通过压缩、结构化笔记和子 Agent 支持长程任务的具体方法与取舍。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Prithvi Rajasekaran"
+      },
+      {
+        "@type": "Person",
+        "name": "Ethan Dixon"
+      },
+      {
+        "@type": "Person",
+        "name": "Carly Ryan"
+      },
+      {
+        "@type": "Person",
+        "name": "Jeremy Hadfield"
+      }
+    ]
+  },
+  "traces-documentation": {
+    "description": "Harrison Chase 文章的中文译文，讨论 Agent 的决策为何难以仅靠代码理解，以及执行轨迹如何记录实际行为。内容涵盖调试、评测、性能优化、质量监控、产品分析和跨团队协作所需关键信息的变化。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Harrison Chase"
+      }
+    ]
+  },
+  "managed": {
+    "description": "Anthropic Managed Agents 架构文章的中文译文，介绍如何将模型推理、工具执行环境与持久会话解耦，使运行框架能够独立演进，区分持久会话与模型当前上下文，并讨论状态恢复、扩展执行和稳定接口的设计。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Lance Martin"
+      },
+      {
+        "@type": "Person",
+        "name": "Gabe Cemaj"
+      },
+      {
+        "@type": "Person",
+        "name": "Michael Cohen"
+      }
+    ]
+  },
+  "improvement": {
+    "description": "LangChain 指南的中文译文，说明如何收集执行轨迹，通过在线评分与人工反馈发现失败，再转化为离线评测和经过验证的改动。结合 LangSmith 介绍持续迭代流程，并讨论自动化与人工判断的边界。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "LangChain"
+      }
+    ]
+  },
+  "tools": {
+    "description": "Anthropic 工具工程文章的中文译文，介绍如何与 Agent 协作构建、评测和优化工具，讨论工具选择、命名空间、响应信息与 token 成本，并说明如何通过清晰描述和留出测试验证改进，避免仅凭调用成功判断质量。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Ken Aizawa"
+      }
+    ]
+  },
+  "multi-agent": {
+    "description": "Anthropic Research 系统的工程经验中文译文，介绍主 Agent 与并行子 Agent 的分工、搜索和信息汇总，讨论任务委派、提示词、工具设计、评测与生产可靠性，并说明任务并行程度和额外成本如何影响架构选择。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Jeremy Hadfield"
+      },
+      {
+        "@type": "Person",
+        "name": "Barry Zhang"
+      },
+      {
+        "@type": "Person",
+        "name": "Kenneth Lien"
+      },
+      {
+        "@type": "Person",
+        "name": "Florian Scholz"
+      },
+      {
+        "@type": "Person",
+        "name": "Jeremy Fox"
+      },
+      {
+        "@type": "Person",
+        "name": "Daniel Ford"
+      }
+    ]
+  },
+  "best-practices": {
+    "description": "Claude Code 官方实践文档的中文译文，围绕验证结果、探索规划和上下文管理，说明如何配置项目指令、权限及外部工具，借助技能、子 Agent 与自动化机制组织编程任务，并识别会话中常见的失败模式。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "Anthropic"
+      }
+    ]
+  },
+  "think": {
+    "description": "Anthropic think 工具研究文章的中文译文，围绕 Claude 3.7 Sonnet 的实验，说明如何在工具调用过程中加入专门的思考步骤，比较其与扩展思考的区别，并讨论基准结果、提示示例、业务规则遵循和适用边界。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "Anthropic"
+      }
+    ]
+  },
+  "long-running": {
+    "description": "Anthropic 长程 Agent 工程文章的中文译文，针对跨上下文窗口丢失进展的问题，介绍初始化与编程 Agent 的分工，以及功能清单、进度记录、Git 提交和端到端测试如何帮助任务持续推进、避免过早宣布完成。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Justin Young"
+      }
+    ]
+  },
+  "mcp-code": {
+    "description": "Anthropic MCP 工程文章的中文译文，解释预加载工具定义与中间结果带来的上下文开销，介绍通过代码按需发现、组合和调用工具的方法，并讨论结果过滤、状态持久化、隐私及安全执行环境的成本。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Adam Jones"
+      },
+      {
+        "@type": "Person",
+        "name": "Conor Kelly"
+      }
+    ]
+  },
+  "skills": {
+    "description": "Anthropic Agent Skills 设计文章的中文译文，介绍如何用包含指令、脚本和资源的文件夹提供领域知识，解释如何按需发现、渐进式加载与代码执行，并讨论技能的开发、评测、安全审查及跨平台复用。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Barry Zhang"
+      },
+      {
+        "@type": "Person",
+        "name": "Keith Lazuka"
+      },
+      {
+        "@type": "Person",
+        "name": "Mahesh Murag"
+      }
+    ]
+  },
+  "sandboxing": {
+    "description": "Anthropic 沙箱工程文章的中文译文，介绍 Claude Code 如何结合文件系统与网络隔离减少权限提示和审批疲劳，并说明沙箱化 bash、云端执行和 Git 凭据代理的设计，以及安全边界与自主执行之间的关系。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "David Dworken"
+      },
+      {
+        "@type": "Person",
+        "name": "Oliver Weller-Davies"
+      }
+    ]
+  },
+  "auto-mode": {
+    "description": "Anthropic Claude Code 自动模式文章的中文译文，介绍权限分类器如何判断操作是否获得用户授权，讨论两阶段分类、提示注入防御、子 Agent 交接与拒绝后的恢复，并披露误报、漏报及需要人工判断的剩余风险。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "John Hughes"
+      }
+    ]
+  },
+  "long-apps": {
+    "description": "Anthropic 长时间应用开发实验的中文译文，介绍如何把前端审美转化为评分标准，并用规划器、生成器和评估器组织全栈开发。文章比较运行框架迭代的结果，讨论模型更新后应保留或移除哪些机制。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Prithvi Rajasekaran"
+      }
+    ]
+  },
+  "containment": {
+    "description": "Anthropic Agent 隔离实践的中文译文，对比不同产品使用的临时容器、人工参与沙箱和本地虚拟机，结合权限信任、提示注入与获准域名外传数据等实际问题，讨论如何为故障影响范围设定上限。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Max McGuinness"
+      },
+      {
+        "@type": "Person",
+        "name": "Mikaela Grace"
+      },
+      {
+        "@type": "Person",
+        "name": "Jiri De Jonghe"
+      },
+      {
+        "@type": "Person",
+        "name": "Jake Eaton"
+      },
+      {
+        "@type": "Person",
+        "name": "Abel Ribbink"
+      }
+    ]
+  },
+  "c-compiler": {
+    "description": "Nicholas Carlini 编译器实验的中文译文，记录 16 个 Claude Agent 并行用 Rust 构建 C 编译器的过程，讨论长期运行、测试质量、共享代码库协作与角色分工，并说明测试通过仍不等于软件可靠，并分析自主开发的真实风险。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Nicholas Carlini"
+      }
+    ]
+  },
+  "advanced-tools": {
+    "description": "Anthropic 高级工具使用文章的中文译文，介绍工具搜索、程序化工具调用和工具使用示例三项能力，解释如何减少预加载与中间结果开销、明确控制流和参数用法，并讨论组合使用时的适用场景。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Bin Wu"
+      }
+    ]
+  },
+  "harness-anatomy": {
+    "description": "Vivek Trivedy 文章的中文译文，从模型能力与期望行为的差距出发，梳理 Agent 运行框架的组成，涵盖工具执行、文件系统、沙箱、记忆、上下文管理与验证循环，并讨论各类组件与模型训练的关系。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Vivek Trivedy"
+      }
+    ]
+  },
+  "agent-engineering": {
+    "description": "LangChain 团队文章的中文译文，将 Agent 工程描述为构建、测试、发布、观察与改进的持续循环，讨论非确定性系统的生产可靠性，以及评测、可观测性和真实使用反馈在日常团队实践中的作用。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "The LangChain Team"
+      }
+    ]
+  },
+  "middleware": {
+    "description": "LangChain 中间件指南的中文译文，解释如何在 Agent 循环中接入自定义逻辑，修改提示词、工具和模型行为，并以 Deep Agents 为例讨论上下文管理、策略执行及可复用运行框架组件的设计与职责分离。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Sydney Runkle"
+      }
+    ]
+  },
+  "model-router": {
+    "description": "LangChain 模型路由实验的中文译文，介绍如何结合任务特征、模型档位和结果反馈，在运行框架中选择模型。结合 Open SWE 案例讨论成本、质量、缓存与路由粒度，并交代实验结果的统计与适用局限。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Sydney Runkle"
+      },
+      {
+        "@type": "Person",
+        "name": "Eugene Yurtsev"
+      }
+    ]
+  },
+  "jev": {
+    "description": "LangChain 介绍 Jev 的中文译文，解释这种分类模型如何输出决策及概率，并用于模型路由和工具权限检查。文章展示中间件集成方式，区分分类决策与文本生成，并转述供应商报告的速度和成本表现。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Sydney Runkle"
+      },
+      {
+        "@type": "Person",
+        "name": "Hunter Lovell"
+      }
+    ]
+  },
+  "coding-blackbox": {
+    "description": "LangChain 编程 Agent 可观测性文章的中文译文，从旧辅助函数导致分页错误的案例出发，说明如何通过执行轨迹检查上下文、工具调用和子 Agent 交接，并用统一记录比较不同编程工具的行为。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Hari Harish"
+      }
+    ]
+  },
+  "practical-guide": {
+    "description": "OpenAI Agent 实用指南的中文译文，面向首次构建系统的产品与工程团队，介绍场景选择、模型、工具与指令设计，比较单体与多智能体协作的编排模式，并讨论安全护栏、人工介入和通过真实用户逐步验证部署。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "OpenAI"
+      }
+    ]
+  },
+  "agent-tools": {
+    "description": "OpenAI 开发工具发布文章的中文译文，介绍 Responses API 及网页搜索、文件检索和计算机操作工具，说明如何组织多步骤任务、交接控制权与追踪执行过程，并保留原发布时的接口迁移说明和安全限制。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "OpenAI"
+      }
+    ]
+  },
+  "skills-ecosystem": {
+    "description": "Anthropic Skills 生态发布文章的中文译文，介绍组织管理员如何集中配置工作流、用户如何创建和编辑技能，以及合作伙伴目录与开放标准的作用，说明可复用知识与 MCP 工具之间的互补关系。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "Anthropic"
+      }
+    ]
+  },
+  "code-mods": {
+    "description": "Anthropic Mods 介绍文章的中文译文，说明如何用 TypeScript 改写 Claude Code 事件、扩展界面或替换内置功能，介绍插件分发、团队管理、加载顺序与默认安全设置，并明确这些扩展不在沙箱中运行，强调只应安装可信来源的扩展。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "Anthropic"
+      }
+    ]
+  },
+  "context-rise": {
+    "description": "Harrison Chase 上下文工程文章的中文译文，讨论为何 Agent 的成败不仅取决于提示词措辞，还取决于运行时提供的信息，梳理指令、历史、记忆、工具和检索内容，并解释上下文组织与产品可靠性的关系。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Harrison Chase"
+      }
+    ]
+  },
+  "context-agents": {
+    "description": "LangChain 上下文工程综述的中文译文，将常见方法归纳为写入、选择、压缩和隔离，结合记忆、检索、工具输出与多 Agent 案例，讨论如何管理有限的上下文资源，并介绍相关框架与可观测性支持。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "The LangChain Team"
+      }
+    ]
+  },
+  "context-retrieval": {
+    "description": "Anthropic 上下文检索文章的中文译文，介绍为文档片段补充上下文后构建嵌入和 BM25 索引的方法，比较重排序及不同检索配置的实验结果，并讨论提示词缓存、实现成本和评测中的取舍。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Daniel Ford"
+      }
+    ]
+  },
+  "manus-context": {
+    "description": "Manus 上下文工程经验的中文译文，介绍 KV 缓存、工具屏蔽、文件系统、任务复述、错误记录和示例多样性等设计选择，解释这些机制如何影响长程 Agent 的成本、注意力与行为，并保留实践中的限制。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Yichao 'Peak' Ji"
+      }
+    ]
+  },
+  "cursor-context": {
+    "description": "Cursor 动态上下文发现文章的中文译文，介绍将长工具结果、聊天历史和终端会话转为可按需读取的文件，以及渐进式加载 Skills 与 MCP 工具的方法，讨论如何减少上下文占用并保留可追溯信息。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Jediah Katz"
+      }
+    ]
+  },
+  "autonomous-agents": {
+    "description": "Lilian Weng 自主 Agent 综述的中文译文，围绕规划、记忆和工具使用介绍任务分解、自我反思与检索方法，并结合科学发现、生成式模拟和早期项目案例，讨论长期规划、上下文及可靠性的挑战。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Lilian Weng"
+      }
+    ]
+  },
+  "skill-issue": {
+    "description": "HumanLayer 编程 Agent 工程文章的中文译文，讨论如何用指令文件、外部工具、技能、子 Agent 和钩子定制运行框架，结合具体失败经验解释渐进式披露、上下文隔离、成本控制与持续验证反馈的作用。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Kyle"
+      }
+    ]
+  },
+  "autoharness": {
+    "description": "AutoHarness 论文摘要的中文译文与文献信息，介绍根据游戏环境反馈自动合成代码运行框架、约束非法行动的研究，并概述其在 TextArena 上的实验结论。本页不含论文全文，保留原文与全文入口。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Xinghua Lou"
+      },
+      {
+        "@type": "Person",
+        "name": "Miguel Lázaro-Gredilla"
+      },
+      {
+        "@type": "Person",
+        "name": "Antoine Dedieu"
+      },
+      {
+        "@type": "Person",
+        "name": "Carter Wendelken"
+      },
+      {
+        "@type": "Person",
+        "name": "Wolfgang Lehrach"
+      },
+      {
+        "@type": "Person",
+        "name": "Kevin P. Murphy"
+      }
+    ],
+    "content_kind": "abstract"
+  },
+  "cursor-harness": {
+    "description": "Cursor 运行框架迭代经验的中文译文，介绍如何结合离线评测、线上使用信号和回归跟踪验证改动，讨论上下文管理、针对不同模型的定制，以及对话中途切换模型带来的工程问题。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Stefan Heule"
+      },
+      {
+        "@type": "Person",
+        "name": "Jediah Katz"
+      }
+    ]
+  },
+  "self-improvement": {
+    "description": "Lilian Weng 自我改进研究综述的中文译文，梳理上下文与工作流优化、运行框架演化、进化式搜索及模型权重联合更新，比较相关研究，并讨论评测、记忆、奖励投机、权限边界和人类监督的挑战。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Lilian Weng"
+      }
+    ]
+  }
+}

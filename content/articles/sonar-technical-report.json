@@ -1,0 +1,335 @@
+{
+  "title": "Sonar Foundation Agent 技术报告",
+  "original_title": "Sonar Foundation Agent Technical Report",
+  "url": "https://github.com/AutoCodeRoverSG/sonar-foundation-agent/blob/main/technical_report.pdf",
+  "publisher": "Sonar",
+  "author": "Haifeng Ruan, Yuntong Zhang",
+  "source_order": 44.5,
+  "source_note": "原文 PDF 的部分得分存在不一致：引言、正文与表格分别出现 79.4%/79.2% 及 52.62%/52.8%/52.6%；本页按原文保留。该文件的 PDF 创建日期为 2025-12-19，不能据此确认正式发布日期。",
+  "slug": "sonar-technical-report",
+  "source_id": "new44_sonar_technical_report",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new44_sonar_technical_report-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Haifeng Ruan · SonarSource · <a href=\"mailto:haifeng.ruan@sonarsource.com\">haifeng.ruan@sonarsource.com</a><br>Yuntong Zhang · SonarSource · <a href=\"mailto:zhang.yuntong@sonarsource.com\">zhang.yuntong@sonarsource.com</a></p>",
+      "zh": "<p>Haifeng Ruan · SonarSource · <a href=\"mailto:haifeng.ruan@sonarsource.com\">haifeng.ruan@sonarsource.com</a><br>Yuntong Zhang · SonarSource · <a href=\"mailto:zhang.yuntong@sonarsource.com\">zhang.yuntong@sonarsource.com</a></p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-001",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Abstract</h2>",
+      "zh": "<h2>摘要</h2>"
+    },
+    {
+      "id": "new44_sonar_technical_report-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This report contains detailed description and analysis of Sonar Foundation Agent.</p>",
+      "zh": "<p>本报告对 Sonar Foundation Agent 进行了详细介绍和分析。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-003",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>1 Introduction</h2>",
+      "zh": "<h2>1 引言</h2>"
+    },
+    {
+      "id": "new44_sonar_technical_report-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sonar Foundation Agent is a coding agent for general software issues, developed at Sonar by the former AutoCodeRover team. As of December 19th, 2025, Sonar Foundation Agent scores 79.4% on SWE-bench Verified and 52.62% on SWE-bench, while maintaining a low average cost of $1.98 and a high efficiency of 10.4 minutes per issue.</p>",
+      "zh": "<p>Sonar Foundation Agent 是一个面向一般软件问题的编程 Agent，由原 AutoCodeRover 团队在 Sonar 开发。截至 2025 年 12 月 19 日，Sonar Foundation Agent 在 SWE-bench Verified 上的得分为 79.4%，在 SWE-bench 上的得分为 52.62%，同时保持每个问题平均 1.98 美元的低成本，以及 10.4 分钟的高处理效率。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Quick clarification for Sonar customers</strong> The Sonar Foundation Agent is an internal project rather than a commercial product. The technology behind it, however, will show up in our real offering — the SonarQube Remediation Agent, which is currently in beta.</p>",
+      "zh": "<p><strong>向 Sonar 客户作一个简要说明</strong> Sonar Foundation Agent 是一个内部项目，而不是商业产品。不过，其背后的技术将应用到我们真正对外提供的产品 SonarQube Remediation Agent 中，该产品目前处于测试阶段。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-006",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>2 Design &amp; Implementation</h2>",
+      "zh": "<h2>2 设计与实现</h2>"
+    },
+    {
+      "id": "new44_sonar_technical_report-007",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>2.1 General Architecture</h3>",
+      "zh": "<h3>2.1 总体架构</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sonar Foundation Agent is a tool-calling-style agent, implemented with the LlamaIndex [1] framework. Configured with a carefully-designed system prompt, Sonar Foundation Agent receives the description of the issue to solve and then iteratively invokes tools to investigate and resolve the issue. The final output is a patch to the code in the unified diff format.</p>",
+      "zh": "<p>Sonar Foundation Agent 是一个采用工具调用方式的 Agent，使用 LlamaIndex [1] 框架实现。配置了精心设计的系统提示词后，Sonar Foundation Agent 会接收待解决问题的描述，然后迭代调用工具，调查并解决问题。最终输出是采用统一差异格式（unified diff）的代码补丁。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-009",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>2.2 Tools</h3>",
+      "zh": "<h3>2.2 工具</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Tool Choice</strong> In Sonar Foundation Agent, we employ two simple and effective tools: the bash and the text editor. Both tools have proved to work well for a variety of coding agents. More importantly, the two tools are deeply integrated into the Anthropic models, with dedicated tool names (bash_20250124 and text_editor_20250728). Therefore, it is likely that the Anthropic models have been trained for both tools, yielding additional efficacy gains. Additionally, Sonar Foundation Agent also uses the AST (abstract syntax tree) Search tool of AutoCodeRover [4]. When the agent needs to look for the definition of symbols in the codebase, the AST Search tool is often a more efficient way than using grep from the bash tool, saving the number of reasoning steps and LLM costs. The agent is allowed at most 150 steps for a task, which was decided empirically to achieve a balance between efficacy and cost.</p>",
+      "zh": "<p><strong>工具选择</strong> 在 Sonar Foundation Agent 中，我们采用了两种简单有效的工具：bash 和文本编辑器。这两种工具已被证明适用于多种编程 Agent。更重要的是，这两种工具与 Anthropic 模型进行了深度集成，并具有专用的工具名称（bash_20250124 和 text_editor_20250728）。因此，Anthropic 模型很可能接受过针对这两种工具的训练，从而带来额外的效果提升。此外，Sonar Foundation Agent 还使用了 AutoCodeRover [4] 的 AST（抽象语法树）搜索工具。当 Agent 需要查找代码库中的符号定义时，与通过 bash 工具使用 grep 相比，AST 搜索工具通常效率更高，可以减少推理步骤和大语言模型调用成本。对于每项任务，Agent 最多可以执行 150 步；这一上限是根据实验经验确定的，目的是在效果与成本之间取得平衡。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Bash</strong> To exploit the full power of the Anthropic models, our bash tool has an interface compatible with Anthropic’s bash_20250124. The timeout of each bash command is set to 5 minutes, after which the command will be terminated and only the output collected within the timeout will be returned.</p>",
+      "zh": "<p><strong>Bash</strong> 为了充分发挥 Anthropic 模型的能力，我们的 bash 工具采用了与 Anthropic 的 bash_20250124 兼容的接口。每条 bash 命令的超时时间设为 5 分钟，超时后命令将被终止，并且只返回超时时间内收集到的输出。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Text Editor</strong> Similar to the bash tool, our editor tool is also compatible with Anthropic’s interface, text_editor_20250728. It can view the directory structure and files, create files, and edit files by string replacement. After each successful edit, the updated portion of the file is returned for the agent to verify.</p>",
+      "zh": "<p><strong>文本编辑器</strong> 与 bash 工具类似，我们的编辑器工具也兼容 Anthropic 的 text_editor_20250728 接口。它能够查看目录结构和文件、创建文件，以及通过字符串替换编辑文件。每次编辑成功后，工具都会返回文件中更新的部分，供 Agent 验证。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>AST Search</strong> The AST Search tool is similar to that of AutoCodeRover, capable of searching for a class or function in a certain file or the whole codebase. An index of the classes and functions in the codebase is built at the beginning of the agent execution, by parsing the whole codebase with treesitter.</p>",
+      "zh": "<p><strong>AST 搜索</strong> AST 搜索工具与 AutoCodeRover 的同类工具相似，能够在指定文件或整个代码库中搜索类或函数。在 Agent 开始执行时，它会使用 treesitter 解析整个代码库，为代码库中的类和函数建立索引。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-014",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>2.3 Prompts</h3>",
+      "zh": "<h3>2.3 提示词</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sonar Foundation Agent uses only two prompts: a system prompt defining the methodology for solving issues, and a user prompt defining the task and the output format.</p>",
+      "zh": "<p>Sonar Foundation Agent 只使用两个提示词：一个系统提示词，用来定义解决问题的方法；一个用户提示词，用来定义任务和输出格式。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>System Prompt</strong> We design the system prompts with a few considerations:</p>",
+      "zh": "<p><strong>系统提示词</strong> 我们设计系统提示词时考虑了以下几点：</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-017",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Test-driven methodology.</strong> We stipulate the core principles of a test-driven methodology, including fully understanding the issue, writing a reproducer test, fixing the issue, and verifying the issue with the reproducer and regression tests<sup><a href=\"#en-source-footnote-1\">1</a></sup>.</li><li><strong>High-level instructions.</strong> The methodology is outlined at a high level as core principles rather than step-by-step instructions, to allow thinking models the autonomy needed for solving the issues in a creative way. Additionally, the system prompt explicitly encourages a flexible approach, e.g., “adapt your approach to task complexity” and “whether through reproduction, code inspection, or test analysis, ensure you’re fixing the right thing.”</li><li><strong>No overfitting to SWE-bench.</strong> For Sonar Foundation Agent to be useful in practice, we make sure to avoid any knowledge specific to the benchmark, and only include generally applicable software engineering principles in the prompt.</li></ol>",
+      "zh": "<ol><li><strong>测试驱动的方法。</strong> 我们规定了测试驱动方法的核心原则，包括充分理解问题、编写复现测试、修复问题，以及使用复现测试和回归测试验证问题是否得到解决<sup><a href=\"#zh-source-footnote-1\">1</a></sup>。</li><li><strong>高层指令。</strong> 我们以高层次的核心原则概述方法，而不是给出逐步操作指令，让思考模型拥有创造性解决问题所需的自主权。此外，系统提示词还明确鼓励灵活的方法，例如：“根据任务的复杂程度调整你的方法”，以及“无论是通过复现、代码检查还是测试分析，都要确保你修复的是正确的问题”。</li><li><strong>不过拟合 SWE-bench。</strong> 为了让 Sonar Foundation Agent 在实际场景中有用，我们确保避免纳入任何仅针对该基准的知识，在提示词中只包含普遍适用的软件工程原则。</li></ol>"
+    },
+    {
+      "id": "new44_sonar_technical_report-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>User Prompt</strong> The user prompt provides the agent with the issue description from SWE-bench verbatim. It also specifies the expected output format, that the agent is to save the patch to a particular location on the disk. In particular, the agent is encouraged to save tentative patches produced in the process of solving the issue. Otherwise, the agent would often run out of reasoning steps while trying to validate a tentative patch, thus forced to terminate without giving an answer.</p>",
+      "zh": "<p><strong>用户提示词</strong> 用户提示词将 SWE-bench 中的问题描述原样提供给 Agent，同时规定预期的输出格式，要求 Agent 将补丁保存到磁盘上的特定位置。尤其是，我们鼓励 Agent 保存解决问题过程中生成的临时补丁。否则，Agent 经常会在尝试验证某个临时补丁时耗尽推理步数，从而被迫终止，无法给出答案。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-019",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>3 Evaluation</h2>",
+      "zh": "<h2>3 评测</h2>"
+    },
+    {
+      "id": "new44_sonar_technical_report-020",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>3.1 Efficacy and Cost</h3>",
+      "zh": "<h3>3.1 效果与成本</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We evaluate the efficacy of Sonar Foundation Agent on both SWE-bench Verified and SWE-bench Full. SWE-bench Verified [3] is a widely used benchmark for evaluating repository-level LLM agents for resolving issues in popular open-source software repositories. It contains 500 human-validated issues that contain well-specified issue descriptions. SWE-bench Full [3] is a superset of SWE-bench Verified, containing 2294 repository issues. Compared to SWE-bench Verified, SWE-bench Full has received less participation on the official SWE-bench leaderboard [2]. We evaluate Sonar Foundation Agent on both benchmarks to understand its performance both when the issues are well-specified and when the issues can be potentially under-specified.</p>",
+      "zh": "<p>我们同时在 SWE-bench Verified 和 SWE-bench Full 上评测 Sonar Foundation Agent 的效果。SWE-bench Verified [3] 是一个广泛使用的基准，用于评测仓库级大语言模型 Agent 解决热门开源软件仓库中问题的能力。它包含 500 个经过人工验证的问题，这些问题具有定义明确的问题描述。SWE-bench Full [3] 是 SWE-bench Verified 的超集，包含 2294 个仓库问题。与 SWE-bench Verified 相比，SWE-bench Full 在 SWE-bench 官方排行榜 [2] 上的参与者较少。我们在两个基准上都评测了 Sonar Foundation Agent，以了解它在问题描述明确，以及问题描述可能不够充分这两种情况下的表现。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Table 1 presents the efficacy of Sonar Foundation Agent. On SWE-bench Verified, Sonar Foundation Agent achieves a resolution rate of 79.2% with Claude Opus-4.5. Sonar Foundation Agent generally has higher efficacy on Claude models, compared to GPT-5 and Gemini 3 Pro. We attribute this partly to the design of Sonar Foundation Agent, as the bash tool and text editor tool are more closely related to Anthropic models. On the other hand, GPT-5 and Gemini 3 Pro incurs much lower costs with Sonar Foundation Agent, compared to Claude models. For example, Sonar Foundation Agent + GPT-5 resolved 70.8% of issues in SWE-bench Verified with an average cost of $0.45. The efficacy and cost present a trade-off when deploying Sonar Foundation Agent in different usage scenarios.</p>",
+      "zh": "<p>表 1 展示了 Sonar Foundation Agent 的效果。在 SWE-bench Verified 上，Sonar Foundation Agent 使用 Claude Opus-4.5 达到了 79.2% 的问题解决率。与 GPT-5 和 Gemini 3 Pro 相比，Sonar Foundation Agent 使用 Claude 模型时通常效果更好。我们认为，这部分归因于 Sonar Foundation Agent 的设计，因为 bash 工具和文本编辑器工具与 Anthropic 模型的关联更加紧密。另一方面，与 Claude 模型相比，Sonar Foundation Agent 使用 GPT-5 和 Gemini 3 Pro 时的成本要低得多。例如，Sonar Foundation Agent + GPT-5 解决了 SWE-bench Verified 中 70.8% 的问题，平均成本为 0.45 美元。在不同使用场景中部署 Sonar Foundation Agent 时，需要在效果与成本之间进行权衡。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p id=\"en-source-footnote-1\"><sup>1</sup> When performing evaluation on SWE-bench, we strictly follow the rules and avoid using metadata about regression tests, i.e., PASS_TO_PASS and FAIL_TO_PASS. Instead, Sonar Foundation Agent can discover and run the relevant regression tests fully autonomously.</p>",
+      "zh": "<p id=\"zh-source-footnote-1\"><sup>1</sup> 在 SWE-bench 上进行评测时，我们严格遵守规则，避免使用有关回归测试的元数据，即 PASS_TO_PASS 和 FAIL_TO_PASS。Sonar Foundation Agent 可以完全自主地发现并运行相关回归测试。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-024",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure id=\"shared-source-table-1\"><figcaption>Table 1: Efficacy and cost of Sonar Foundation Agent on SWE-bench.</figcaption><table><thead><tr><th>Tool</th><th>LLM</th><th>Resolved%</th><th>Average Cost ($)</th></tr></thead><tbody><tr><th colspan=\"4\">SWE-bench Full</th></tr><tr><td>Sonar Foundation Agent</td><td>Claude Opus 4.5</td><td>52.6%</td><td>1.98</td></tr><tr><th colspan=\"4\">SWE-bench Verified</th></tr><tr><td rowspan=\"4\">Sonar Foundation Agent</td><td>GPT-5</td><td>70.8%</td><td>0.45</td></tr><tr><td>Gemini 3 Pro</td><td>72.4%</td><td>0.59</td></tr><tr><td>Claude Sonnet 4.5</td><td>74.8%</td><td>1.25</td></tr><tr><td>Claude Opus 4.5</td><td>79.2%</td><td>1.90</td></tr></tbody></table></figure>"
+    },
+    {
+      "id": "new44_sonar_technical_report-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>On SWE-bench Full consisting 2294 issues, Sonar Foundation Agent resolved 52.8% of the issues with Claude Opus-4.5, which is the new state-of-the-art on SWE-bench Full. While agents achieve approximately 80% efficacy on SWE-bench Verified, a significant performance gap remains on SWE-bench Full. This disparity highlights the need to enhance LLM agents’ ability to automatically resolve ambiguity in under-specified natural-language issue descriptions, which more closely mirror the complexities of real-world production environments.</p>",
+      "zh": "<p>在包含 2294 个问题的 SWE-bench Full 上，Sonar Foundation Agent 使用 Claude Opus-4.5 解决了 52.8% 的问题，创下了 SWE-bench Full 上新的最佳成绩。虽然 Agent 在 SWE-bench Verified 上的效果已达到约 80%，但在 SWE-bench Full 上仍存在显著的性能差距。这一差异表明，需要提升大语言模型 Agent 自动消解自然语言问题描述中歧义的能力，尤其是在描述不够充分的情况下；这类描述更贴近真实生产环境中的复杂情况。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-026",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>3.2 Patch Analysis</h3>",
+      "zh": "<h3>3.2 补丁分析</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Patch Size</strong> We further analyze the size of patches generated by Sonar Foundation Agent on SWE-bench Verified, with different LLMs as the backend. Figure 1, 2, 3 present the patch churn distribution (in log scale) from GPT-5, Sonnet-4.5, and Opus-4.5, respectively. Each figure plots the distribution of agent-generated patches based on their sizes, where the patch size is defined by the number of lines added and removed. Additionally, each bar in the figure shows both the correct and incorrect patches, where correctness here is defined by whether the patch resolves the issue. Across all three LLM backends, the majority of the agent-generated patches have less than 30 changed lines. The ratio of correct patches is also higher when the patch size is smaller. These observations suggest that the smaller patches generated by the agent have a high probability of resolving the issue compared to larger patches. While all three LLMs exhibit a similar distribution of patch size, GPT-5 patches are more evenly distributed across the 1–20 range. In contrast, both Sonnet 4.5 and Opus 4.5 show a higher concentration of patches in the 2–4 size range.</p>",
+      "zh": "<p><strong>补丁大小</strong> 我们进一步分析了 Sonar Foundation Agent 使用不同大语言模型作为后端时，在 SWE-bench Verified 上生成的补丁大小。图 1、2、3 分别展示了 GPT-5、Sonnet-4.5 和 Opus-4.5 的补丁改动行数分布（采用对数刻度）。每张图都按照补丁大小绘制了 Agent 所生成补丁的分布，其中补丁大小定义为新增和删除的行数。此外，图中的每个条形都同时展示了正确补丁与错误补丁，这里的正确性取决于补丁是否解决了问题。在全部三个大语言模型后端上，Agent 生成的大多数补丁的改动都少于 30 行。补丁越小，正确补丁的占比也越高。这些观察结果表明，与较大的补丁相比，Agent 生成的较小补丁解决问题的概率更高。虽然三个大语言模型呈现出相似的补丁大小分布，但 GPT-5 的补丁在 1–20 行范围内分布得更均匀。相比之下，Sonnet 4.5 和 Opus 4.5 的补丁都更加集中于 2–4 行的范围。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-028",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure id=\"shared-source-figure-1\"><img src=\"/media/47e679d80462d688dfe14afc.png\" alt=\"Figure 1\" loading=\"lazy\" decoding=\"async\"><figcaption>Figure 1: Patch Churn Distribution with Sonar Foundation Agent + GPT-5.</figcaption></figure>"
+    },
+    {
+      "id": "new44_sonar_technical_report-029",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure id=\"shared-source-figure-2\"><img src=\"/media/9e30a4eaefa6f5e9d5a50b91.png\" alt=\"Figure 2\" loading=\"lazy\" decoding=\"async\"><figcaption>Figure 2: Patch Churn Distribution with Sonar Foundation Agent + Sonnet-4.5.</figcaption></figure>"
+    },
+    {
+      "id": "new44_sonar_technical_report-030",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure id=\"shared-source-figure-3\"><img src=\"/media/c4514bb04bd88f0730c05324.png\" alt=\"Figure 3\" loading=\"lazy\" decoding=\"async\"><figcaption>Figure 3: Patch Churn Distribution with Sonar Foundation Agent + Opus-4.5.</figcaption></figure>"
+    },
+    {
+      "id": "new44_sonar_technical_report-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Exact Match Analysis</strong> To understand the effect of potential LLM memorization, we examine the exact match rate of agent-generated patches. An agent-generated patch is considered as an exact match, if it makes the same code modification (i.e., excluding comments etc.) as the ground truth developer’s patch. Table 2 shows the exact match rate of patches generated by Sonar Foundation Agent with different LLM backends. Even with the same agent scaffold, LLMs show a large variation in the exact match rate, with GPT-5 at 11.49% and Opus-4.5 at 23%. However, we note that the exact-match patches are usually the smaller patches. Table 2 also presents the average size of the exact-match patches, and the average size of all patches generated with different LLMs as backend. The exact-match patches on average modified 4.02 to 5.22 lines, while patches in general modified 12.44 to 15.32 lines.</p>",
+      "zh": "<p><strong>完全匹配分析</strong> 为了解潜在的大语言模型记忆效应，我们检查了 Agent 生成补丁的完全匹配率。如果 Agent 生成的补丁与作为标准答案的开发者补丁进行了相同的代码修改（即不计注释等内容），就认为它们完全匹配。表 2 展示了 Sonar Foundation Agent 使用不同大语言模型后端时生成补丁的完全匹配率。即使使用同一个 Agent 运行框架，不同大语言模型的完全匹配率也有很大差异：GPT-5 为 11.49%，Opus-4.5 为 23%。不过，我们注意到，完全匹配的补丁通常较小。表 2 还列出了完全匹配补丁的平均大小，以及使用不同大语言模型后端生成的所有补丁的平均大小。完全匹配的补丁平均修改 4.02 至 5.22 行，而所有补丁平均修改 12.44 至 15.32 行。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-032",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure id=\"shared-source-table-2\"><figcaption>Table 2: Percentage of agent-generated patches that are exact match to developer’s patch.</figcaption><table><thead><tr><th>LLM</th><th>Exact Match%</th><th>Avg. Patch Size (Exact Match)</th><th>Avg. Patch Size (All Patches)</th></tr></thead><tbody><tr><td>GPT-5</td><td>11.49%</td><td>4.02</td><td>15.32</td></tr><tr><td>Claude Sonnet 4.5</td><td>18.20%</td><td>5.22</td><td>14.78</td></tr><tr><td>Claude Opus 4.5</td><td>23.00%</td><td>4.80</td><td>12.44</td></tr></tbody></table></figure>"
+    },
+    {
+      "id": "new44_sonar_technical_report-033",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>4 Lesson learned: Tailoring agent autonomy</h2>",
+      "zh": "<h2>4 经验总结：调整 Agent 的自主程度</h2>"
+    },
+    {
+      "id": "new44_sonar_technical_report-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In trying to improve the efficacy of Sonar Foundation Agent, our team has conducted extensive research and experiments. During this process, it became clear to us that the key to a great agent is to match the level of autonomy with the capability of the underlying model. As shown in Figure 4, with the current powerful LLMs, the efficacy of our agent on SWE-bench Verified increases when given more autonomy.</p>",
+      "zh": "<p>为了提高 Sonar Foundation Agent 的效果，我们团队开展了大量研究和实验。在此过程中，我们逐渐认识到，优秀 Agent 的关键是让其自主程度与底层模型的能力相匹配。如图 4 所示，在使用当前这些强大的大语言模型时，赋予 Agent 更多自主权，可以提高它在 SWE-bench Verified 上的效果。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-035",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure id=\"shared-source-figure-4\"><img src=\"/media/d77a2fc53d9b45795c9f9f8a.png\" alt=\"Figure 4\" loading=\"lazy\" decoding=\"async\"><figcaption>Figure 4: Efficacy increases with the level of agent autonomy.</figcaption></figure>"
+    },
+    {
+      "id": "new44_sonar_technical_report-036",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>4.1 Constrained workflow: Early-days AutoCodeRover</h3>",
+      "zh": "<h3>4.1 受约束的工作流：早期的 AutoCodeRover</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Back in April 2024, our team developed AutoCodeRover, which was one of the earliest coding agents. It has a clearly-defined 2-stage workflow: context retrieval, followed by patch generation. Either stage is handled by a separate agent. In the context retrieval stage, AutoCodeRover would repeatedly invoke an AST search tool to find the buggy location and accumulate relevant context, and most of the autonomy of AutoCodeRover lies in what AST searches to perform and when to stop. In the patch generation stage, AutoCodeRover would simply write a patch with the accumulated context. There is no autonomy in deciding the workflow.</p>",
+      "zh": "<p>早在 2024 年 4 月，我们团队就开发了 AutoCodeRover，它是最早的一批编程 Agent 之一。它采用明确定义的 2 阶段工作流：先检索上下文，再生成补丁。每个阶段分别由独立的 Agent 处理。在上下文检索阶段，AutoCodeRover 会反复调用 AST 搜索工具，寻找存在缺陷的位置并积累相关上下文；它的大部分自主权体现在决定执行哪些 AST 搜索，以及何时停止搜索。在补丁生成阶段，AutoCodeRover 只需利用积累的上下文编写补丁。它没有自主决定工作流的权力。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The limited autonomy to AutoCodeRover was a conscious decision. At that time, the capability of LLMs to grasp a long context was limited. When we instructed a single agent to first retrieve context and then write a patch, it would have lost sight of some context collected early on when writing the patch. Moreover, oftentimes, it would not write a patch altogether. Therefore, we broke the workflow into two distinct stages: the context is first collected and summarized by a first agent, and a patch is written by a second agent. We found that the separation improved both context utilization and instruction following, boosting AutoCodeRover’s efficacy under limited LLM capability.</p>",
+      "zh": "<p>我们有意限制了 AutoCodeRover 的自主权。当时，大语言模型理解长上下文的能力有限。如果我们要求单个 Agent 先检索上下文，再编写补丁，那么到编写补丁时，它就会忽略一部分较早收集到的上下文。而且，它经常根本不编写补丁。因此，我们将工作流分为两个独立阶段：第一个 Agent 先收集并总结上下文，第二个 Agent 再编写补丁。我们发现，这种拆分同时改善了上下文利用和指令遵循，让 AutoCodeRover 在大语言模型能力有限的情况下取得了更好的效果。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-039",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>4.2 More autonomy in workflow and tools: Sonar Foundation Agent</h3>",
+      "zh": "<h3>4.2 在工作流和工具上给予更多自主权：Sonar Foundation Agent</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This time around, while developing Sonar Foundation Agent, we re-examined AutoCodeRover’s two-stage workflow and its basis. We realized that the capability of LLMs have evolved a lot over the past year and a half, and that the agent might now benefit from a more free workflow. Therefore, we switched to a single-agent workflow. The two-stage workflow was not totally discarded. Instead, we prompted the single agent to work in several stages, including the two stages and more patch testing and validation. We were glad to find that the latest models, including GPT-5 and Claude Sonnet 4.5, are able to deal with a longer context window and follow instructions significantly better. Using the same LLM, the change in workflow resulted in an efficacy boost from about 58% (“Two-Stage Workflow” in Figure 4) to 70% (“Free Workflow” in Figure 4).</p>",
+      "zh": "<p>这一次，在开发 Sonar Foundation Agent 时，我们重新审视了 AutoCodeRover 的两阶段工作流及其设计依据。我们意识到，在过去一年半里，大语言模型的能力已经大幅进步，现在 Agent 或许能从更加自由的工作流中获益。因此，我们改用了单 Agent 工作流。但我们并未完全抛弃两阶段工作流，而是通过提示词要求这个 Agent 分若干阶段工作，其中既包括原来的两个阶段，也包括更多补丁测试和验证。我们欣喜地发现，包括 GPT-5 和 Claude Sonnet 4.5 在内的最新模型能够处理更长的上下文窗口，指令遵循能力也显著提升。在使用同一个大语言模型的情况下，这一工作流调整将效果从约 58%（图 4 中的“Two-Stage Workflow”，即“两阶段工作流”）提高到了 70%（图 4 中的“Free Workflow”，即“自由工作流”）。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-041",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>4.3 More autonomy in prompts: Leveraging thinking models</h3>",
+      "zh": "<h3>4.3 在提示词上给予更多自主权：发挥思考模型的能力</h3>"
+    },
+    {
+      "id": "new44_sonar_technical_report-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Finally, we sought to unlock the power of thinking models. In an initial attempt, we simply turned on the extended thinking of Claude Sonnet 4.5. However, the efficacy remained at about 70%. We realized that the prompt was so detailed that even with extended thinking, the agent would do largely the same things and achieve similar results. Our realization was corroborated by Claude’s official prompting guide, which says thinking models can benefit from more concise and less prescriptive prompts. In light of this, we distilled the essence of our prompt, highlighting a test-driven approach to issue resolving, while removing the overly prescriptive instructions. This improvement in prompts gave us a final boost of efficacy to 75% (“Free Workflow+Extended Thinking” in the chart above).</p>",
+      "zh": "<p>最后，我们尝试释放思考模型的能力。最初，我们只是开启了 Claude Sonnet 4.5 的扩展思考功能，但效果仍停留在约 70%。我们意识到，提示词写得过于详细，即使开启扩展思考，Agent 做的事情也基本相同，因此结果也很接近。Claude 官方提示词指南印证了我们的认识：思考模型可以从更简洁、规定更少的提示词中获益。据此，我们提炼了提示词的核心内容，突出以测试驱动的方式解决问题，同时移除了规定过于具体的指令。这次提示词改进最终将效果进一步提升至 75%（上图中的“Free Workflow+Extended Thinking”，即“自由工作流＋扩展思考”）。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The journey from AutoCodeRover to the Sonar Foundation Agent offers a critical insight for the future of agentic coding: as underlying models grow more powerful, we must grant them more autonomy. Our research clearly shows that moving from a constrained, two-stage process to a \"Free Workflow\" and refining prompts to be less prescriptive unlocked the agent’s full potential, boosting efficacy from 58% to 75%. This principle of matching agent autonomy to model capability will be foundational as we continue to push the boundaries of AI-driven software development.</p>",
+      "zh": "<p>从 AutoCodeRover 到 Sonar Foundation Agent 的发展历程，为 Agent 编程的未来提供了一条关键启示：随着底层模型越来越强大，我们必须赋予它们更多自主权。我们的研究清楚地表明，从受约束的两阶段流程转向“自由工作流”，并减少提示词中规定过细的内容，能够释放 Agent 的全部潜力，将效果从 58% 提升至 75%。在我们继续拓展 AI 驱动的软件开发边界时，让 Agent 的自主程度与模型能力相匹配，将成为一项基础原则。</p>"
+    },
+    {
+      "id": "new44_sonar_technical_report-044",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>References</h2>",
+      "zh": "<h2>参考文献</h2>"
+    },
+    {
+      "id": "new44_sonar_technical_report-045",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li id=\"en-source-reference-1\">Llamaindex - redefine document workflows with ai agents. <a href=\"https://www.llamaindex.ai/\" rel=\"noopener noreferrer\">https://www.llamaindex.ai/</a>. Accessed: 2025-12-11.</li><li id=\"en-source-reference-2\">Carlos E. Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Gaunt, Lakshman Niranjan, Ziyang Zhong, Karthik Narasimhan, and Anirudh Narasimhan. SWE-bench official leaderboards. <a href=\"https://www.swebench.com/\" rel=\"noopener noreferrer\">https://www.swebench.com/</a>, 2024. Accessed: 2025-12-15.</li><li id=\"en-source-reference-3\">Carlos E Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik R Narasimhan. SWE-bench: Can language models resolve real-world github issues? In The Twelfth International Conference on Learning Representations , 2024.</li><li id=\"en-source-reference-4\">Yuntong Zhang, Haifeng Ruan, Zhiyu Fan, and Abhik Roychoudhury. Autocoderover: Autonomous program improvement. In Maria Christakis and Michael Pradel, editors, Proceedings of the 33rd ACM SIGSOFT International Symposium on Software Testing and Analysis, ISSTA 2024, Vienna, Austria, September 16-20, 2024 , pages 1592–1604. ACM, 2024.</li></ol>",
+      "zh": "<ol><li id=\"zh-source-reference-1\">Llamaindex——用 AI Agent 重新定义文档工作流。<a href=\"https://www.llamaindex.ai/\" rel=\"noopener noreferrer\">https://www.llamaindex.ai/</a>。访问日期：2025-12-11。</li><li id=\"zh-source-reference-2\">Carlos E. Jimenez、John Yang、Alexander Wettig、Shunyu Yao、Kexin Gaunt、Lakshman Niranjan、Ziyang Zhong、Karthik Narasimhan 和 Anirudh Narasimhan。SWE-bench 官方排行榜。<a href=\"https://www.swebench.com/\" rel=\"noopener noreferrer\">https://www.swebench.com/</a>，2024。访问日期：2025-12-15。</li><li id=\"zh-source-reference-3\">Carlos E Jimenez、John Yang、Alexander Wettig、Shunyu Yao、Kexin Pei、Ofir Press 和 Karthik R Narasimhan。SWE-bench：语言模型能否解决真实世界中的 GitHub 问题？载于第十二届国际学习表征会议，2024。</li><li id=\"zh-source-reference-4\">Yuntong Zhang、Haifeng Ruan、Zhiyu Fan 和 Abhik Roychoudhury。AutoCodeRover：自主改进程序。载于 Maria Christakis 和 Michael Pradel 主编，《第 33 届 ACM SIGSOFT 国际软件测试与分析研讨会论文集》，ISSTA 2024，奥地利维也纳，2024 年 9 月 16–20 日，第 1592–1604 页。ACM，2024。</li></ol>"
+    }
+  ],
+  "description": "Sonar Foundation Agent 是一个面向一般软件问题的编程 Agent，由原 AutoCodeRover 团队在 Sonar 开发。截至 2025 年 12 月 19 日，Sonar Foundation Agent 在 SWE-be…",
+  "reading_minutes": 15,
+  "downloads": {
+    "original": "/downloads/sonar-technical-report-source.pdf"
+  }
+}

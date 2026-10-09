@@ -1,0 +1,206 @@
+{
+  "title": "Live-SWE-agent：首个可在运行时自我演化的软件工程 Agent",
+  "original_title": "Live-SWE-agent | The First Live AI Software Agent",
+  "url": "https://github.com/OpenAutoCoder/live-swe-agent",
+  "publisher": "Live-SWE-agent",
+  "author": "Chunqiu Steven Xia, Zhe Wang, Yan Yang, Yuxiang Wei, Lingming Zhang",
+  "source_order": 45,
+  "slug": "live-swe-agent",
+  "source_id": "new45_live_swe_agent",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new45_live_swe_agent-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"live-swe-agent banner\" src=\"/media/c09b4094f3fb33246e4e6999.png\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new45_live_swe_agent-001",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>\n<a href=\"https://live-swe-agent.github.io/\" rel=\"noopener noreferrer\"><img src=\"/media/9fd99ddab2a898d15003390a.svg\" loading=\"lazy\" decoding=\"async\"></a>\n<a href=\"https://arxiv.org/abs/2511.13646\" rel=\"noopener noreferrer\"><img src=\"/media/e6d9a8078377562b55ea3320.svg\" loading=\"lazy\" decoding=\"async\"></a>\n<a href=\"https://huggingface.co/livesweagent\" rel=\"noopener noreferrer\"><img src=\"/media/a458b5c473cafd6872984502.svg\" loading=\"lazy\" decoding=\"async\"></a>\n</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>\n<a href=\"#en-source-news\">📣News</a> |\n    <a href=\"#en-source-leaderboard\">🏆Leaderboard</a> |\n    <a href=\"#en-source-comparison\">📊Comparison</a> | \n    <a href=\"#en-source-setup\">🚀Setup</a> |\n    <a href=\"#en-source-artifacts\">⚙️Artifacts</a> |\n    <a href=\"#en-source-attribution\">📜Attribution</a> |\n    <a href=\"#en-source-acknowledgements\">🙏Acknowledgements</a>\n</p>",
+      "zh": "<p><a href=\"#zh-source-news\">📣动态</a> | <a href=\"#zh-source-leaderboard\">🏆排行榜</a> | <a href=\"#zh-source-comparison\">📊对比</a> | <a href=\"#zh-source-setup\">🚀安装与配置</a> | <a href=\"#zh-source-artifacts\">⚙️实验产物</a> | <a href=\"#zh-source-attribution\">📜引用</a> | <a href=\"#zh-source-acknowledgements\">🙏致谢</a></p>"
+    },
+    {
+      "id": "new45_live_swe_agent-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Live-SWE-agent is the <strong>first <em>live</em>, runtime self-evolving software engineering agent</strong> that expands and revises its own capabilities <em>on the fly</em> while working on a real-world issue.\nOur key insight is that <strong>software agents are themselves software systems</strong>, and modern LLM-based agents already possess the intrinsic capability to extend or modify their own behavior at runtime.</p>",
+      "zh": "<p>Live-SWE-agent 是<strong>首个能够在运行时自我演化的<em>动态</em>软件工程 Agent</strong>，在处理真实世界问题的同时，<em>即时</em>扩展和调整自身能力。我们的关键洞察是：<strong>软件 Agent 本身也是软件系统</strong>，而现代基于大语言模型的 Agent 已经具备在运行时扩展或修改自身行为的内在能力。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-news\">📣 News</h2>",
+      "zh": "<h2 id=\"zh-source-news\">📣 动态</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-005",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong>[Nov 24th, 2025]</strong>: Claude Opus 4.5 + Live-SWE-agent scores 79.2% on SWE-bench Verified, leading all current open-source scaffolds and coming very close to Anthropic’s internal, manually engineered scaffold for Opus 4.5!!</li>\n<li><strong>[Nov 20th, 2025]</strong>: Gemini 3 Pro + Live-SWE-agent scores 77.4% on SWE-bench Verified, outperforming all available models (including Claude 4.5)!</li>\n<li><strong>[Nov 17th, 2025]</strong>: Live-SWE-agent achieves the new state-of-the-art solve rate of 45.8% on SWE-Bench Pro!</li>\n<li><strong>[Nov 17th, 2025]</strong>: We've released Live-SWE-agent 1.0.0!</li>\n</ul>",
+      "zh": "<ul><li><strong>[2025 年 11 月 24 日]</strong>：Claude Opus 4.5 + Live-SWE-agent 在 SWE-bench Verified 上取得了 79.2% 的成绩，领先于目前所有开源运行框架，并且已经非常接近 Anthropic 为 Opus 4.5 手工设计的内部运行框架！！</li><li><strong>[2025 年 11 月 20 日]</strong>：Gemini 3 Pro + Live-SWE-agent 在 SWE-bench Verified 上取得了 77.4% 的成绩，超越所有已可用的模型（包括 Claude 4.5）！</li><li><strong>[2025 年 11 月 17 日]</strong>：Live-SWE-agent 在 SWE-Bench Pro 上实现了 45.8% 的问题解决率，刷新了最佳水平！</li><li><strong>[2025 年 11 月 17 日]</strong>：我们发布了 Live-SWE-agent 1.0.0！</li></ul>"
+    },
+    {
+      "id": "new45_live_swe_agent-006",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-leaderboard\">🏆 Leaderboard</h2>",
+      "zh": "<h2 id=\"zh-source-leaderboard\">🏆 排行榜</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For software tasks, recent LLMs are often benchmarked using manually engineered, proprietary agent scaffolds, which makes it difficult to compare the true capabilities of different models fairly.</p>",
+      "zh": "<p>在软件任务中，近期的大语言模型通常使用手工设计的专有 Agent 运行框架进行基准评测，这使得公平比较不同模型的真实能力变得困难。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Live-SWE-agent not only demonstrates that a minimal, open, and live scaffold already has the ability to outperform proprietary scaffolds, but also offers a unified and powerful platform that enables genuinely fair, apples-to-apples comparisons for future model releases.</p>",
+      "zh": "<p>Live-SWE-agent 不仅表明，一个极简、开放且能在运行时演化的运行框架已经有能力超越专有框架，还提供了统一而强大的平台，让未来发布的模型可以在相同条件下进行真正公平的比较。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As shown below, on our leaderboard of recent models (all evaluated with Live-SWE-agent), <strong>Claude Opus 4.5</strong> retains the #1 spot with a score of 79.2% on SWE-bench Verified by a large margin.</p>",
+      "zh": "<p>如下所示，在我们针对近期模型建立的排行榜中（所有模型均使用 Live-SWE-agent 进行评测），<strong>Claude Opus 4.5</strong> 以 SWE-bench Verified 上 79.2% 的得分大幅领先，继续位居第 1。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-010",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>\n<a href=\"https://github.com/OpenAutoCoder/live-swe-agent/blob/main/assets/leaderboard.png\" rel=\"noopener noreferrer\"><img src=\"/media/fb67a6a5c147a84e23083a8d.png\" loading=\"lazy\" decoding=\"async\"></a>\n</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>More model scores are coming soon! For more details, please visit our <a href=\"https://live-swe-agent.github.io/\" rel=\"noopener noreferrer\">leaderboard</a>. Feel free to submit your model's evaluation results to help build a more comprehensive and fair benchmarking platform!</p>",
+      "zh": "<p>更多模型的得分即将公布！详情请访问我们的<a href=\"https://live-swe-agent.github.io/\" rel=\"noopener noreferrer\">排行榜</a>。欢迎提交你的模型评测结果，帮助我们建设一个更加全面、公平的基准评测平台！</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-012",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-comparison\">📊 Comparison</h2>",
+      "zh": "<h2 id=\"zh-source-comparison\">📊 对比</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Below shows the comparison graph between Live-SWE-agent and state-of-the-art open-source solutions and proprietary commercial agent scaffolds on SWE-bench Verified and SWE-Bench Pro.</p>",
+      "zh": "<p>下图展示了 Live-SWE-agent 与最先进的开源方案及专有商业 Agent 运行框架在 SWE-bench Verified 和 SWE-Bench Pro 上的对比。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-014",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p>\n<a href=\"https://github.com/OpenAutoCoder/live-swe-agent/blob/main/assets/comparison.png\" rel=\"noopener noreferrer\"><img src=\"/media/fb60dcf1d5be2b5f3291045e.png\" loading=\"lazy\" decoding=\"async\"></a>\n</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-015",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-setup\">🚀 Setup</h2>",
+      "zh": "<h2 id=\"zh-source-setup\">🚀 安装与配置</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We built Live-SWE-agent on top of the popular <a href=\"https://github.com/SWE-agent/mini-swe-agent\" rel=\"noopener noreferrer\">mini-swe-agent</a> framework with very minimal modifications.</p>",
+      "zh": "<p>我们基于广受欢迎的 <a href=\"https://github.com/SWE-agent/mini-swe-agent\" rel=\"noopener noreferrer\">mini-swe-agent</a> 框架构建了 Live-SWE-agent，只做了极少量修改。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To use Live-SWE-agent, simply install mini-swe-agent first using this <a href=\"https://github.com/OpenAutoCoder/live-swe-agent/blob/main\" rel=\"noopener noreferrer\">guide</a> and use the custom Live-SWE-agent config:</p>",
+      "zh": "<p>要使用 Live-SWE-agent，只需先按照这份<a href=\"https://github.com/OpenAutoCoder/live-swe-agent/blob/main\" rel=\"noopener noreferrer\">指南</a>安装 mini-swe-agent，再使用自定义的 Live-SWE-agent 配置：</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-018",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre>mini --config config/livesweagent.yaml <span><span>#</span> using custom Live-SWE-agent config</span></pre>"
+    },
+    {
+      "id": "new45_live_swe_agent-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>See the <code>config</code> folder for more details.</p>",
+      "zh": "<p>更多详情请查看 <code>config</code> 文件夹。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-020",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-artifacts\">⚙️ Artifacts</h2>",
+      "zh": "<h2 id=\"zh-source-artifacts\">⚙️ 实验产物</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can download the complete trajectories, patches, and results of Live-SWE-agent in our <a href=\"https://github.com/OpenAutoCoder/live-swe-agent/releases/tag/v1.0.0\" rel=\"noopener noreferrer\">v1.0.0 release</a>:</p>",
+      "zh": "<p>你可以在我们的 <a href=\"https://github.com/OpenAutoCoder/live-swe-agent/releases/tag/v1.0.0\" rel=\"noopener noreferrer\">v1.0.0 发布页面</a>下载 Live-SWE-agent 的完整执行轨迹、补丁和结果：</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-022",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><code>swebench_verified</code>: complete runs on SWE-bench Verified</li>\n<li><code>swebench_pro</code>: complete runs on SWE-Bench Pro</li>\n</ul>",
+      "zh": "<ul><li><code>swebench_verified</code>：在 SWE-bench Verified 上的完整运行记录</li><li><code>swebench_pro</code>：在 SWE-Bench Pro 上的完整运行记录</li></ul>"
+    },
+    {
+      "id": "new45_live_swe_agent-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You also obtain them in our 🤗 huggingface <a href=\"https://huggingface.co/livesweagent/datasets\" rel=\"noopener noreferrer\">datasets</a></p>",
+      "zh": "<p>你也可以从我们的 🤗 Hugging Face <a href=\"https://huggingface.co/livesweagent/datasets\" rel=\"noopener noreferrer\">数据集</a>获取这些内容。</p>"
+    },
+    {
+      "id": "new45_live_swe_agent-024",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-attribution\">📜 Attribution</h2>",
+      "zh": "<h2 id=\"zh-source-attribution\">📜 引用</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-025",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><span>@article</span>{<span>livesweagent</span>,\n  <span>author</span>    = <span><span>{</span>Xia, Chunqiu Steven and Wang, Zhe and Yang, Yan and Wei, Yuxiang and Zhang, Lingming<span>}</span></span>,\n  <span>title</span>     = <span><span>{</span>Live-SWE-agent: Can Software Engineering Agents Self-Evolve on the Fly?<span>}</span></span>,\n  <span>year</span>      = <span><span>{</span>2025<span>}</span></span>,\n  <span>journal</span>   = <span><span>{</span>arXiv preprint<span>}</span></span>,\n}</pre>"
+    },
+    {
+      "id": "new45_live_swe_agent-026",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-acknowledgements\">🙏 Acknowledgements</h2>",
+      "zh": "<h2 id=\"zh-source-acknowledgements\">🙏 致谢</h2>"
+    },
+    {
+      "id": "new45_live_swe_agent-027",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><a href=\"https://github.com/SWE-agent/mini-swe-agent\" rel=\"noopener noreferrer\">mini-swe-agent</a></li>\n<li><a href=\"https://www.swebench.com/\" rel=\"noopener noreferrer\">SWE-bench</a></li>\n<li><a href=\"https://scale.com/blog/swe-bench-pro/\" rel=\"noopener noreferrer\">SWE-Bench Pro</a></li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://github.com/SWE-agent/mini-swe-agent\" rel=\"noopener noreferrer\">mini-swe-agent</a></li><li><a href=\"https://www.swebench.com/\" rel=\"noopener noreferrer\">SWE-bench</a></li><li><a href=\"https://scale.com/blog/swe-bench-pro/\" rel=\"noopener noreferrer\">SWE-Bench Pro</a></li></ul>"
+    }
+  ],
+  "description": "📣动态 | 🏆排行榜 | 📊对比 | 🚀安装与配置 | ⚙️实验产物 | 📜引用 | 🙏致谢",
+  "reading_minutes": 3,
+  "downloads": {}
+}

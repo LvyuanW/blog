@@ -1,0 +1,1032 @@
+{
+  "title": "OpenAI Agents SDK：工具与将 Agent 用作工具",
+  "original_title": "OpenAI Agents SDK: Tools",
+  "url": "https://openai.github.io/openai-agents-python/tools/",
+  "date": "",
+  "publisher": "OpenAI",
+  "author": "OpenAI",
+  "source_order": 48,
+  "slug": "agents-sdk-tools",
+  "source_id": "new48_agents_sdk_tools",
+  "category": "工具与技能",
+  "blocks": [
+    {
+      "id": "new48_agents_sdk_tools-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tools let agents take actions: things like fetching data, running code, calling external APIs, and even using a computer. The SDK supports five categories:</p>",
+      "zh": "<p>工具让 Agent 能够采取行动，例如获取数据、运行代码、调用外部 API，甚至使用计算机。SDK 支持五类工具：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-001",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Hosted OpenAI tools: execute for the model on OpenAI servers.</li>\n<li>Local/runtime execution tools: <code>ComputerTool</code> and <code>ApplyPatchTool</code> always run in your environment, while <code>ShellTool</code> can run locally or in a hosted container.</li>\n<li><code>FunctionTool</code> instances: wrap any Python function as a tool.</li>\n<li>Agents as tools: expose an agent as a callable tool without a full handoff.</li>\n<li>Experimental: Codex tool: run workspace-scoped Codex tasks from a tool call.</li>\n</ul>",
+      "zh": "<ul><li>OpenAI 托管工具：在 OpenAI 服务器上为模型执行操作。</li><li>本地／运行时执行工具：<code>ComputerTool</code> 和 <code>ApplyPatchTool</code> 始终在你的环境中运行，而 <code>ShellTool</code> 既可以在本地运行，也可以在托管容器中运行。</li><li><code>FunctionTool</code> 实例：将任意 Python 函数封装为工具。</li><li>将 Agent 用作工具：将一个 Agent 暴露为可调用的工具，而不进行完整的控制权移交。</li><li>实验性功能：Codex 工具，通过工具调用执行限定在工作区范围内的 Codex 任务。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-002",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-choosing-a-tool-type\">Choosing a tool type</h2>",
+      "zh": "<h2 id=\"zh-source-choosing-a-tool-type\">选择工具类型</h2>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Use this page as a catalog, then jump to the section that matches the runtime you control.</p>",
+      "zh": "<p>可以把本页当作工具目录，再跳转到与你所控制的运行时相对应的章节。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-004",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table>\n<thead>\n<tr>\n<th>If you want to...</th>\n<th>Start here</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Use OpenAI-managed tools (web search, file search, code interpreter, hosted MCP, image generation)</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#hosted-tools\" rel=\"noopener noreferrer\">Hosted tools</a></td>\n</tr>\n<tr>\n<td>Defer large tool surfaces until runtime with tool search</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#hosted-tool-search\" rel=\"noopener noreferrer\">Hosted tool search</a></td>\n</tr>\n<tr>\n<td>Coordinate several tool calls from generated JavaScript</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#programmatic-tool-calling\" rel=\"noopener noreferrer\">Programmatic Tool Calling</a></td>\n</tr>\n<tr>\n<td>Run tools in your own process or environment</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#local-runtime-tools\" rel=\"noopener noreferrer\">Local runtime tools</a></td>\n</tr>\n<tr>\n<td>Wrap Python functions as tools</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#function-tools\" rel=\"noopener noreferrer\">Function tools</a></td>\n</tr>\n<tr>\n<td>Let one agent call another without a handoff</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#agents-as-tools\" rel=\"noopener noreferrer\">Agents as tools</a></td>\n</tr>\n<tr>\n<td>Run workspace-scoped Codex tasks from an agent</td>\n<td><a href=\"https://openai.github.io/openai-agents-python/tools/#experimental-codex-tool\" rel=\"noopener noreferrer\">Experimental: Codex tool</a></td>\n</tr>\n</tbody>\n</table>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-005",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-hosted-tools\">Hosted tools</h2>",
+      "zh": "<h2 id=\"zh-source-hosted-tools\">托管工具</h2>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>OpenAI offers a few built-in tools when using the <a href=\"https://openai.github.io/openai-agents-python/ref/models/openai_responses/#agents.models.openai_responses.OpenAIResponsesModel\" title=\"OpenAIResponsesModel\" rel=\"noopener noreferrer\"><code>OpenAIResponsesModel</code></a>:</p>",
+      "zh": "<p>使用 <a href=\"https://openai.github.io/openai-agents-python/ref/models/openai_responses/#agents.models.openai_responses.OpenAIResponsesModel\" title=\"OpenAIResponsesModel\" rel=\"noopener noreferrer\"><code>OpenAIResponsesModel</code></a> 时，OpenAI 提供以下内置工具：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-007",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.WebSearchTool\" title=\"WebSearchTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>WebSearchTool</code></a> lets an agent search the web.</li>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.FileSearchTool\" title=\"FileSearchTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>FileSearchTool</code></a> allows retrieving information from your OpenAI Vector Stores.</li>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.CodeInterpreterTool\" title=\"CodeInterpreterTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>CodeInterpreterTool</code></a> lets the LLM execute code in a sandboxed environment.</li>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.HostedMCPTool\" title=\"HostedMCPTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>HostedMCPTool</code></a> exposes a remote MCP server's tools to the model.</li>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ImageGenerationTool\" title=\"ImageGenerationTool\" rel=\"noopener noreferrer\"><code>ImageGenerationTool</code></a> generates images from a prompt.</li>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolSearchTool\" title=\"ToolSearchTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ToolSearchTool</code></a> lets the model load deferred tools, namespaces, or hosted MCP servers on demand.</li>\n<li>The <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ProgrammaticToolCallingTool\" title=\"ProgrammaticToolCallingTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ProgrammaticToolCallingTool</code></a> lets the model coordinate eligible tools from generated JavaScript.</li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.WebSearchTool\" title=\"WebSearchTool            dataclass   \" rel=\"noopener noreferrer\"><code>WebSearchTool</code></a> 让 Agent 搜索网页。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.FileSearchTool\" title=\"FileSearchTool            dataclass   \" rel=\"noopener noreferrer\"><code>FileSearchTool</code></a> 支持从你的 OpenAI 向量存储中检索信息。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.CodeInterpreterTool\" title=\"CodeInterpreterTool            dataclass   \" rel=\"noopener noreferrer\"><code>CodeInterpreterTool</code></a> 让大语言模型在沙箱环境中执行代码。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.HostedMCPTool\" title=\"HostedMCPTool            dataclass   \" rel=\"noopener noreferrer\"><code>HostedMCPTool</code></a> 将远程 MCP 服务器的工具暴露给模型。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ImageGenerationTool\" title=\"ImageGenerationTool\" rel=\"noopener noreferrer\"><code>ImageGenerationTool</code></a> 根据提示词生成图像。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolSearchTool\" title=\"ToolSearchTool            dataclass   \" rel=\"noopener noreferrer\"><code>ToolSearchTool</code></a> 让模型按需加载延迟加载的工具、命名空间或托管 MCP 服务器。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ProgrammaticToolCallingTool\" title=\"ProgrammaticToolCallingTool            dataclass   \" rel=\"noopener noreferrer\"><code>ProgrammaticToolCallingTool</code></a> 让模型通过生成的 JavaScript 协调符合条件的工具。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Advanced hosted search options:</p>",
+      "zh": "<p>托管搜索的高级选项：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-009",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><code>FileSearchTool</code> supports <code>filters</code>, <code>ranking_options</code>, and <code>include_search_results</code> in addition to <code>vector_store_ids</code> and <code>max_num_results</code>. Set <code>max_num_results</code> to an integer from 1 through 50; <code>None</code> or zero uses the provider default.</li>\n<li><code>WebSearchTool</code> supports <code>filters</code>, <code>user_location</code>, <code>search_context_size</code>, <code>external_web_access</code>, <code>search_content_types</code>, and <code>image_settings</code>.</li>\n</ul>",
+      "zh": "<ul><li>除 <code>vector_store_ids</code> 和 <code>max_num_results</code> 外，<code>FileSearchTool</code> 还支持 <code>filters</code>、<code>ranking_options</code> 和 <code>include_search_results</code>。将 <code>max_num_results</code> 设为 1 至 50 的整数；<code>None</code> 或零表示使用服务提供方的默认值。</li><li><code>WebSearchTool</code> 支持 <code>filters</code>、<code>user_location</code>、<code>search_context_size</code>、<code>external_web_access</code>、<code>search_content_types</code> 和 <code>image_settings</code>。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-010",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import Agent, FileSearchTool, Runner, WebSearchTool\n\nagent = Agent(\n    name=\"Assistant\",\n    tools=[\n        WebSearchTool(\n            search_content_types=[\"image\", \"text\"],\n            image_settings={\"max_results\": 3, \"caption\": True},\n        ),\n        FileSearchTool(\n            max_num_results=3,\n            vector_store_ids=[\"VECTOR_STORE_ID\"],\n        ),\n    ],\n)\n\n\nasync def main():\n    result = await Runner.run(\n        agent, \"Find recent images and supporting text about the Golden Gate Bridge at sunset.\"\n    )\n    print(result.final_output)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Set <code>search_content_types</code> to include <code>\"image\"</code> when the web search should return images, and also include <code>\"text\"</code> when the model needs supporting text results. <code>image_settings.max_results</code> requests a positive number of image results, while <code>image_settings.caption</code> requests short descriptions when available. When <code>\"image\"</code> is present, the SDK automatically requests <code>web_search_call.results</code>. Those raw results are stored on the <code>web_search_call</code> item in <a href=\"https://openai.github.io/openai-agents-python/results/#raw-responses\" rel=\"noopener noreferrer\"><code>RunResult.raw_responses</code></a>, separately from the assistant message, and can include <code>image_url</code>, <code>source_website_url</code>, <code>thumbnail_url</code>, and <code>caption</code>. See the OpenAI <a href=\"https://developers.openai.com/api/docs/guides/tools-web-search#image-search-results\" rel=\"noopener noreferrer\">image search results guide</a>.</p>",
+      "zh": "<p>如果网页搜索应返回图像，请在 <code>search_content_types</code> 中包含 <code>\"image\"</code>；如果模型还需要辅助的文本结果，请同时包含 <code>\"text\"</code>。<code>image_settings.max_results</code> 用正数指定要获取的图像数量，<code>image_settings.caption</code> 则请求在有相应信息时返回简短描述。包含 <code>\"image\"</code> 时，SDK 会自动请求 <code>web_search_call.results</code>。这些原始结果保存在 <a href=\"https://openai.github.io/openai-agents-python/results/#raw-responses\" rel=\"noopener noreferrer\"><code>RunResult.raw_responses</code></a> 的 <code>web_search_call</code> 项中，与助手消息分开存放，可能包含 <code>image_url</code>、<code>source_website_url</code>、<code>thumbnail_url</code> 和 <code>caption</code>。参见 OpenAI 的<a href=\"https://developers.openai.com/api/docs/guides/tools-web-search#image-search-results\" rel=\"noopener noreferrer\">图像搜索结果指南</a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-012",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-hosted-tool-search\">Hosted tool search</h3>",
+      "zh": "<h3 id=\"zh-source-hosted-tool-search\">托管工具搜索</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tool search lets OpenAI Responses models defer large tool surfaces until runtime, so the model loads only the subset it needs for the current turn. This is useful when you have many function tools, namespace groups, or hosted MCP servers and want to reduce tool-schema tokens without exposing every tool up front.</p>",
+      "zh": "<p>工具搜索允许 OpenAI Responses 模型将大量工具的加载推迟到运行时，使模型只加载当前轮次需要的那部分工具。如果你有很多函数工具、命名空间分组或托管 MCP 服务器，希望减少工具 schema 占用的 token，又不想一开始就暴露所有工具，这项功能很有用。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Start with hosted tool search when the candidate tools are already known when you build the agent. If your application needs to decide what to load dynamically, the Responses API also supports client-executed tool search, but the standard <code>Runner</code> does not auto-execute that mode.</p>",
+      "zh": "<p>如果构建 Agent 时就已经知道候选工具有哪些，可以先采用托管工具搜索。如果应用需要动态决定加载什么，Responses API 也支持由客户端执行的工具搜索，但标准 <code>Runner</code> 不会自动执行这种模式。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-015",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from typing import Annotated\n\nfrom agents import Agent, Runner, ToolSearchTool, tool_namespace\nfrom agents.decorators import tool\n\n\n@tool(defer_loading=True)\ndef get_customer_profile(\n    customer_id: Annotated[str, \"The customer ID to look up.\"],\n) -&gt; str:\n    \"\"\"Fetch a CRM customer profile.\"\"\"\n    return f\"profile for {customer_id}\"\n\n\n@tool(defer_loading=True)\ndef list_open_orders(\n    customer_id: Annotated[str, \"The customer ID to look up.\"],\n) -&gt; str:\n    \"\"\"List open orders for a customer.\"\"\"\n    return f\"open orders for {customer_id}\"\n\n\ncrm_tools = tool_namespace(\n    name=\"crm\",\n    description=\"CRM tools for customer lookups.\",\n    tools=[get_customer_profile, list_open_orders],\n)\n\n\nagent = Agent(\n    name=\"Operations assistant\",\n    model=\"gpt-5.6-sol\",\n    instructions=\"Load the crm namespace before using CRM tools.\",\n    tools=[*crm_tools, ToolSearchTool()],\n)\n\nresult = await Runner.run(agent, \"Look up customer_42 and list their open orders.\")\nprint(result.final_output)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>What to know:</p>",
+      "zh": "<p>需要了解的事项：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-017",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Hosted tool search is available only with OpenAI Responses models.</li>\n<li>Add exactly one <code>ToolSearchTool()</code> when you configure deferred-loading surfaces on an agent.</li>\n<li>Searchable surfaces include <code>@function_tool(defer_loading=True)</code>, <code>tool_namespace(name=..., description=..., tools=[...])</code>, and <code>HostedMCPTool(tool_config={..., \"defer_loading\": True})</code>.</li>\n<li>Deferred-loading function tools must be paired with <code>ToolSearchTool()</code>. Namespace-only setups may also use <code>ToolSearchTool()</code> to let the model load the right group on demand.</li>\n<li><code>tool_namespace()</code> groups <code>FunctionTool</code> instances under a shared namespace name and description. This is usually the best fit when you have many related tools, such as <code>crm</code>, <code>billing</code>, or <code>shipping</code>.</li>\n<li>OpenAI's official best-practice guidance is <a href=\"https://developers.openai.com/api/docs/guides/tools-tool-search#use-namespaces-where-possible\" rel=\"noopener noreferrer\">Use namespaces where possible</a>.</li>\n<li>Prefer namespaces or hosted MCP servers over many individually deferred functions when possible. They usually give the model a better high-level search surface and better token savings.</li>\n<li>Namespaces can mix immediate and deferred tools. Tools without <code>defer_loading=True</code> remain callable immediately, while deferred tools in the same namespace are loaded through tool search.</li>\n<li>As a rule of thumb, keep each namespace fairly small, ideally fewer than 10 functions.</li>\n<li>Named <code>tool_choice</code> cannot target bare namespace names or deferred-only tools. Prefer <code>auto</code>, <code>required</code>, or a real top-level callable tool name.</li>\n<li><code>ToolSearchTool(execution=\"client\")</code> is for manual Responses orchestration. If the model emits a client-executed <code>tool_search_call</code>, the standard <code>Runner</code> raises instead of executing it for you.</li>\n<li>Tool search activity appears in <a href=\"https://openai.github.io/openai-agents-python/results/#new-items\" rel=\"noopener noreferrer\"><code>RunResult.new_items</code></a> and in <a href=\"https://openai.github.io/openai-agents-python/streaming/#run-item-event-names\" rel=\"noopener noreferrer\"><code>RunItemStreamEvent</code></a> with dedicated item and event types.</li>\n<li>See <code>examples/tools/tool_search.py</code> for complete runnable examples covering both namespaced loading and top-level deferred tools.</li>\n<li>Official platform guide: <a href=\"https://developers.openai.com/api/docs/guides/tools-tool-search\" rel=\"noopener noreferrer\">Tool search</a>.</li>\n</ul>",
+      "zh": "<ul><li>托管工具搜索仅适用于 OpenAI Responses 模型。</li><li>为 Agent 配置延迟加载的工具集合时，必须且只能添加一个 <code>ToolSearchTool()</code>。</li><li>可搜索的工具集合包括 <code>@function_tool(defer_loading=True)</code>、<code>tool_namespace(name=..., description=..., tools=[...])</code> 和 <code>HostedMCPTool(tool_config={..., \"defer_loading\": True})</code>。</li><li>延迟加载的函数工具必须与 <code>ToolSearchTool()</code> 配合使用。仅使用命名空间的配置也可以添加 <code>ToolSearchTool()</code>，让模型按需加载合适的分组。</li><li><code>tool_namespace()</code> 将多个 <code>FunctionTool</code> 实例归入一个共享名称和描述的命名空间。当你有许多相互关联的工具时，例如 <code>crm</code>、<code>billing</code> 或 <code>shipping</code>，这通常是最合适的做法。</li><li>OpenAI 的官方最佳实践是<a href=\"https://developers.openai.com/api/docs/guides/tools-tool-search#use-namespaces-where-possible\" rel=\"noopener noreferrer\">尽可能使用命名空间</a>。</li><li>条件允许时，应优先使用命名空间或托管 MCP 服务器，而不是大量单独延迟加载的函数。它们通常能为模型提供更好的高层搜索入口，并节省更多 token。</li><li>命名空间可以混合即时可用和延迟加载的工具。未设置 <code>defer_loading=True</code> 的工具仍然可以立即调用，同一命名空间中的延迟工具则通过工具搜索加载。</li><li>经验上应让每个命名空间保持较小规模，最好少于 10 个函数。</li><li>按名称指定的 <code>tool_choice</code> 不能指向单纯的命名空间名称，也不能指向仅能延迟加载的工具。应优先使用 <code>auto</code>、<code>required</code>，或真实的顶层可调用工具名称。</li><li><code>ToolSearchTool(execution=\"client\")</code> 用于手动编排 Responses。如果模型发出由客户端执行的 <code>tool_search_call</code>，标准 <code>Runner</code> 会抛出异常，而不会替你执行。</li><li>工具搜索活动会以专用的条目和事件类型，出现在 <a href=\"https://openai.github.io/openai-agents-python/results/#new-items\" rel=\"noopener noreferrer\"><code>RunResult.new_items</code></a> 和 <a href=\"https://openai.github.io/openai-agents-python/streaming/#run-item-event-names\" rel=\"noopener noreferrer\"><code>RunItemStreamEvent</code></a> 中。</li><li><code>examples/tools/tool_search.py</code> 提供了完整可运行示例，涵盖命名空间加载和顶层延迟工具。</li><li>官方平台指南：<a href=\"https://developers.openai.com/api/docs/guides/tools-tool-search\" rel=\"noopener noreferrer\">工具搜索</a>。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-018",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-programmatic-tool-calling\">Programmatic Tool Calling</h3>",
+      "zh": "<h3 id=\"zh-source-programmatic-tool-calling\">程序化工具调用</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Programmatic Tool Calling lets a supported OpenAI Responses model generate JavaScript that calls eligible tools, combines their outputs, and returns one result to the model. It is useful for bounded workflows that benefit from loops, branching, parallel calls, or intermediate calculations without a model round trip after every tool call.</p>",
+      "zh": "<p>程序化工具调用（Programmatic Tool Calling）让支持该功能的 OpenAI Responses 模型生成 JavaScript，调用符合条件的工具、组合其输出，并向模型返回一个结果。它适合边界明确、能从循环、分支、并行调用或中间计算中获益的工作流，无须在每次工具调用后都与模型往返交互。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The generated program runs in a fresh hosted V8 environment. It does not have Node.js APIs, filesystem or network access, or a persistent process. The program can interact only with tools that you explicitly allow.</p>",
+      "zh": "<p>生成的程序在一个全新的托管 V8 环境中运行。它没有 Node.js API、文件系统或网络访问能力，也没有持久进程。程序只能与明确获准使用的工具交互。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-021",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from pydantic import BaseModel\n\nfrom agents import (\n    Agent,\n    ModelSettings,\n    ProgrammaticToolCallingTool,\n    Runner,\n)\nfrom agents.decorators import tool\n\n\nclass InventoryOutput(BaseModel):\n    sku: str\n    available_units: int\n\n\n@tool(allowed_callers=[\"programmatic\"])\ndef get_inventory(sku: str) -&gt; InventoryOutput:\n    return InventoryOutput(sku=sku, available_units=42)\n\n\nagent = Agent(\n    name=\"Inventory planner\",\n    model=\"gpt-5.6\",\n    model_settings=ModelSettings(tool_choice=\"programmatic_tool_calling\"),\n    tools=[get_inventory, ProgrammaticToolCallingTool()],\n)\n\nresult = Runner.run_sync(agent, \"Check inventory for desk-lamp and summarize it.\")\nprint(result.final_output)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>What to know:</p>",
+      "zh": "<p>需要了解的事项：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-023",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Programmatic Tool Calling is available only with supported OpenAI Responses models. <code>ProgrammaticToolCallingTool()</code> and <code>tool_choice=\"programmatic_tool_calling\"</code> are rejected by Chat Completions models and non-Responses backends.</li>\n<li>Add at most one <code>ProgrammaticToolCallingTool()</code> to an agent. The agent must also expose at least one programmatically callable tool, a <code>ToolSearchTool()</code> backed by a namespace, deferred function, or deferred hosted MCP server, or an opaque prompt-managed tool surface. A bare <code>ToolSearchTool()</code> without a searchable surface is rejected.</li>\n<li><code>allowed_callers</code> controls how a tool may be invoked. Omitting it allows direct model calls only. Use <code>[\"programmatic\"]</code> for program-only access or <code>[\"direct\", \"programmatic\"]</code> to allow both.</li>\n<li>SDK tool types that can opt in are <code>FunctionTool</code>, <code>CustomTool</code>, <code>ShellTool</code>, <code>ApplyPatchTool</code>, <code>HostedMCPTool</code>, and <code>CodeInterpreterTool</code>. Function, custom, shell, and apply-patch tools expose <code>allowed_callers</code> directly. For hosted MCP and code interpreter, set <code>allowed_callers</code> inside <code>tool_config</code>.</li>\n<li>For <code>@function_tool(allowed_callers=[...])</code>, a structured return annotation such as a Pydantic model, TypedDict, or dataclass automatically becomes a strict object output schema, and the returned value is validated against that schema before it is returned to the program. Use <code>output_type=...</code> when the function has no usable annotation, or the lower-level <code>output_json_schema={...}</code> escape hatch when you already have a strict object schema. <code>output_type</code> and <code>output_json_schema</code> are mutually exclusive. Return annotations of <code>str</code>, <code>Any</code>, or <code>None</code> do not create an output schema. For a schema-backed program-owned call, the default failure formatter is disabled because its free-form text does not satisfy the output schema. A handler exception therefore propagates unless you provide a custom <code>failure_error_function</code> that returns schema-conforming JSON.</li>\n<li>Program-owned SDK tools still use the normal Runner lifecycle. Tool input and output guardrails, hooks, timeouts, concurrency limits, approvals, sessions, and <code>RunState</code> pause/resume behavior continue to apply, and the SDK preserves each child call's program caller relationship.</li>\n<li>Model-request retries use a stricter replay-safety boundary whenever <code>ProgrammaticToolCallingTool()</code> is present, even before a program executes. The SDK disables provider-managed retries and WebSocket pre-event retries for these requests. A Runner retry policy retries only when provider advice explicitly marks the replay safe; <code>retry_policies.network_error()</code> by itself does not override this boundary.</li>\n<li>Approval-sensitive or high-impact tools are usually better kept as direct calls so a person can review each action before it becomes part of a larger program. If a program-owned call pauses for approval, resolve the interruption through <code>RunState</code> and resume the original run as usual.</li>\n<li>Programmatic Tool Calling can be combined with <a href=\"https://openai.github.io/openai-agents-python/tools/#hosted-tool-search\" rel=\"noopener noreferrer\">hosted tool search</a>. The model must load deferred tools before a generated program can call them.</li>\n<li>A <code>program</code> item and its ordinary program-owned child tool calls appear as <a href=\"https://openai.github.io/openai-agents-python/ref/items/#agents.items.ToolCallItem\" title=\"ToolCallItem\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ToolCallItem</code></a> entries. The matching <code>program_output</code> appears as a <a href=\"https://openai.github.io/openai-agents-python/ref/items/#agents.items.ToolCallOutputItem\" title=\"ToolCallOutputItem\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ToolCallOutputItem</code></a>. Hosted MCP approval requests and tool catalogs use specialized MCP items and stream events instead. See <a href=\"https://openai.github.io/openai-agents-python/results/#new-items\" rel=\"noopener noreferrer\">Results</a> and <a href=\"https://openai.github.io/openai-agents-python/streaming/#run-item-event-names\" rel=\"noopener noreferrer\">Streaming</a> for inspection details.</li>\n<li>See <code>examples/tools/programmatic_tool_calling.py</code> for a complete concurrent inventory-planning example.</li>\n<li>Official platform guide: <a href=\"https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling\" rel=\"noopener noreferrer\">Programmatic Tool Calling</a>.</li>\n</ul>",
+      "zh": "<ul><li>程序化工具调用仅适用于支持该功能的 OpenAI Responses 模型。Chat Completions 模型和非 Responses 后端会拒绝 <code>ProgrammaticToolCallingTool()</code> 和 <code>tool_choice=\"programmatic_tool_calling\"</code>。</li><li>每个 Agent 最多添加一个 <code>ProgrammaticToolCallingTool()</code>。Agent 还必须暴露以下至少一种能力：至少一个可由程序调用的工具；一个由命名空间、延迟函数或延迟托管 MCP 服务器提供可搜索内容的 <code>ToolSearchTool()</code>；或者由提示词管理、对 SDK 不透明的工具集合。没有可搜索工具集合的单独 <code>ToolSearchTool()</code> 会被拒绝。</li><li><code>allowed_callers</code> 控制工具的调用方式。省略它时只允许模型直接调用。使用 <code>[\"programmatic\"]</code> 只允许程序调用，使用 <code>[\"direct\", \"programmatic\"]</code> 则允许两种方式。</li><li>可以选择加入的 SDK 工具类型包括 <code>FunctionTool</code>、<code>CustomTool</code>、<code>ShellTool</code>、<code>ApplyPatchTool</code>、<code>HostedMCPTool</code> 和 <code>CodeInterpreterTool</code>。函数、自定义、shell 和 apply-patch 工具直接提供 <code>allowed_callers</code> 参数；托管 MCP 和代码解释器则需要在 <code>tool_config</code> 内设置 <code>allowed_callers</code>。</li><li>对于 <code>@function_tool(allowed_callers=[...])</code>，Pydantic 模型、TypedDict 或 dataclass 等结构化返回类型注解会自动转为严格的对象输出 schema；在结果返回给程序前，会先按该 schema 验证返回值。函数没有可用的注解时，使用 <code>output_type=...</code>；如果已有严格的对象 schema，可以使用更底层的 <code>output_json_schema={...}</code> 作为替代入口。<code>output_type</code> 与 <code>output_json_schema</code> 互斥。返回类型注解为 <code>str</code>、<code>Any</code> 或 <code>None</code> 时，不会创建输出 schema。对于受 schema 约束、由程序发起的调用，默认的失败格式化函数会被禁用，因为它返回的自由格式文本不满足输出 schema。因此，处理函数抛出的异常会继续向上传播，除非你提供了能返回符合 schema 的 JSON 的自定义 <code>failure_error_function</code>。</li><li>由程序发起的 SDK 工具调用仍然遵循正常的 Runner 生命周期。工具输入和输出护栏、钩子、超时、并发限制、审批、会话以及 <code>RunState</code> 的暂停／恢复行为仍然适用，SDK 也会保留每个子调用与发起它的程序之间的关系。</li><li>只要存在 <code>ProgrammaticToolCallingTool()</code>，即便程序尚未执行，模型请求重试也会采用更严格的重放安全边界。SDK 会禁用这类请求由服务提供方管理的重试，以及 WebSocket 在收到事件前的重试。Runner 的重试策略只有在服务提供方的建议明确标记重放安全时才会重试；单独使用 <code>retry_policies.network_error()</code> 不会覆盖这一边界。</li><li>对审批敏感或影响较大的工具，通常更适合保留为直接调用，让人可以在每项操作成为更大程序的一部分之前逐项审查。如果程序发起的调用因审批而暂停，请照常通过 <code>RunState</code> 处理这一中断，然后恢复原来的运行。</li><li>程序化工具调用可以与<a href=\"https://openai.github.io/openai-agents-python/tools/#hosted-tool-search\" rel=\"noopener noreferrer\">托管工具搜索</a>结合使用。在生成的程序调用延迟工具前，模型必须先加载这些工具。</li><li><code>program</code> 项及其普通的、由程序发起的子工具调用会显示为 <a href=\"https://openai.github.io/openai-agents-python/ref/items/#agents.items.ToolCallItem\" title=\"ToolCallItem            dataclass   \" rel=\"noopener noreferrer\"><code>ToolCallItem</code></a> 条目。对应的 <code>program_output</code> 会显示为 <a href=\"https://openai.github.io/openai-agents-python/ref/items/#agents.items.ToolCallOutputItem\" title=\"ToolCallOutputItem            dataclass   \" rel=\"noopener noreferrer\"><code>ToolCallOutputItem</code></a>。托管 MCP 的审批请求和工具目录则使用专用的 MCP 条目和流式事件。如何检查这些内容，参见<a href=\"https://openai.github.io/openai-agents-python/results/#new-items\" rel=\"noopener noreferrer\">结果</a>和<a href=\"https://openai.github.io/openai-agents-python/streaming/#run-item-event-names\" rel=\"noopener noreferrer\">流式输出</a>文档。</li><li><code>examples/tools/programmatic_tool_calling.py</code> 提供了完整的并发库存规划示例。</li><li>官方平台指南：<a href=\"https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling\" rel=\"noopener noreferrer\">程序化工具调用</a>。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-024",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-hosted-container-shell-skills\">Hosted container shell + skills</h3>",
+      "zh": "<h3 id=\"zh-source-hosted-container-shell-skills\">托管容器 shell 与技能</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>ShellTool</code> also supports OpenAI-hosted container execution. Use this mode when you want the model to run shell commands in a managed container instead of your local runtime.</p>",
+      "zh": "<p><code>ShellTool</code> 也支持在 OpenAI 托管容器中执行。如果你希望模型在托管容器而非本地运行时中执行 shell 命令，可以使用这种模式。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-026",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import Agent, Runner, ShellTool, ShellToolSkillReference\n\ncsv_skill: ShellToolSkillReference = {\n    \"type\": \"skill_reference\",\n    \"skill_id\": \"skill_698bbe879adc81918725cbc69dcae7960bc5613dadaed377\",\n    \"version\": \"1\",\n}\n\nagent = Agent(\n    name=\"Container shell agent\",\n    model=\"gpt-5.6-sol\",\n    instructions=\"Use the mounted skill when helpful.\",\n    tools=[\n        ShellTool(\n            environment={\n                \"type\": \"container_auto\",\n                \"network_policy\": {\"type\": \"disabled\"},\n                \"skills\": [csv_skill],\n            }\n        )\n    ],\n)\n\nresult = await Runner.run(\n    agent,\n    \"Use the configured skill to analyze CSV files in /mnt/data and summarize totals by region.\",\n)\nprint(result.final_output)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To reuse an existing container in later runs, set <code>environment={\"type\": \"container_reference\", \"container_id\": \"cntr_...\"}</code>.</p>",
+      "zh": "<p>要在后续运行中复用已有容器，请设置 <code>environment={\"type\": \"container_reference\", \"container_id\": \"cntr_...\"}</code>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>What to know:</p>",
+      "zh": "<p>需要了解的事项：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-029",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Hosted shell is available through the Responses API shell tool.</li>\n<li><code>container_auto</code> provisions a container for the request; <code>container_reference</code> reuses an existing one.</li>\n<li><code>container_auto</code> can also include <code>file_ids</code> and <code>memory_limit</code>.</li>\n<li><code>environment.skills</code> accepts skill references and inline skill bundles.</li>\n<li>With hosted environments, do not set <code>executor</code>, <code>needs_approval</code>, or <code>on_approval</code> on <code>ShellTool</code>.</li>\n<li><code>network_policy</code> supports <code>disabled</code> and <code>allowlist</code> modes.</li>\n<li>In allowlist mode, <code>network_policy.domain_secrets</code> can inject domain-scoped secrets by name.</li>\n<li>See <code>examples/tools/container_shell_skill_reference.py</code> and <code>examples/tools/container_shell_inline_skill.py</code> for complete examples.</li>\n<li>OpenAI platform guides: <a href=\"https://platform.openai.com/docs/guides/tools-shell\" rel=\"noopener noreferrer\">Shell</a> and <a href=\"https://platform.openai.com/docs/guides/tools-skills\" rel=\"noopener noreferrer\">Skills</a>.</li>\n</ul>",
+      "zh": "<ul><li>托管 shell 通过 Responses API 的 shell 工具提供。</li><li><code>container_auto</code> 为请求创建容器；<code>container_reference</code> 复用已有容器。</li><li><code>container_auto</code> 还可以包含 <code>file_ids</code> 和 <code>memory_limit</code>。</li><li><code>environment.skills</code> 接受技能引用和内联技能包。</li><li>使用托管环境时，不要在 <code>ShellTool</code> 上设置 <code>executor</code>、<code>needs_approval</code> 或 <code>on_approval</code>。</li><li><code>network_policy</code> 支持 <code>disabled</code> 和 <code>allowlist</code> 两种模式。</li><li>在允许列表模式下，<code>network_policy.domain_secrets</code> 可以按名称注入限定于特定域名的密钥。</li><li><code>examples/tools/container_shell_skill_reference.py</code> 和 <code>examples/tools/container_shell_inline_skill.py</code> 提供了完整示例。</li><li>OpenAI 平台指南：<a href=\"https://platform.openai.com/docs/guides/tools-shell\" rel=\"noopener noreferrer\">Shell</a> 和 <a href=\"https://platform.openai.com/docs/guides/tools-skills\" rel=\"noopener noreferrer\">Skills</a>。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-030",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-local-runtime-tools\">Local runtime tools</h2>",
+      "zh": "<h2 id=\"zh-source-local-runtime-tools\">本地运行时工具</h2>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Local runtime tools execute outside the model response itself. The model still decides when to call them, but your application or configured execution environment performs the actual work.</p>",
+      "zh": "<p>本地运行时工具在模型响应之外执行。模型仍然决定何时调用它们，但实际工作由你的应用或配置好的执行环境完成。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>ComputerTool</code> and <code>ApplyPatchTool</code> always require local implementations that you provide. <code>ShellTool</code> spans both modes: use the hosted-container configuration above when you want managed execution, or the local runtime configuration below when you want commands to run in your own process.</p>",
+      "zh": "<p><code>ComputerTool</code> 和 <code>ApplyPatchTool</code> 始终需要你提供本地实现。<code>ShellTool</code> 横跨两种模式：需要托管执行时，使用上面的托管容器配置；希望命令在自己的进程中运行时，使用下面的本地运行时配置。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Local runtime tools require you to supply implementations:</p>",
+      "zh": "<p>本地运行时工具需要你提供实现：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-034",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerTool\" title=\"ComputerTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ComputerTool</code></a>: implement the <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.Computer\" title=\"Computer\" rel=\"noopener noreferrer\"><code>Computer</code></a> or <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.AsyncComputer\" title=\"AsyncComputer\" rel=\"noopener noreferrer\"><code>AsyncComputer</code></a> interface to enable GUI/browser automation.</li>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ShellTool\" title=\"ShellTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ShellTool</code></a>: the latest shell tool for both local execution and hosted container execution.</li>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.LocalShellTool\" title=\"LocalShellTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>LocalShellTool</code></a>: legacy local-shell integration.</li>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ApplyPatchTool\" title=\"ApplyPatchTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ApplyPatchTool</code></a>: implement <a href=\"https://openai.github.io/openai-agents-python/ref/editor/#agents.editor.ApplyPatchEditor\" title=\"ApplyPatchEditor\" rel=\"noopener noreferrer\"><code>ApplyPatchEditor</code></a> to apply diffs locally.</li>\n<li>Local shell skills are available with <code>ShellTool(environment={\"type\": \"local\", \"skills\": [...]})</code>.</li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerTool\" title=\"ComputerTool            dataclass   \" rel=\"noopener noreferrer\"><code>ComputerTool</code></a>：实现 <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.Computer\" title=\"Computer\" rel=\"noopener noreferrer\"><code>Computer</code></a> 或 <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.AsyncComputer\" title=\"AsyncComputer\" rel=\"noopener noreferrer\"><code>AsyncComputer</code></a> 接口，以启用图形界面／浏览器自动化。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ShellTool\" title=\"ShellTool            dataclass   \" rel=\"noopener noreferrer\"><code>ShellTool</code></a>：最新的 shell 工具，同时支持本地执行和托管容器执行。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.LocalShellTool\" title=\"LocalShellTool            dataclass   \" rel=\"noopener noreferrer\"><code>LocalShellTool</code></a>：旧版的本地 shell 集成。</li><li><a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ApplyPatchTool\" title=\"ApplyPatchTool            dataclass   \" rel=\"noopener noreferrer\"><code>ApplyPatchTool</code></a>：实现 <a href=\"https://openai.github.io/openai-agents-python/ref/editor/#agents.editor.ApplyPatchEditor\" title=\"ApplyPatchEditor\" rel=\"noopener noreferrer\"><code>ApplyPatchEditor</code></a>，以在本地应用差异补丁。</li><li>使用 <code>ShellTool(environment={\"type\": \"local\", \"skills\": [...]})</code> 可以启用本地 shell 技能。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Shell action timeouts use positive integer milliseconds for a finite timeout. The SDK treats both <code>0</code> and <code>None</code> as no explicit timeout before calling a local <code>ShellTool</code> executor because zero does not have a portable meaning across executor implementations; other values are rejected before executor invocation. This is specific to the timeout field: <code>max_output_length=0</code> remains a supported request for empty captured output.</p>",
+      "zh": "<p>Shell 操作的有限超时值使用正整数毫秒。调用本地 <code>ShellTool</code> 执行器前，SDK 会把 <code>0</code> 和 <code>None</code> 都视为未明确设置超时，因为零在不同执行器实现中的含义并不一致；其他值会在执行器调用前被拒绝。这一规则只针对超时字段：<code>max_output_length=0</code> 仍然是有效设置，表示捕获的输出为空。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-036",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-approval-for-local-shell-and-file-edits\">Approval for local shell and file edits</h3>",
+      "zh": "<h3 id=\"zh-source-approval-for-local-shell-and-file-edits\">本地 shell 与文件编辑的审批</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Local <code>ShellTool</code> and <code>ApplyPatchTool</code> default to <code>needs_approval=False</code>. With this setting, the SDK can invoke your executor or editor without requesting approval. Your implementation determines where commands run or files change and must enforce the intended resource permissions and isolation; SDK approval does not provide a sandbox.</p>",
+      "zh": "<p>本地 <code>ShellTool</code> 和 <code>ApplyPatchTool</code> 默认设置为 <code>needs_approval=False</code>。采用这个设置时，SDK 可以不请求审批就调用你的执行器或编辑器。命令在哪里运行、文件在哪里更改，由你的实现决定；预期的资源权限和隔离也必须由你的实现落实。SDK 的审批并不提供沙箱。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For commands or file edits that require review, set <code>needs_approval=True</code> on the tool, or provide a callable policy that returns <code>True</code> for calls that require approval. Without an <code>on_approval</code> callback, the run pauses before invoking the executor or editor and returns pending requests in <code>result.interruptions</code>. Approve or reject those requests through <code>RunState</code>, then resume the run as described in the <a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">human-in-the-loop guide</a>.</p>",
+      "zh": "<p>如果命令或文件编辑需要审查，请在工具上设置 <code>needs_approval=True</code>，或提供一个可调用的策略，让它对需要审批的调用返回 <code>True</code>。没有 <code>on_approval</code> 回调时，运行会在调用执行器或编辑器之前暂停，并在 <code>result.interruptions</code> 中返回待处理请求。通过 <code>RunState</code> 批准或拒绝这些请求，再按照<a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">人在回路指南</a>中的说明恢复运行。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To decide immediately in application code, set both <code>needs_approval</code> and <code>on_approval</code>. The SDK invokes <code>on_approval</code> only when the call requires approval and has no existing approval decision; setting the callback alone does not enable approval. See <code>examples/tools/shell.py</code> for a CLI prompt and <code>examples/tools/shell_human_in_the_loop.py</code> for manual interruption handling. The <code>examples/tools/apply_patch.py</code> example instead prompts inside its editor before changing files.</p>",
+      "zh": "<p>如果要在应用代码中立即作出决定，请同时设置 <code>needs_approval</code> 和 <code>on_approval</code>。只有调用需要审批且尚无审批决定时，SDK 才会调用 <code>on_approval</code>；单独设置这个回调不会启用审批。命令行提示示例见 <code>examples/tools/shell.py</code>，手动处理中断的示例见 <code>examples/tools/shell_human_in_the_loop.py</code>。相比之下，<code>examples/tools/apply_patch.py</code> 示例在编辑器内部、更改文件之前发出提示。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Keep <code>needs_approval=False</code> when your application intentionally authorizes automatic execution, for example through an executor that enforces your sandbox policy. Hosted shell environments do not support the SDK's local <code>needs_approval</code> or <code>on_approval</code> settings.</p>",
+      "zh": "<p>如果应用有意授权自动执行，例如通过执行器落实沙箱策略，那么应保留 <code>needs_approval=False</code>。托管 shell 环境不支持 SDK 的本地 <code>needs_approval</code> 或 <code>on_approval</code> 设置。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-041",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-computertool-and-the-responses-computer-tool\">ComputerTool and the Responses computer tool</h3>",
+      "zh": "<h3 id=\"zh-source-computertool-and-the-responses-computer-tool\">ComputerTool 与 Responses 的计算机工具</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>ComputerTool</code> is still a local harness: you provide a <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.Computer\" title=\"Computer\" rel=\"noopener noreferrer\"><code>Computer</code></a> or <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.AsyncComputer\" title=\"AsyncComputer\" rel=\"noopener noreferrer\"><code>AsyncComputer</code></a> implementation, and the SDK maps that harness onto the OpenAI Responses API computer surface.</p>",
+      "zh": "<p><code>ComputerTool</code> 仍然是一个本地运行框架：你提供 <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.Computer\" title=\"Computer\" rel=\"noopener noreferrer\"><code>Computer</code></a> 或 <a href=\"https://openai.github.io/openai-agents-python/ref/computer/#agents.computer.AsyncComputer\" title=\"AsyncComputer\" rel=\"noopener noreferrer\"><code>AsyncComputer</code></a> 实现，SDK 再将这套运行框架映射到 OpenAI Responses API 的计算机工具接口。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When an <a href=\"https://openai.github.io/openai-agents-python/ref/agent/#agents.agent.Agent\" title=\"Agent\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>Agent</code></a> does not set <code>model</code>, normal SDK model-selection precedence applies. The built-in SDK default, currently <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6-luna\" rel=\"noopener noreferrer\"><code>gpt-5.6-luna</code></a>, supports computer use. If <code>OPENAI_DEFAULT_MODEL</code> or <code>RunConfig.model</code> overrides that default, select a model that supports computer use. Set <code>model</code> on the agent when you want to choose a different capability and cost profile for the computer-use workload. The example below uses the <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6\" rel=\"noopener noreferrer\"><code>gpt-5.6</code></a> alias, which OpenAI routes to GPT-5.6 Sol; you can instead select another model that supports computer use, such as <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6-terra\" rel=\"noopener noreferrer\">GPT-5.6 Terra</a> or <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6-luna\" rel=\"noopener noreferrer\">GPT-5.6 Luna</a>.</p>",
+      "zh": "<p>当 <a href=\"https://openai.github.io/openai-agents-python/ref/agent/#agents.agent.Agent\" title=\"Agent            dataclass   \" rel=\"noopener noreferrer\"><code>Agent</code></a> 未设置 <code>model</code> 时，SDK 会按正常的模型选择优先级处理。SDK 内置的默认模型目前是 <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6-luna\" rel=\"noopener noreferrer\"><code>gpt-5.6-luna</code></a>，支持计算机使用。如果 <code>OPENAI_DEFAULT_MODEL</code> 或 <code>RunConfig.model</code> 覆盖了这个默认值，请选择支持计算机使用的模型。如果希望针对计算机使用任务选择不同的能力和成本组合，可以在 Agent 上设置 <code>model</code>。下面的示例使用 <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6\" rel=\"noopener noreferrer\"><code>gpt-5.6</code></a> 别名，OpenAI 会将其路由到 GPT-5.6 Sol；你也可以选择其他支持计算机使用的模型，例如 <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6-terra\" rel=\"noopener noreferrer\">GPT-5.6 Terra</a> 或 <a href=\"https://developers.openai.com/api/docs/models/gpt-5.6-luna\" rel=\"noopener noreferrer\">GPT-5.6 Luna</a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For explicit requests to a model that supports the GA built-in computer tool, such as <code>gpt-5.6</code>, the SDK sends the payload <code>{\"type\": \"computer\"}</code>. For requests to the older <code>computer-use-preview</code> model, the SDK continues to send the preview payload <code>{\"type\": \"computer_use_preview\", \"environment\": ..., \"display_width\": ..., \"display_height\": ...}</code>. This mirrors the platform's <a href=\"https://developers.openai.com/api/docs/guides/tools-computer-use-integration#migration-from-computer-use-preview\" rel=\"noopener noreferrer\">migration from <code>computer-use-preview</code></a>:</p>",
+      "zh": "<p>对于明确指定支持正式版内置计算机工具的模型（如 <code>gpt-5.6</code>）的请求，SDK 发送 <code>{\"type\": \"computer\"}</code> 载荷。对于旧版 <code>computer-use-preview</code> 模型，SDK 仍然发送预览版载荷 <code>{\"type\": \"computer_use_preview\", \"environment\": ..., \"display_width\": ..., \"display_height\": ...}</code>。这与平台的<a href=\"https://developers.openai.com/api/docs/guides/tools-computer-use-integration#migration-from-computer-use-preview\" rel=\"noopener noreferrer\">从 <code>computer-use-preview</code> 迁移</a>方案一致：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-045",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Model: <code>computer-use-preview</code> -&gt; <code>gpt-5.6-sol</code></li>\n<li>Tool selector: <code>computer_use_preview</code> -&gt; <code>computer</code></li>\n<li>Computer call shape: one <code>action</code> per <code>computer_call</code> -&gt; batched <code>actions[]</code> on <code>computer_call</code></li>\n<li>Truncation: <code>ModelSettings(truncation=\"auto\")</code> required on the preview path -&gt; not required on the GA path</li>\n</ul>",
+      "zh": "<ul><li>模型：<code>computer-use-preview</code> → <code>gpt-5.6-sol</code></li><li>工具选择器：<code>computer_use_preview</code> → <code>computer</code></li><li>计算机调用结构：每个 <code>computer_call</code> 中包含单个 <code>action</code> → <code>computer_call</code> 中包含批量 <code>actions[]</code></li><li>截断：预览版路径要求 <code>ModelSettings(truncation=\"auto\")</code> → 正式版路径不再要求</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The SDK chooses that wire shape from the effective model on the actual Responses request. If you use a prompt template and the request omits <code>model</code> because the prompt owns it, the SDK keeps the preview-compatible computer payload unless you either make a supported GA model such as <code>model=\"gpt-5.6\"</code> explicit or force the GA selector with <code>ModelSettings(tool_choice=\"computer\")</code> or <code>ModelSettings(tool_choice=\"computer_use\")</code>.</p>",
+      "zh": "<p>SDK 根据实际 Responses 请求最终采用的模型，选择这种传输格式。如果你使用提示词模板，并因为模型由提示词指定而在请求中省略 <code>model</code>，SDK 会保留兼容预览版的计算机工具载荷；除非你明确指定受支持的正式版模型，例如 <code>model=\"gpt-5.6\"</code>，或者通过 <code>ModelSettings(tool_choice=\"computer\")</code> 或 <code>ModelSettings(tool_choice=\"computer_use\")</code> 强制使用正式版选择器。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When a <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerTool\" title=\"ComputerTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ComputerTool</code></a> is present, <code>tool_choice=\"computer\"</code>, <code>\"computer_use\"</code>, and <code>\"computer_use_preview\"</code> are all accepted and normalized to the built-in selector that matches the effective request model. Without a <code>ComputerTool</code>, those strings still behave like ordinary function names.</p>",
+      "zh": "<p>存在 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerTool\" title=\"ComputerTool            dataclass   \" rel=\"noopener noreferrer\"><code>ComputerTool</code></a> 时，<code>tool_choice=\"computer\"</code>、<code>\"computer_use\"</code> 和 <code>\"computer_use_preview\"</code> 都会被接受，并被归一化为与请求实际采用的模型匹配的内置选择器。没有 <code>ComputerTool</code> 时，这些字符串仍然被当作普通函数名称。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This distinction matters when <code>ComputerTool</code> is backed by a <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerProvider\" title=\"ComputerProvider\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ComputerProvider</code></a> factory. The GA <code>computer</code> payload does not need <code>environment</code> or dimensions at serialization time, so serialization can occur before a factory has produced a <code>Computer</code> or <code>AsyncComputer</code> instance. Preview-compatible serialization still needs a resolved <code>Computer</code> or <code>AsyncComputer</code> instance so the SDK can send <code>environment</code>, <code>display_width</code>, and <code>display_height</code>.</p>",
+      "zh": "<p>当 <code>ComputerTool</code> 由 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerProvider\" title=\"ComputerProvider            dataclass   \" rel=\"noopener noreferrer\"><code>ComputerProvider</code></a> 工厂提供实例时，这个区别很重要。正式版 <code>computer</code> 载荷在序列化时不需要 <code>environment</code> 或屏幕尺寸，因此可以在工厂创建 <code>Computer</code> 或 <code>AsyncComputer</code> 实例之前完成序列化。兼容预览版的序列化仍然需要一个已经解析得到的 <code>Computer</code> 或 <code>AsyncComputer</code> 实例，以便 SDK 发送 <code>environment</code>、<code>display_width</code> 和 <code>display_height</code>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>At runtime, both paths still use the same local harness. Preview responses emit <code>computer_call</code> items with a single <code>action</code>; GA responses can emit batched <code>actions[]</code>, and the SDK executes them in order before producing a <code>computer_call_output</code> screenshot item. See <code>examples/tools/computer_use.py</code> for a runnable Playwright-based harness.</p>",
+      "zh": "<p>运行时，两条路径仍然使用同一套本地运行框架。预览版响应会发出包含单个 <code>action</code> 的 <code>computer_call</code> 项；正式版响应可以发出批量 <code>actions[]</code>，SDK 会依次执行这些操作，然后生成 <code>computer_call_output</code> 截图项。<code>examples/tools/computer_use.py</code> 提供了基于 Playwright 的可运行框架。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-050",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import Agent, ApplyPatchTool, ComputerTool, ShellTool\nfrom agents.computer import AsyncComputer\nfrom agents.editor import ApplyPatchResult, ApplyPatchOperation, ApplyPatchEditor\n\n\nclass NoopComputer(AsyncComputer):\n    environment = \"browser\"\n    dimensions = (1024, 768)\n\n    async def screenshot(self):\n        return \"\"\n\n    async def click(self, x, y, button): ...\n    async def double_click(self, x, y): ...\n    async def scroll(self, x, y, scroll_x, scroll_y): ...\n    async def type(self, text): ...\n    async def wait(self): ...\n    async def move(self, x, y): ...\n    async def keypress(self, keys): ...\n    async def drag(self, path): ...\n\n\nclass NoopEditor(ApplyPatchEditor):\n    async def create_file(self, op: ApplyPatchOperation):\n        return ApplyPatchResult(status=\"completed\")\n\n    async def update_file(self, op: ApplyPatchOperation):\n        return ApplyPatchResult(status=\"completed\")\n\n    async def delete_file(self, op: ApplyPatchOperation):\n        return ApplyPatchResult(status=\"completed\")\n\n\nasync def run_shell(request):\n    return \"shell output\"\n\n\nagent = Agent(\n    name=\"Local tools agent\",\n    tools=[\n        ShellTool(executor=run_shell),\n        ApplyPatchTool(editor=NoopEditor()),\n        ComputerTool(computer=NoopComputer()),\n    ],\n    # Optional: omit this argument to use the configured or built-in default model.\n    model=\"gpt-5.6\",\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-051",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4 id=\"en-source-pending-computer-safety-checks\">Pending computer safety checks</h4>",
+      "zh": "<h4 id=\"zh-source-pending-computer-safety-checks\">待处理的计算机安全检查</h4>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The Responses API can include <code>pending_safety_checks</code> in a <code>computer_call</code> to flag concerns for your application to review. Each check has an <code>id</code> and optional <code>code</code> and <code>message</code> fields that describe the type of concern and provide details. These checks come from the API; the Agents SDK passes them to your callback. See the <a href=\"https://developers.openai.com/api/reference/resources/responses/methods/create\" rel=\"noopener noreferrer\">Responses API reference</a> for <code>pending_safety_checks</code> and <code>acknowledged_safety_checks</code>, and the <a href=\"https://developers.openai.com/api/docs/guides/tools-computer-use#run-safely\" rel=\"noopener noreferrer\">computer-use safety guidance</a> for application-level precautions.</p>",
+      "zh": "<p>Responses API 可以在 <code>computer_call</code> 中包含 <code>pending_safety_checks</code>，标记需要应用审查的问题。每项检查都有一个 <code>id</code>，以及可选的 <code>code</code> 和 <code>message</code> 字段，用于描述问题类型并提供详细信息。这些检查来自 API，Agents SDK 会把它们传给你的回调。关于 <code>pending_safety_checks</code> 和 <code>acknowledged_safety_checks</code>，参见 <a href=\"https://developers.openai.com/api/reference/resources/responses/methods/create\" rel=\"noopener noreferrer\">Responses API 参考文档</a>；应用层面的预防措施，参见<a href=\"https://developers.openai.com/api/docs/guides/tools-computer-use#run-safely\" rel=\"noopener noreferrer\">计算机使用安全指南</a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Configure <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerTool.on_safety_check\" title=\"on_safety_check\n\n\n  \n      class-attribute\n      instance-attribute\n  \" rel=\"noopener noreferrer\"><code>ComputerTool.on_safety_check</code></a> to decide whether to proceed with a flagged computer call. The SDK invokes this callback only when the call includes pending checks, before executing the call's actions.</p>",
+      "zh": "<p>配置 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerTool.on_safety_check\" title=\"on_safety_check            class-attribute       instance-attribute   \" rel=\"noopener noreferrer\"><code>ComputerTool.on_safety_check</code></a>，以决定是否继续执行被标记的计算机调用。只有调用包含待处理检查时，SDK 才会在执行其操作之前调用这个回调。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The callback receives one <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerToolSafetyCheckData\" title=\"ComputerToolSafetyCheckData\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ComputerToolSafetyCheckData</code></a> at a time. Return <code>True</code> to acknowledge that check. Return <code>False</code> to raise <a href=\"https://openai.github.io/openai-agents-python/ref/exceptions/#agents.exceptions.UserError\" title=\"UserError\" rel=\"noopener noreferrer\"><code>UserError</code></a> before the call's actions or screenshot execute. The SDK requires all reported checks to be acknowledged when a callback is configured. The callback can be synchronous or asynchronous.</p>",
+      "zh": "<p>回调每次接收一个 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ComputerToolSafetyCheckData\" title=\"ComputerToolSafetyCheckData            dataclass   \" rel=\"noopener noreferrer\"><code>ComputerToolSafetyCheckData</code></a>。返回 <code>True</code> 表示确认该项检查；返回 <code>False</code> 则会在执行该调用的操作或截图之前抛出 <a href=\"https://openai.github.io/openai-agents-python/ref/exceptions/#agents.exceptions.UserError\" title=\"UserError\" rel=\"noopener noreferrer\"><code>UserError</code></a>。配置了回调时，SDK 要求所有报告的检查都得到确认。回调可以是同步或异步的。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If <code>on_safety_check</code> is omitted, the SDK proceeds with execution and leaves the checks unacknowledged. The SDK does not prompt a person automatically. Configure the callback explicitly when your application requires review of flagged calls. For example, this conservative policy rejects every flagged call:</p>",
+      "zh": "<p>如果省略 <code>on_safety_check</code>，SDK 会继续执行，并让这些检查保持未确认状态。SDK 不会自动提示人工处理。如果应用要求审查被标记的调用，请明确配置回调。例如，下面这项保守策略会拒绝所有被标记的调用：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-056",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import AsyncComputer, Computer, ComputerTool\nfrom agents.tool import ComputerToolSafetyCheckData\n\n\ndef reject_flagged_call(data: ComputerToolSafetyCheckData) -&gt; bool:\n    return False\n\n\ndef computer_tool_with_safety_checks(computer: Computer | AsyncComputer) -&gt; ComputerTool:\n    return ComputerTool(computer=computer, on_safety_check=reject_flagged_call)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-057",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To allow reviewed calls, replace <code>reject_flagged_call</code> with a callback that presents <code>data.safety_check</code> and the proposed <code>data.tool_call</code> to your application's reviewer, waits for a decision, and returns that decision. Treat unknown check codes as requiring review as well.</p>",
+      "zh": "<p>要允许经过审查的调用，请将 <code>reject_flagged_call</code> 替换为这样的回调：把 <code>data.safety_check</code> 和拟执行的 <code>data.tool_call</code> 展示给应用的审查人员，等待决定，再返回该决定。未知的检查代码也应被视为需要审查。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-058",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Computer calls without pending checks do not invoke this callback. Enforce any policy that must apply to every computer action in your computer harness. To collect a person's decision, your callback must arrange that interaction and return the decision; the SDK does not populate <code>RunResult.interruptions</code> or use the pause-and-resume flow described in <a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">Human-in-the-loop</a>.</p>",
+      "zh": "<p>不含待处理检查的计算机调用不会触发这个回调。如果某项策略必须适用于每一个计算机操作，请在计算机运行框架中落实。要收集人工决定，回调必须自行安排交互并返回决定；SDK 不会填充 <code>RunResult.interruptions</code>，也不会使用<a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">人在回路</a>文档描述的暂停和恢复流程。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-059",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-function-tools\">Function tools</h2>",
+      "zh": "<h2 id=\"zh-source-function-tools\">函数工具</h2>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-060",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can use any Python function as a tool. The Agents SDK will set up the tool automatically:</p>",
+      "zh": "<p>任意 Python 函数都可以用作工具。Agents SDK 会自动完成工具配置：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-061",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>The name of the tool will be the name of the Python function (or you can provide a name)</li>\n<li>Tool description will be taken from the docstring of the function (or you can provide a description)</li>\n<li>The schema for the function inputs is automatically created from the function's arguments</li>\n<li>Descriptions for each input are taken from the docstring of the function, unless disabled</li>\n</ul>",
+      "zh": "<ul><li>工具名称取自 Python 函数名称，也可以由你自行指定。</li><li>工具描述取自函数的文档字符串，也可以由你自行提供。</li><li>函数输入的 schema 会根据函数参数自动创建。</li><li>除非禁用，各个输入的描述会取自函数的文档字符串。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-062",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Tools created by <code>@tool</code> expose the original Python callable through the read-only <code>__wrapped__</code> attribute. This is useful for inspection and testing, but calling it directly bypasses the tool runtime pipeline, including schema validation, context injection, guardrails, timeouts, failure handling, and tracing. Hand-built <code>FunctionTool</code> instances do not expose <code>__wrapped__</code>.</p>",
+      "zh": "<p>通过 <code>@tool</code> 创建的工具，会通过只读的 <code>__wrapped__</code> 属性暴露原始 Python 可调用对象。这有助于检查和测试，但直接调用它会绕过工具运行时的处理流程，包括 schema 验证、上下文注入、护栏、超时、失败处理和执行轨迹记录。手动构建的 <code>FunctionTool</code> 实例不会暴露 <code>__wrapped__</code>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-063",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We use Python's <code>inspect</code> module to extract the function signature, along with <a href=\"https://mkdocstrings.github.io/griffe/\" rel=\"noopener noreferrer\"><code>griffe</code></a> to parse docstrings and <code>pydantic</code> for schema creation.</p>",
+      "zh": "<p>我们使用 Python 的 <code>inspect</code> 模块提取函数签名，使用 <a href=\"https://mkdocstrings.github.io/griffe/\" rel=\"noopener noreferrer\"><code>griffe</code></a> 解析文档字符串，并使用 <code>pydantic</code> 创建 schema。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-064",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When you are using OpenAI Responses models, <code>@function_tool(defer_loading=True)</code> hides a function tool until <code>ToolSearchTool()</code> loads it. You can also group related function tools with <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.tool_namespace\" title=\"tool_namespace\" rel=\"noopener noreferrer\"><code>tool_namespace()</code></a>. See <a href=\"https://openai.github.io/openai-agents-python/tools/#hosted-tool-search\" rel=\"noopener noreferrer\">Hosted tool search</a> for the full setup and constraints.</p>",
+      "zh": "<p>使用 OpenAI Responses 模型时，<code>@function_tool(defer_loading=True)</code> 会隐藏函数工具，直到 <code>ToolSearchTool()</code> 将它加载。你也可以通过 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.tool_namespace\" title=\"tool_namespace\" rel=\"noopener noreferrer\"><code>tool_namespace()</code></a> 对相关函数工具分组。完整配置及约束见<a href=\"https://openai.github.io/openai-agents-python/tools/#hosted-tool-search\" rel=\"noopener noreferrer\">托管工具搜索</a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-065",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>import json\n\nfrom typing_extensions import TypedDict, Any\n\nfrom agents import Agent, FunctionTool, RunContextWrapper\nfrom agents.decorators import tool\n\n\nclass Location(TypedDict):\n    lat: float\n    long: float\n\n\n@tool  # (1)!\nasync def fetch_weather(location: Location) -&gt; str:\n    # (2)!\n    \"\"\"Fetch the weather for a given location.\n\n    Args:\n        location: The location to fetch the weather for.\n    \"\"\"\n    # In real life, we'd fetch the weather from a weather API\n    return \"sunny\"\n\n\n@tool(name_override=\"fetch_data\")  # (3)!\ndef read_file(ctx: RunContextWrapper[Any], path: str, directory: str | None = None) -&gt; str:\n    \"\"\"Read the contents of a file.\n\n    Args:\n        path: The path to the file to read.\n        directory: The directory to read the file from.\n    \"\"\"\n    # In real life, we'd read the file from the file system\n    return \"&lt;file contents&gt;\"\n\n\nagent = Agent(\n    name=\"Assistant\",\n    tools=[fetch_weather, read_file],  # (4)!\n)\n\nfor tool in agent.tools:\n    if isinstance(tool, FunctionTool):\n        print(tool.name)\n        print(tool.description)\n        print(json.dumps(tool.params_json_schema, indent=2))\n        print()\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-066",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>You can use any Python types as arguments to your functions, and the function can be sync or async.</li>\n<li>Docstrings, if present, are used to capture descriptions and argument descriptions</li>\n<li>Functions can optionally take the run context as their first argument. You can also set overrides, like the name of the tool, description, which docstring style to use, etc.</li>\n<li>You can pass the decorated functions to the list of tools.</li>\n</ol>",
+      "zh": "<ol><li>函数参数可以使用任意 Python 类型，函数也可以是同步或异步的。</li><li>如果存在文档字符串，就会从中提取函数描述和参数描述。</li><li>函数可以选择将运行上下文作为第一个参数。你还可以覆盖工具名称、描述、采用的文档字符串风格等设置。</li><li>可以把装饰后的函数传入工具列表。</li></ol>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-067",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Expand to see output</p>",
+      "zh": "<p>展开查看输出</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-068",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>fetch_weather\nFetch the weather for a given location.\n{\n\"$defs\": {\n  \"Location\": {\n    \"properties\": {\n      \"lat\": {\n        \"title\": \"Lat\",\n        \"type\": \"number\"\n      },\n      \"long\": {\n        \"title\": \"Long\",\n        \"type\": \"number\"\n      }\n    },\n    \"required\": [\n      \"lat\",\n      \"long\"\n    ],\n    \"title\": \"Location\",\n    \"type\": \"object\"\n  }\n},\n\"properties\": {\n  \"location\": {\n    \"$ref\": \"#/$defs/Location\",\n    \"description\": \"The location to fetch the weather for.\"\n  }\n},\n\"required\": [\n  \"location\"\n],\n\"title\": \"fetch_weather_args\",\n\"type\": \"object\"\n}\n\nfetch_data\nRead the contents of a file.\n{\n\"properties\": {\n  \"path\": {\n    \"description\": \"The path to the file to read.\",\n    \"title\": \"Path\",\n    \"type\": \"string\"\n  },\n  \"directory\": {\n    \"anyOf\": [\n      {\n        \"type\": \"string\"\n      },\n      {\n        \"type\": \"null\"\n      }\n    ],\n    \"default\": null,\n    \"description\": \"The directory to read the file from.\",\n    \"title\": \"Directory\"\n  }\n},\n\"required\": [\n  \"path\"\n],\n\"title\": \"fetch_data_args\",\n\"type\": \"object\"\n}\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-069",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-returning-images-or-files-from-function-tools\">Returning images or files from function tools</h3>",
+      "zh": "<h3 id=\"zh-source-returning-images-or-files-from-function-tools\">从函数工具返回图像或文件</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-070",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In addition to returning text outputs, you can return one or many images or files as the output of a function tool. To do so, you can return any of:</p>",
+      "zh": "<p>除了返回文本，还可以把一张或多张图像、一个或多个文件作为函数工具的输出。为此，你可以返回以下任意类型：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-071",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Images: <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputImage\" title=\"ToolOutputImage\" rel=\"noopener noreferrer\"><code>ToolOutputImage</code></a> (or the TypedDict version, <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputImageDict\" title=\"ToolOutputImageDict\" rel=\"noopener noreferrer\"><code>ToolOutputImageDict</code></a>)</li>\n<li>Files: <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputFileContent\" title=\"ToolOutputFileContent\" rel=\"noopener noreferrer\"><code>ToolOutputFileContent</code></a> (or the TypedDict version, <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputFileContentDict\" title=\"ToolOutputFileContentDict\" rel=\"noopener noreferrer\"><code>ToolOutputFileContentDict</code></a>)</li>\n<li>Text: either a string or stringable objects, or <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputText\" title=\"ToolOutputText\" rel=\"noopener noreferrer\"><code>ToolOutputText</code></a> (or the TypedDict version, <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputTextDict\" title=\"ToolOutputTextDict\" rel=\"noopener noreferrer\"><code>ToolOutputTextDict</code></a>)</li>\n</ul>",
+      "zh": "<ul><li>图像：<a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputImage\" title=\"ToolOutputImage\" rel=\"noopener noreferrer\"><code>ToolOutputImage</code></a>，或其 TypedDict 版本 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputImageDict\" title=\"ToolOutputImageDict\" rel=\"noopener noreferrer\"><code>ToolOutputImageDict</code></a>。</li><li>文件：<a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputFileContent\" title=\"ToolOutputFileContent\" rel=\"noopener noreferrer\"><code>ToolOutputFileContent</code></a>，或其 TypedDict 版本 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputFileContentDict\" title=\"ToolOutputFileContentDict\" rel=\"noopener noreferrer\"><code>ToolOutputFileContentDict</code></a>。</li><li>文本：字符串、可转为字符串的对象，或 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputText\" title=\"ToolOutputText\" rel=\"noopener noreferrer\"><code>ToolOutputText</code></a>（也可以使用其 TypedDict 版本 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.ToolOutputTextDict\" title=\"ToolOutputTextDict\" rel=\"noopener noreferrer\"><code>ToolOutputTextDict</code></a>）。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-072",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-custom-function-tools\">Custom function tools</h3>",
+      "zh": "<h3 id=\"zh-source-custom-function-tools\">自定义函数工具</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-073",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sometimes, you don't want to use a Python function as a tool. You can directly create a <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.FunctionTool\" title=\"FunctionTool\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>FunctionTool</code></a> if you prefer. You'll need to provide:</p>",
+      "zh": "<p>有时，你并不想使用 Python 函数作为工具。如果愿意，可以直接创建 <a href=\"https://openai.github.io/openai-agents-python/ref/tool/#agents.tool.FunctionTool\" title=\"FunctionTool            dataclass   \" rel=\"noopener noreferrer\"><code>FunctionTool</code></a>。你需要提供：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-074",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><code>name</code></li>\n<li><code>description</code></li>\n<li><code>params_json_schema</code>, which is the JSON schema for the arguments</li>\n<li><code>on_invoke_tool</code>, which is an async function that receives a <a href=\"https://openai.github.io/openai-agents-python/ref/tool_context/#agents.tool_context.ToolContext\" title=\"ToolContext\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>ToolContext</code></a> and the arguments as a JSON string, and returns tool output (for example, text, structured tool output objects, or a list of outputs).</li>\n</ul>",
+      "zh": "<ul><li><code>name</code></li><li><code>description</code></li><li><code>params_json_schema</code>，即参数的 JSON schema。</li><li><code>on_invoke_tool</code>，这是一个异步函数，接收 <a href=\"https://openai.github.io/openai-agents-python/ref/tool_context/#agents.tool_context.ToolContext\" title=\"ToolContext            dataclass   \" rel=\"noopener noreferrer\"><code>ToolContext</code></a> 和 JSON 字符串形式的参数，并返回工具输出，例如文本、结构化工具输出对象或输出列表。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-075",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from typing import Any\n\nfrom pydantic import BaseModel\n\nfrom agents import RunContextWrapper, FunctionTool\n\n\ndef do_some_work(data: str) -&gt; str:\n    return \"done\"\n\n\nclass FunctionArgs(BaseModel):\n    username: str\n    age: int\n\n\nasync def run_function(ctx: RunContextWrapper[Any], args: str) -&gt; str:\n    parsed = FunctionArgs.model_validate_json(args)\n    return do_some_work(data=f\"{parsed.username} is {parsed.age} years old\")\n\n\ntool = FunctionTool(\n    name=\"process_user\",\n    description=\"Processes extracted user data\",\n    params_json_schema=FunctionArgs.model_json_schema(),\n    on_invoke_tool=run_function,\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-076",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-automatic-argument-and-docstring-parsing\">Automatic argument and docstring parsing</h3>",
+      "zh": "<h3 id=\"zh-source-automatic-argument-and-docstring-parsing\">自动解析参数和文档字符串</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-077",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>As mentioned before, we automatically parse the function signature to extract the schema for the tool, and we parse the docstring to extract descriptions for the tool and for individual arguments. Some notes on that:</p>",
+      "zh": "<p>如前所述，我们会自动解析函数签名来提取工具的 schema，并解析文档字符串，提取工具本身及各个参数的描述。需要说明的是：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-078",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol>\n<li>The signature parsing is done via the <code>inspect</code> module. We use type annotations to understand the types for the arguments, and dynamically build a Pydantic model to represent the overall schema. It supports most types, including Python primitives, Pydantic models, TypedDicts, and more.</li>\n<li>We use <code>griffe</code> to parse docstrings. Supported docstring formats are <code>google</code>, <code>sphinx</code> and <code>numpy</code>. We attempt to automatically detect the docstring format, but this is best-effort and you can explicitly set it when calling <code>function_tool</code>. You can also disable docstring parsing by setting <code>use_docstring_info</code> to <code>False</code>. For Google-style docstrings, the parser also accepts an <code>Args:</code>, <code>Arguments:</code>, <code>Params:</code>, or <code>Parameters:</code> section immediately after summary text without an intervening blank line.</li>\n</ol>",
+      "zh": "<ol><li>签名解析通过 <code>inspect</code> 模块完成。我们利用类型注解理解参数类型，并动态构建 Pydantic 模型来表示整体 schema。它支持大多数类型，包括 Python 基本类型、Pydantic 模型、TypedDict 等。</li><li>我们使用 <code>griffe</code> 解析文档字符串，支持 <code>google</code>、<code>sphinx</code> 和 <code>numpy</code> 格式。我们会尽力自动检测格式，但并不保证总能识别；调用 <code>function_tool</code> 时也可以明确设置格式。将 <code>use_docstring_info</code> 设为 <code>False</code> 可以禁用文档字符串解析。对于 Google 风格的文档字符串，解析器也接受紧接在摘要文本后、两者之间没有空行的 <code>Args:</code>、<code>Arguments:</code>、<code>Params:</code> 或 <code>Parameters:</code> 小节。</li></ol>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-079",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The code for the schema extraction lives in <a href=\"https://openai.github.io/openai-agents-python/ref/function_schema/#agents.function_schema\" rel=\"noopener noreferrer\"><code>agents.function_schema</code></a>.</p>",
+      "zh": "<p>schema 提取代码位于 <a href=\"https://openai.github.io/openai-agents-python/ref/function_schema/#agents.function_schema\" rel=\"noopener noreferrer\"><code>agents.function_schema</code></a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-080",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-constraining-and-describing-arguments-with-pydantic-field\">Constraining and describing arguments with Pydantic Field</h3>",
+      "zh": "<h3 id=\"zh-source-constraining-and-describing-arguments-with-pydantic-field\">使用 Pydantic Field 约束和描述参数</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-081",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can use Pydantic's <a href=\"https://docs.pydantic.dev/latest/concepts/fields/\" rel=\"noopener noreferrer\"><code>Field</code></a> to add constraints (e.g. min/max for numbers, length or pattern for strings) and descriptions to tool arguments. As in Pydantic, both forms are supported: default-based (<code>arg: int = Field(..., ge=1)</code>) and <code>Annotated</code> (<code>arg: Annotated[int, Field(..., ge=1)]</code>). The generated JSON schema and validation include these constraints.</p>",
+      "zh": "<p>可以使用 Pydantic 的 <a href=\"https://docs.pydantic.dev/latest/concepts/fields/\" rel=\"noopener noreferrer\"><code>Field</code></a> 为工具参数添加约束，例如数字的最小值／最大值、字符串长度或匹配模式，也可以添加描述。与 Pydantic 一样，两种写法都受支持：基于默认值的写法（<code>arg: int = Field(..., ge=1)</code>）和 <code>Annotated</code> 写法（<code>arg: Annotated[int, Field(..., ge=1)]</code>）。生成的 JSON schema 和验证过程都会包含这些约束。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-082",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For variadic parameters, an annotation describes each collected value. The SDK therefore applies <code>Annotated[..., Field(...)]</code> constraints to each value supplied through <code>*args</code> or <code>**kwargs</code>, while omitted variadic parameters remain valid empty collections.</p>",
+      "zh": "<p>对于可变参数，注解描述的是收集到的每一个值。因此，SDK 会将 <code>Annotated[..., Field(...)]</code> 约束应用于通过 <code>*args</code> 或 <code>**kwargs</code> 传入的每个值；没有传入可变参数时，空集合仍然有效。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-083",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The SDK ignores <code>Field(description=...)</code> in the annotation of a variadic parameter (<code>*args</code> or <code>**kwargs</code>). To describe the collected parameter, use a parameter entry in the function docstring or a string in <code>Annotated</code>, for example <code>*scores: Annotated[int, \"Exam scores\", Field(ge=0, le=100)]</code>. When docstring parsing is enabled and both sources provide a description, the docstring description takes precedence.</p>",
+      "zh": "<p>SDK 会忽略可变参数（<code>*args</code> 或 <code>**kwargs</code>）注解中的 <code>Field(description=...)</code>。要描述这个收集参数，请在函数文档字符串中添加对应参数条目，或在 <code>Annotated</code> 中使用字符串，例如 <code>*scores: Annotated[int, \"Exam scores\", Field(ge=0, le=100)]</code>。如果启用了文档字符串解析，且两个来源都提供描述，则优先使用文档字符串中的描述。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-084",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For <code>**kwargs</code>, use <code>@tool(strict_mode=False)</code> and supply the keyword values in the nested object named after the parameter. For example, a tool with <code>**scores: int</code> receives <code>{\"scores\": {\"exam\": 90}}</code>.</p>",
+      "zh": "<p>对于 <code>**kwargs</code>，使用 <code>@tool(strict_mode=False)</code>，并把关键字值放入以该参数命名的嵌套对象中。例如，带有 <code>**scores: int</code> 的工具接收 <code>{\"scores\": {\"exam\": 90}}</code>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-085",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Annotate scalar positional values as <code>*args: T</code>. If each positional value is itself a homogeneous tuple, use <code>*args: tuple[T, ...]</code>; the SDK rejects fixed-length tuple annotations such as <code>*args: tuple[int, str]</code> because one fixed tuple shape cannot describe a variadic sequence of positional values.</p>",
+      "zh": "<p>标量位置参数应注解为 <code>*args: T</code>。如果每个位置参数本身都是同质元组，使用 <code>*args: tuple[T, ...]</code>；SDK 会拒绝 <code>*args: tuple[int, str]</code> 这类定长元组注解，因为一种固定的元组结构无法描述长度可变的位置参数序列。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-086",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from typing import Annotated\nfrom pydantic import Field\nfrom agents.decorators import tool\n\n\n# Default-based form\n@tool\ndef score_a(score: int = Field(..., ge=0, le=100, description=\"Score from 0 to 100\")) -&gt; str:\n    return f\"Score recorded: {score}\"\n\n\n# Annotated form\n@tool\ndef score_b(\n    score: Annotated[int, Field(..., ge=0, le=100, description=\"Score from 0 to 100\")],\n) -&gt; str:\n    return f\"Score recorded: {score}\"\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-087",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-function-tool-timeouts\">Function tool timeouts</h3>",
+      "zh": "<h3 id=\"zh-source-function-tool-timeouts\">函数工具超时</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-088",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can set per-call timeouts for async function tools with <code>@function_tool(timeout=...)</code>.</p>",
+      "zh": "<p>可以通过 <code>@function_tool(timeout=...)</code> 为异步函数工具设置每次调用的超时时间。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-089",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>import asyncio\nfrom agents import Agent\nfrom agents.decorators import tool\n\n\n@tool(timeout=2.0)\nasync def slow_lookup(query: str) -&gt; str:\n    await asyncio.sleep(10)\n    return f\"Result for {query}\"\n\n\nagent = Agent(\n    name=\"Timeout demo\",\n    instructions=\"Use tools when helpful.\",\n    tools=[slow_lookup],\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-090",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When a timeout is reached, the default behavior is <code>timeout_behavior=\"error_as_result\"</code>, which sends a model-visible timeout message (for example, <code>Tool 'slow_lookup' timed out after 2 seconds.</code>).</p>",
+      "zh": "<p>达到超时时间后，默认行为是 <code>timeout_behavior=\"error_as_result\"</code>，即向模型发送一条可见的超时消息，例如 <code>Tool 'slow_lookup' timed out after 2 seconds.</code>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-091",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can control timeout handling:</p>",
+      "zh": "<p>你可以控制超时的处理方式：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-092",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><code>timeout_behavior=\"error_as_result\"</code> (default): return a timeout message to the model so it can recover.</li>\n<li><code>timeout_behavior=\"raise_exception\"</code>: raise <a href=\"https://openai.github.io/openai-agents-python/ref/exceptions/#agents.exceptions.ToolTimeoutError\" title=\"ToolTimeoutError\" rel=\"noopener noreferrer\"><code>ToolTimeoutError</code></a> and fail the run.</li>\n<li><code>timeout_error_function=...</code>: customize the timeout message when using <code>error_as_result</code>.</li>\n</ul>",
+      "zh": "<ul><li><code>timeout_behavior=\"error_as_result\"</code>（默认）：向模型返回超时消息，让模型有机会恢复。</li><li><code>timeout_behavior=\"raise_exception\"</code>：抛出 <a href=\"https://openai.github.io/openai-agents-python/ref/exceptions/#agents.exceptions.ToolTimeoutError\" title=\"ToolTimeoutError\" rel=\"noopener noreferrer\"><code>ToolTimeoutError</code></a>，并使运行失败。</li><li><code>timeout_error_function=...</code>：在使用 <code>error_as_result</code> 时自定义超时消息。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-093",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>import asyncio\nfrom agents import Agent, Runner, ToolTimeoutError\nfrom agents.decorators import tool\n\n\n@tool(timeout=1.5, timeout_behavior=\"raise_exception\")\nasync def slow_tool() -&gt; str:\n    await asyncio.sleep(5)\n    return \"done\"\n\n\nagent = Agent(name=\"Timeout hard-fail\", tools=[slow_tool])\n\ntry:\n    await Runner.run(agent, \"Run the tool\")\nexcept ToolTimeoutError as e:\n    print(f\"{e.tool_name} timed out in {e.timeout_seconds} seconds\")\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-094",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Note</p>",
+      "zh": "<p>注意</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-095",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Timeout configuration is supported only for async <code>@function_tool</code> handlers.</p>",
+      "zh": "<p>超时配置仅支持异步的 <code>@function_tool</code> 处理函数。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-096",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-handling-errors-in-function-tools\">Handling errors in function tools</h3>",
+      "zh": "<h3 id=\"zh-source-handling-errors-in-function-tools\">处理函数工具中的错误</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-097",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When you create a function tool via <code>@function_tool</code>, you can pass a <code>failure_error_function</code>. This is a function that provides an error response to the LLM in case the tool call crashes.</p>",
+      "zh": "<p>通过 <code>@function_tool</code> 创建函数工具时，可以传入 <code>failure_error_function</code>。当工具调用崩溃时，这个函数负责向大语言模型提供错误响应。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-098",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>By default (i.e. if you don't pass anything), it runs a <code>default_tool_error_function</code> which tells the LLM an error occurred.</li>\n<li>If you pass your own error function, it runs that instead, and sends the response to the LLM.</li>\n<li>If you explicitly pass <code>None</code>, then any tool call errors will be re-raised for you to handle. This could be a <code>ModelBehaviorError</code> if the model produced invalid JSON, or a <code>UserError</code> if your code crashed, etc.</li>\n</ul>",
+      "zh": "<ul><li>默认情况下，也就是不传入任何值时，会运行 <code>default_tool_error_function</code>，告知大语言模型发生了错误。</li><li>如果传入自己的错误函数，就会改为运行该函数，并将响应发送给大语言模型。</li><li>如果明确传入 <code>None</code>，所有工具调用错误都会被重新抛出，交由你处理。例如，模型生成无效 JSON 时可能出现 <code>ModelBehaviorError</code>，你的代码崩溃时可能出现 <code>UserError</code>，等等。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-099",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import RunContextWrapper\nfrom agents.decorators import tool\nfrom typing import Any\n\n\ndef my_custom_error_function(context: RunContextWrapper[Any], error: Exception) -&gt; str:\n    \"\"\"A custom function to provide a user-friendly error message.\"\"\"\n    print(f\"A tool call failed with the following error: {error}\")\n    return \"An internal server error occurred. Please try again later.\"\n\n\n@tool(failure_error_function=my_custom_error_function)\ndef get_user_profile(user_id: str) -&gt; str:\n    \"\"\"Fetches a user profile from a mock API.\n    This function demonstrates a 'flaky' or failing API call.\n    \"\"\"\n    if user_id == \"user_123\":\n        return \"User profile for user_123 successfully retrieved.\"\n    else:\n        raise ValueError(\n            f\"Could not retrieve profile for user_id: {user_id}. API returned an error.\"\n        )\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-100",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you are manually creating a <code>FunctionTool</code> object, then you must handle errors inside the <code>on_invoke_tool</code> function.</p>",
+      "zh": "<p>如果手动创建 <code>FunctionTool</code> 对象，就必须在 <code>on_invoke_tool</code> 函数内部处理错误。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-101",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-agents-as-tools\">Agents as tools</h2>",
+      "zh": "<h2 id=\"zh-source-agents-as-tools\">将 Agent 用作工具</h2>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-102",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In some workflows, you may want a central agent to orchestrate a network of specialized agents, instead of handing off control. You can do this by modeling agents as tools.</p>",
+      "zh": "<p>在某些工作流中，你可能希望由一个中央 Agent 编排一组专门化 Agent，而不是移交控制权。可以通过将 Agent 建模为工具来实现。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-103",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>import asyncio\n\nfrom agents import Agent, Runner\n\nspanish_agent = Agent(\n    name=\"Spanish agent\",\n    instructions=\"You translate the user's message to Spanish\",\n)\n\nfrench_agent = Agent(\n    name=\"French agent\",\n    instructions=\"You translate the user's message to French\",\n)\n\norchestrator_agent = Agent(\n    name=\"orchestrator_agent\",\n    instructions=(\n        \"You are a translation agent. You use the tools given to you to translate. \"\n        \"If asked for multiple translations, you call the relevant tools.\"\n    ),\n    tools=[\n        spanish_agent.as_tool(\n            tool_name=\"translate_to_spanish\",\n            tool_description=\"Translate the user's message to Spanish\",\n        ),\n        french_agent.as_tool(\n            tool_name=\"translate_to_french\",\n            tool_description=\"Translate the user's message to French\",\n        ),\n    ],\n)\n\n\nasync def main():\n    result = await Runner.run(orchestrator_agent, input=\"Say 'Hello, how are you?' in Spanish.\")\n    print(result.final_output)\n\n\nif __name__ == \"__main__\":\n    asyncio.run(main())\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-104",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-customizing-tool-agents\">Customizing tool-agents</h3>",
+      "zh": "<h3 id=\"zh-source-customizing-tool-agents\">定制作为工具的 Agent</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-105",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>agent.as_tool</code> is a convenience method for turning an agent into a tool. It supports common runtime options such as <code>max_turns</code>, <code>run_config</code>, <code>hooks</code>, <code>previous_response_id</code>, <code>conversation_id</code>, <code>session</code>, and <code>needs_approval</code>. It also supports structured input with <code>parameters</code>, <code>input_builder</code>, and <code>include_input_schema</code>.</p>",
+      "zh": "<p><code>agent.as_tool</code> 是将 Agent 转为工具的便捷方法。它支持常用运行时选项，包括 <code>max_turns</code>、<code>run_config</code>、<code>hooks</code>、<code>previous_response_id</code>、<code>conversation_id</code>、<code>session</code> 和 <code>needs_approval</code>。它也通过 <code>parameters</code>、<code>input_builder</code> 和 <code>include_input_schema</code> 支持结构化输入。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-106",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The state options configure the nested agent run started by the tool call; the parent run's conversation state is not inherited automatically. To share client-managed history between the parent and nested runs, explicitly pass the same <code>session</code> to both. As with <code>Runner.run</code>, choose one state strategy for the nested run: a client-managed <code>session</code>, or server-managed continuation through <code>previous_response_id</code> or <code>conversation_id</code>.</p>",
+      "zh": "<p>这些状态选项配置的是工具调用所启动的嵌套 Agent 运行；父级运行的对话状态不会自动继承。要在父级和嵌套运行之间共享由客户端管理的历史记录，请明确向两者传入同一个 <code>session</code>。与 <code>Runner.run</code> 一样，应为嵌套运行选择一种状态策略：由客户端管理的 <code>session</code>，或通过 <code>previous_response_id</code> 或 <code>conversation_id</code> 实现的服务端续接。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-107",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents.decorators import tool\n\n\n@tool\nasync def run_my_agent() -&gt; str:\n    \"\"\"A tool that runs the agent with custom configs\"\"\"\n\n    agent = Agent(name=\"My agent\", instructions=\"...\")\n\n    result = await Runner.run(agent, input=\"...\", max_turns=5, run_config=...)\n\n    return str(result.final_output)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-108",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-structured-input-for-tool-agents\">Structured input for tool-agents</h3>",
+      "zh": "<h3 id=\"zh-source-structured-input-for-tool-agents\">作为工具的 Agent 的结构化输入</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-109",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>By default, <code>Agent.as_tool()</code> expects an object with one string field, <code>input</code> (<code>{\"input\": \"...\"}</code>), but you can expose a structured schema by passing <code>parameters</code> (a Pydantic model type or a dataclass type).</p>",
+      "zh": "<p>默认情况下，<code>Agent.as_tool()</code> 期望接收只含一个字符串字段 <code>input</code> 的对象（<code>{\"input\": \"...\"}</code>）；但你可以传入 <code>parameters</code>（Pydantic 模型类型或 dataclass 类型），暴露一个结构化 schema。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-110",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Additional options:</p>",
+      "zh": "<p>其他选项：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-111",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><code>include_input_schema=True</code> includes the full JSON Schema in the generated nested input.</li>\n<li><code>input_builder=...</code> lets you fully customize how structured tool arguments become nested agent input.</li>\n<li><code>RunContextWrapper.tool_input</code> contains the parsed structured payload inside the nested run context.</li>\n</ul>",
+      "zh": "<ul><li><code>include_input_schema=True</code> 会在生成的嵌套输入中包含完整的 JSON Schema。</li><li><code>input_builder=...</code> 让你完全定制结构化工具参数如何转换为嵌套 Agent 的输入。</li><li>嵌套运行上下文中的 <code>RunContextWrapper.tool_input</code> 包含已解析的结构化载荷。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-112",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from pydantic import BaseModel, Field\n\n\nclass TranslationInput(BaseModel):\n    text: str = Field(description=\"Text to translate.\")\n    source: str = Field(description=\"Source language.\")\n    target: str = Field(description=\"Target language.\")\n\n\ntranslator_tool = translator_agent.as_tool(\n    tool_name=\"translate_text\",\n    tool_description=\"Translate text between languages.\",\n    parameters=TranslationInput,\n    include_input_schema=True,\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-113",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>See <code>examples/agent_patterns/agents_as_tools_structured.py</code> for a complete runnable example.</p>",
+      "zh": "<p>完整可运行示例见 <code>examples/agent_patterns/agents_as_tools_structured.py</code>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-114",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-approval-gates-for-tool-agents\">Approval gates for tool-agents</h3>",
+      "zh": "<h3 id=\"zh-source-approval-gates-for-tool-agents\">作为工具的 Agent 的审批关卡</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-115",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>Agent.as_tool(..., needs_approval=...)</code> uses the same approval flow as <code>function_tool</code>. If approval is required, the run pauses and pending items appear in <code>result.interruptions</code>; then use <code>result.to_state()</code> and resume after calling <code>state.approve(...)</code> or <code>state.reject(...)</code>. See the <a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">Human-in-the-loop guide</a> for the full pause/resume pattern.</p>",
+      "zh": "<p><code>Agent.as_tool(..., needs_approval=...)</code> 使用与 <code>function_tool</code> 相同的审批流程。如果需要审批，运行会暂停，待处理项出现在 <code>result.interruptions</code> 中；随后使用 <code>result.to_state()</code>，并在调用 <code>state.approve(...)</code> 或 <code>state.reject(...)</code> 后恢复运行。完整的暂停／恢复模式见<a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">人在回路指南</a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-116",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-custom-output-extraction\">Custom output extraction</h3>",
+      "zh": "<h3 id=\"zh-source-custom-output-extraction\">自定义输出提取</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-117",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In certain cases, you might want to modify the output of the tool-agents before returning it to the central agent. This may be useful if you want to:</p>",
+      "zh": "<p>在某些情况下，你可能希望在将作为工具的 Agent 的输出返回给中央 Agent 之前对其进行修改。如果希望完成以下操作，这样做会很有用：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-118",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Extract a specific piece of information (e.g., a JSON payload) from the sub-agent's chat history.</li>\n<li>Convert or reformat the agent’s final answer (e.g., transform Markdown into plain text or CSV).</li>\n<li>Validate the output or provide a fallback value when the agent’s response is missing or malformed.</li>\n</ul>",
+      "zh": "<ul><li>从子 Agent 的聊天历史中提取某条特定信息，例如 JSON 载荷。</li><li>转换或重新格式化 Agent 的最终回答，例如把 Markdown 转成纯文本或 CSV。</li><li>验证输出，或在 Agent 响应缺失或格式有误时提供兜底值。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-119",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can do this by supplying the <code>custom_output_extractor</code> argument to the <code>as_tool</code> method:</p>",
+      "zh": "<p>可以通过向 <code>as_tool</code> 方法提供 <code>custom_output_extractor</code> 参数来实现：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-120",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>async def extract_json_payload(run_result: RunResult) -&gt; str:\n    # Scan the agent’s outputs in reverse order until we find a JSON-like message from a tool call.\n    for item in reversed(run_result.new_items):\n        if isinstance(item, ToolCallOutputItem) and item.output.strip().startswith(\"{\"):\n            return item.output.strip()\n    # Fallback to an empty JSON object if nothing was found\n    return \"{}\"\n\n\njson_tool = data_agent.as_tool(\n    tool_name=\"get_data_json\",\n    tool_description=\"Run the data agent and return only its JSON payload\",\n    custom_output_extractor=extract_json_payload,\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-121",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Inside a custom extractor, the nested <a href=\"https://openai.github.io/openai-agents-python/ref/result/#agents.result.RunResult\" title=\"RunResult\n\n\n  \n      dataclass\n  \" rel=\"noopener noreferrer\"><code>RunResult</code></a> also exposes <a href=\"https://openai.github.io/openai-agents-python/ref/result/#agents.result.RunResultBase.agent_tool_invocation\" title=\"agent_tool_invocation\n\n\n  \n      property\n  \" rel=\"noopener noreferrer\"><code>agent_tool_invocation</code></a>, which is useful when you need the outer tool name, call ID, or raw arguments while post-processing the nested result. See the <a href=\"https://openai.github.io/openai-agents-python/results/#agent-as-tool-metadata\" rel=\"noopener noreferrer\">Results guide</a>.</p>",
+      "zh": "<p>在自定义提取器中，嵌套的 <a href=\"https://openai.github.io/openai-agents-python/ref/result/#agents.result.RunResult\" title=\"RunResult            dataclass   \" rel=\"noopener noreferrer\"><code>RunResult</code></a> 还会暴露 <a href=\"https://openai.github.io/openai-agents-python/ref/result/#agents.result.RunResultBase.agent_tool_invocation\" title=\"agent_tool_invocation            property   \" rel=\"noopener noreferrer\"><code>agent_tool_invocation</code></a>。如果你在后处理嵌套结果时需要外层工具名称、调用 ID 或原始参数，这个属性会很有用。参见<a href=\"https://openai.github.io/openai-agents-python/results/#agent-as-tool-metadata\" rel=\"noopener noreferrer\">结果指南</a>。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-122",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-streaming-nested-agent-runs\">Streaming nested agent runs</h3>",
+      "zh": "<h3 id=\"zh-source-streaming-nested-agent-runs\">嵌套 Agent 运行的流式输出</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-123",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Pass an <code>on_stream</code> callback to <code>as_tool</code> to listen to streaming events emitted by the nested agent while still returning its final output once the stream completes.</p>",
+      "zh": "<p>向 <code>as_tool</code> 传入 <code>on_stream</code> 回调，可以监听嵌套 Agent 发出的流式事件，同时仍在流结束后返回其最终输出。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-124",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import AgentToolStreamEvent\n\n\nasync def handle_stream(event: AgentToolStreamEvent) -&gt; None:\n    # Inspect the underlying StreamEvent along with agent metadata.\n    print(f\"[stream] {event['agent'].name} :: {event['event'].type}\")\n\n\nbilling_agent_tool = billing_agent.as_tool(\n    tool_name=\"billing_helper\",\n    tool_description=\"Answer billing questions.\",\n    on_stream=handle_stream,  # Can be sync or async.\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-125",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>What to expect:</p>",
+      "zh": "<p>预期行为：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-126",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Event types mirror <code>StreamEvent[\"type\"]</code>: <code>raw_response_event</code>, <code>run_item_stream_event</code>, <code>agent_updated_stream_event</code>.</li>\n<li>Providing <code>on_stream</code> automatically runs the nested agent in streaming mode and drains the stream before returning the final output.</li>\n<li>The handler may be synchronous or asynchronous; each event is delivered in order as it arrives.</li>\n<li><code>tool_call</code> is present when the tool is invoked via a model tool call; direct calls may leave it <code>None</code>.</li>\n<li>See <code>examples/agent_patterns/agents_as_tools_streaming.py</code> for a complete runnable sample.</li>\n</ul>",
+      "zh": "<ul><li>事件类型与 <code>StreamEvent[\"type\"]</code> 一致：<code>raw_response_event</code>、<code>run_item_stream_event</code>、<code>agent_updated_stream_event</code>。</li><li>提供 <code>on_stream</code> 会自动以流式模式运行嵌套 Agent，并在返回最终输出前消费完流。</li><li>处理函数可以同步或异步；每个事件在到达时按顺序传递。</li><li>通过模型工具调用来调用工具时，会提供 <code>tool_call</code>；直接调用时它可能为 <code>None</code>。</li><li>完整可运行示例见 <code>examples/agent_patterns/agents_as_tools_streaming.py</code>。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-127",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3 id=\"en-source-conditional-tool-enabling\">Conditional tool enabling</h3>",
+      "zh": "<h3 id=\"zh-source-conditional-tool-enabling\">有条件地启用工具</h3>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-128",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>You can conditionally enable or disable agent tools at runtime using the <code>is_enabled</code> parameter. This allows you to dynamically filter which tools are available to the LLM based on context, user preferences, or runtime conditions.</p>",
+      "zh": "<p>可以使用 <code>is_enabled</code> 参数，在运行时有条件地启用或禁用 Agent 工具。这样就能根据上下文、用户偏好或运行时条件，动态筛选大语言模型可用的工具。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-129",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>import asyncio\nfrom agents import Agent, AgentBase, Runner, RunContextWrapper\nfrom pydantic import BaseModel\n\n\nclass LanguageContext(BaseModel):\n    language_preference: str = \"french_spanish\"\n\n\ndef french_enabled(ctx: RunContextWrapper[LanguageContext], agent: AgentBase) -&gt; bool:\n    \"\"\"Enable French for French+Spanish preference.\"\"\"\n    return ctx.context.language_preference == \"french_spanish\"\n\n\n# Create specialized agents\nspanish_agent = Agent(\n    name=\"spanish_agent\",\n    instructions=\"You respond in Spanish. Always reply to the user's question in Spanish.\",\n)\n\nfrench_agent = Agent(\n    name=\"french_agent\",\n    instructions=\"You respond in French. Always reply to the user's question in French.\",\n)\n\n# Create orchestrator with conditional tools\norchestrator = Agent(\n    name=\"orchestrator\",\n    instructions=(\n        \"You are a multilingual assistant. You use the tools given to you to respond to users. \"\n        \"You must call ALL available tools to provide responses in different languages. \"\n        \"You never respond in languages yourself, you always use the provided tools.\"\n    ),\n    tools=[\n        spanish_agent.as_tool(\n            tool_name=\"respond_spanish\",\n            tool_description=\"Respond to the user's question in Spanish\",\n            is_enabled=True,  # Always enabled\n        ),\n        french_agent.as_tool(\n            tool_name=\"respond_french\",\n            tool_description=\"Respond to the user's question in French\",\n            is_enabled=french_enabled,\n        ),\n    ],\n)\n\n\nasync def main():\n    context = LanguageContext(language_preference=\"french_spanish\")\n    result = await Runner.run(orchestrator, \"How are you?\", context=context)\n    print(result.final_output)\n\n\nasyncio.run(main())\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-130",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <code>is_enabled</code> parameter accepts:</p>",
+      "zh": "<p><code>is_enabled</code> 参数接受：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-131",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><strong>Boolean values</strong>: <code>True</code> (always enabled) or <code>False</code> (always disabled)</li>\n<li><strong>Callable functions</strong>: Functions that take <code>(context, agent)</code> and return a boolean</li>\n<li><strong>Async functions</strong>: Async functions for complex conditional logic</li>\n</ul>",
+      "zh": "<ul><li><strong>布尔值</strong>：<code>True</code>（始终启用）或 <code>False</code>（始终禁用）。</li><li><strong>可调用函数</strong>：接收 <code>(context, agent)</code> 并返回布尔值的函数。</li><li><strong>异步函数</strong>：用于复杂条件逻辑的异步函数。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-132",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Disabled tools are completely hidden from the LLM at runtime, making this useful for:</p>",
+      "zh": "<p>被禁用的工具会在运行时对大语言模型完全隐藏，因此适合用于：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-133",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Request-scoped capability visibility</li>\n<li>Environment-specific tool availability (dev vs prod)</li>\n<li>A/B testing different tool configurations</li>\n<li>Dynamic tool filtering based on runtime state</li>\n</ul>",
+      "zh": "<ul><li>限定在单个请求范围内的能力可见性。</li><li>按环境控制工具可用性，例如开发环境与生产环境。</li><li>对不同工具配置进行 A/B 测试。</li><li>根据运行时状态动态筛选工具。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-134",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For locally configured function tools, the runner also reevaluates <code>is_enabled</code> before invocation. However, <code>is_enabled</code> controls visibility and dispatch; it does not replace authorization that depends on the tool arguments or the resource being accessed. Enforce those checks inside the tool implementation, or use <a href=\"https://openai.github.io/openai-agents-python/guardrails/#tool-guardrails\" rel=\"noopener noreferrer\">tool input guardrails</a> and <a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">approvals</a> when appropriate. MCP servers must authorize their own protected operations.</p>",
+      "zh": "<p>对于在本地配置的函数工具，runner 还会在调用前重新评估 <code>is_enabled</code>。不过，<code>is_enabled</code> 控制的是可见性和调用分发，不能代替依赖工具参数或所访问资源的授权检查。应在工具实现内部落实这些检查，或在适当时使用<a href=\"https://openai.github.io/openai-agents-python/guardrails/#tool-guardrails\" rel=\"noopener noreferrer\">工具输入护栏</a>和<a href=\"https://openai.github.io/openai-agents-python/human_in_the_loop/\" rel=\"noopener noreferrer\">审批</a>。MCP 服务器必须自行对受保护的操作进行授权。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-135",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>See <a href=\"https://openai.github.io/openai-agents-python/context/#use-local-context-for-capability-visibility\" rel=\"noopener noreferrer\">context management</a> for a pattern that applies one application policy across function tools, MCP tools, and handoffs.</p>",
+      "zh": "<p>参见<a href=\"https://openai.github.io/openai-agents-python/context/#use-local-context-for-capability-visibility\" rel=\"noopener noreferrer\">上下文管理</a>，其中介绍了如何将同一项应用策略统一应用于函数工具、MCP 工具和控制权移交。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-136",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-experimental-codex-tool\">Experimental: Codex tool</h2>",
+      "zh": "<h2 id=\"zh-source-experimental-codex-tool\">实验性功能：Codex 工具</h2>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-137",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <code>codex_tool</code> wraps the Codex CLI so an agent can run workspace-scoped tasks (shell, file edits, MCP tools) during a tool call. This surface is experimental and may change.</p>",
+      "zh": "<p><code>codex_tool</code> 封装了 Codex CLI，让 Agent 能在一次工具调用中执行限定于工作区范围的任务，包括 shell、文件编辑和 MCP 工具操作。这个接口仍处于实验阶段，可能发生变化。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-138",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Use it when you want the main agent to delegate a bounded workspace task to Codex without leaving the current run. By default, the tool name is <code>codex</code>. If you set a custom name, it must be <code>codex</code> or start with <code>codex_</code>. When an agent includes multiple Codex tools, each must use a unique name.</p>",
+      "zh": "<p>如果希望主 Agent 在不离开当前运行的情况下，把一个边界明确的工作区任务委派给 Codex，可以使用它。默认工具名称是 <code>codex</code>。如果设置自定义名称，必须是 <code>codex</code> 或以 <code>codex_</code> 开头。当 Agent 包含多个 Codex 工具时，各工具必须使用唯一的名称。</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-139",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre><code>from agents import Agent\nfrom agents.extensions.experimental.codex import ThreadOptions, TurnOptions, codex_tool\n\nagent = Agent(\n    name=\"Codex Agent\",\n    instructions=\"Use the codex tool to inspect the workspace and answer the question.\",\n    tools=[\n        codex_tool(\n            sandbox_mode=\"workspace-write\",\n            working_directory=\"/path/to/repo\",\n            default_thread_options=ThreadOptions(\n                model=\"gpt-5.5\",\n                model_reasoning_effort=\"low\",\n                network_access_enabled=True,\n                web_search_mode=\"disabled\",\n                approval_policy=\"never\",\n            ),\n            default_turn_options=TurnOptions(\n                idle_timeout_seconds=60,\n            ),\n            persist_session=True,\n        )\n    ],\n)\n</code></pre>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-140",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Start with these option groups:</p>",
+      "zh": "<p>可以从以下几组选项开始：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-141",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Execution surface: <code>sandbox_mode</code> and <code>working_directory</code> define where Codex can operate. Pair them together, and set <code>skip_git_repo_check=True</code> when the working directory is not inside a Git repository.</li>\n<li>Thread defaults: <code>default_thread_options=ThreadOptions(...)</code> configures the model, reasoning effort, approval policy, additional directories, network access, and web search mode. Prefer <code>web_search_mode</code> over the legacy <code>web_search_enabled</code>.</li>\n<li>Turn defaults: <code>default_turn_options=TurnOptions(...)</code> configures per-turn behavior such as <code>idle_timeout_seconds</code> and the optional cancellation <code>signal</code>.</li>\n<li>Tool I/O: tool calls must include at least one <code>inputs</code> item with <code>{ \"type\": \"text\", \"text\": ... }</code> or <code>{ \"type\": \"local_image\", \"path\": ... }</code>. <code>output_schema</code> lets you require structured Codex responses.</li>\n</ul>",
+      "zh": "<ul><li>执行范围：<code>sandbox_mode</code> 与 <code>working_directory</code> 定义 Codex 可以在哪里操作，应配合设置；如果工作目录不在 Git 仓库中，请设置 <code>skip_git_repo_check=True</code>。</li><li>会话线程默认值：<code>default_thread_options=ThreadOptions(...)</code> 配置模型、推理强度、审批策略、额外目录、网络访问和网页搜索模式。应优先使用 <code>web_search_mode</code>，而不是旧版的 <code>web_search_enabled</code>。</li><li>轮次默认值：<code>default_turn_options=TurnOptions(...)</code> 配置每个轮次的行为，例如 <code>idle_timeout_seconds</code> 和可选的取消 <code>signal</code>。</li><li>工具输入／输出：工具调用必须至少包含一个 <code>inputs</code> 条目，其形式为 <code>{ \"type\": \"text\", \"text\": ... }</code> 或 <code>{ \"type\": \"local_image\", \"path\": ... }</code>。<code>output_schema</code> 可以要求 Codex 返回结构化响应。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-142",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Thread reuse and persistence are separate controls:</p>",
+      "zh": "<p>会话线程复用与持久化由不同的选项控制：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-143",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><code>persist_session=True</code> reuses one Codex thread for repeated calls to the same tool instance.</li>\n<li><code>use_run_context_thread_id=True</code> stores and reuses the thread ID in run context across runs that share the same mutable context object.</li>\n<li>Thread ID precedence is: per-call <code>thread_id</code>, then run-context thread ID (if enabled), then the configured <code>thread_id</code> option.</li>\n<li>The default run-context key is <code>codex_thread_id</code> for <code>name=\"codex\"</code> and <code>codex_thread_id_&lt;suffix&gt;</code> for <code>name=\"codex_&lt;suffix&gt;\"</code>. Override it with <code>run_context_thread_id_key</code>.</li>\n</ul>",
+      "zh": "<ul><li><code>persist_session=True</code> 让同一工具实例的多次调用复用一个 Codex 会话线程。</li><li><code>use_run_context_thread_id=True</code> 将线程 ID 存入运行上下文，并让共享同一个可变上下文对象的多次运行复用它。</li><li>线程 ID 的优先级为：每次调用的 <code>thread_id</code>，其次是运行上下文中的线程 ID（如果启用），最后是配置的 <code>thread_id</code> 选项。</li><li>对于 <code>name=\"codex\"</code>，默认运行上下文键名是 <code>codex_thread_id</code>；对于 <code>name=\"codex_&lt;suffix&gt;\"</code>，键名是 <code>codex_thread_id_&lt;suffix&gt;</code>。可以通过 <code>run_context_thread_id_key</code> 覆盖它。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-144",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Runtime configuration:</p>",
+      "zh": "<p>运行时配置：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-145",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>Auth: set <code>CODEX_API_KEY</code> (preferred) or <code>OPENAI_API_KEY</code>, or pass <code>codex_options={\"api_key\": \"...\"}</code>.</li>\n<li>Runtime: <code>codex_options.base_url</code> overrides the CLI base URL.</li>\n<li>Binary resolution: set <code>codex_options.codex_path_override</code> (or <code>CODEX_PATH</code>) to pin the CLI path. Otherwise the SDK resolves <code>codex</code> from <code>PATH</code>, then falls back to the bundled vendor binary.</li>\n<li>Environment: <code>codex_options.env</code> fully controls the subprocess environment. When it is provided, the subprocess does not inherit <code>os.environ</code>.</li>\n<li>Stream limits: <code>codex_options.codex_subprocess_stream_limit_bytes</code> (or <code>OPENAI_AGENTS_CODEX_SUBPROCESS_STREAM_LIMIT_BYTES</code>) controls stdout/stderr reader limits. Valid range is <code>65536</code> to <code>67108864</code>; default is <code>8388608</code>.</li>\n<li>Streaming: <code>on_stream</code> receives thread/turn lifecycle events and item events (<code>reasoning</code>, <code>command_execution</code>, <code>mcp_tool_call</code>, <code>file_change</code>, <code>web_search</code>, <code>todo_list</code>, and <code>error</code> item updates).</li>\n<li>Outputs: results include <code>response</code>, <code>usage</code>, and <code>thread_id</code>; usage is added to <code>RunContextWrapper.usage</code>.</li>\n</ul>",
+      "zh": "<ul><li>认证：设置 <code>CODEX_API_KEY</code>（推荐）或 <code>OPENAI_API_KEY</code>，也可以传入 <code>codex_options={\"api_key\": \"...\"}</code>。</li><li>运行时：<code>codex_options.base_url</code> 覆盖 CLI 的基础 URL。</li><li>二进制文件解析：设置 <code>codex_options.codex_path_override</code>（或 <code>CODEX_PATH</code>）以固定 CLI 路径。否则，SDK 先从 <code>PATH</code> 中解析 <code>codex</code>，再回退到随包附带的供应商二进制文件。</li><li>环境：<code>codex_options.env</code> 完全控制子进程环境。提供该选项后，子进程不会继承 <code>os.environ</code>。</li><li>流限制：<code>codex_options.codex_subprocess_stream_limit_bytes</code>（或 <code>OPENAI_AGENTS_CODEX_SUBPROCESS_STREAM_LIMIT_BYTES</code>）控制 stdout/stderr 读取器的限制。有效范围为 <code>65536</code> 至 <code>67108864</code>，默认值为 <code>8388608</code>。</li><li>流式输出：<code>on_stream</code> 接收线程／轮次生命周期事件，以及条目事件，也就是 <code>reasoning</code>、<code>command_execution</code>、<code>mcp_tool_call</code>、<code>file_change</code>、<code>web_search</code>、<code>todo_list</code> 和 <code>error</code> 条目的更新。</li><li>输出：结果包含 <code>response</code>、<code>usage</code> 和 <code>thread_id</code>；用量会累加到 <code>RunContextWrapper.usage</code>。</li></ul>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-146",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Reference:</p>",
+      "zh": "<p>参考：</p>"
+    },
+    {
+      "id": "new48_agents_sdk_tools-147",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/extensions/experimental/codex/codex_tool/\" rel=\"noopener noreferrer\">Codex tool API reference</a></li>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/extensions/experimental/codex/thread_options/\" rel=\"noopener noreferrer\">ThreadOptions reference</a></li>\n<li><a href=\"https://openai.github.io/openai-agents-python/ref/extensions/experimental/codex/turn_options/\" rel=\"noopener noreferrer\">TurnOptions reference</a></li>\n<li>See <code>examples/tools/codex.py</code> and <code>examples/tools/codex_same_thread.py</code> for complete runnable samples.</li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://openai.github.io/openai-agents-python/ref/extensions/experimental/codex/codex_tool/\" rel=\"noopener noreferrer\">Codex 工具 API 参考文档</a></li><li><a href=\"https://openai.github.io/openai-agents-python/ref/extensions/experimental/codex/thread_options/\" rel=\"noopener noreferrer\">ThreadOptions 参考文档</a></li><li><a href=\"https://openai.github.io/openai-agents-python/ref/extensions/experimental/codex/turn_options/\" rel=\"noopener noreferrer\">TurnOptions 参考文档</a></li><li>完整可运行示例见 <code>examples/tools/codex.py</code> 和 <code>examples/tools/codex_same_thread.py</code>。</li></ul>"
+    }
+  ],
+  "description": "工具让 Agent 能够采取行动，例如获取数据、运行代码、调用外部 API，甚至使用计算机。SDK 支持五类工具",
+  "reading_minutes": 38,
+  "downloads": {}
+}

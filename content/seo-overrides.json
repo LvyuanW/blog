@@ -479,5 +479,122 @@
         "name": "Erik Schluntz"
       }
     ]
+  },
+  "agents-sdk-tools": {
+    "description": "OpenAI Agents SDK 工具文档的完整中文译文，涵盖托管工具、工具搜索、程序化工具调用、本地执行与权限审批、函数工具、将 Agent 用作工具和实验性 Codex 工具，保留全部示例代码与 API 参考链接。",
+    "authors": [
+      {
+        "@type": "Organization",
+        "name": "OpenAI"
+      }
+    ]
+  },
+  "codex-platform": {
+    "description": "OpenAI 本文的完整中文译文介绍 Codex 开放 Agent 运行框架，以及 codex exec、Codex SDK 与 app-server 的集成方式，讨论上下文、工具、状态、流式事件、审批和将 Agent 嵌入实际产品工作流的案例。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Nicolas Bonamy"
+      },
+      {
+        "@type": "Person",
+        "name": "Derrick Choi"
+      }
+    ]
+  },
+  "harness-engineering": {
+    "description": "LangChain 本文的完整中文译文介绍如何仅调整运行框架，将 Deep Agents 在 Terminal Bench 2.0 的得分从 52.8 提升至 66.5，讨论执行轨迹分析、自我验证、环境上下文、循环检测和推理预算分配，以及模型适配与泛化限制。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Vivek Trivedy"
+      }
+    ]
+  },
+  "better-harness": {
+    "description": "LangChain 本文的完整中文译文介绍 Better-Harness 如何把评测作为运行框架优化的学习信号，涵盖用例获取与标签、优化集和留出集划分、执行轨迹诊断、人工审查及回归维护，并展示 Claude Sonnet 4.6 与 GLM-5 的实验结果。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Vivek Trivedy"
+      }
+    ]
+  },
+  "multi-agent-context": {
+    "description": "LangChain 本文的完整中文译文比较子 Agent 的隔离与分叉上下文模式，解释对话继承、提示词缓存及任务结果回传机制，并通过执行、验证、研究与记忆 Agent 的例子，说明如何按工作关系选择上下文范围、减少重复收集并保持独立判断。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Thushanth Bengre"
+      },
+      {
+        "@type": "Person",
+        "name": "Chester Curme"
+      }
+    ]
+  },
+  "sonar-foundation-agent": {
+    "description": "Sonar 本文的完整中文译文介绍 Sonar Foundation Agent 的工具与工作流设计，回顾从 AutoCodeRover 两阶段架构到单 Agent 自由工作流的演进，并解释模型能力、提示词约束与自主程度如何共同影响 SWE-bench Verified 表现。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Haifeng Ruan"
+      }
+    ]
+  },
+  "sonar-technical-report": {
+    "description": "Sonar Foundation Agent 六页技术报告的完整中文译文，涵盖 LlamaIndex 架构、bash 与 AST 工具、测试驱动提示词、SWE-bench 效果与成本、补丁大小和完全匹配率分析，以及随模型能力调整 Agent 自主程度的经验。保留全部图表与原文数据差异。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Haifeng Ruan"
+      },
+      {
+        "@type": "Person",
+        "name": "Yuntong Zhang"
+      }
+    ]
+  },
+  "live-swe-agent": {
+    "description": "Live-SWE-agent 项目 README 的完整中文译文，介绍运行时自我演化的软件工程 Agent、统一开放运行框架与模型评测结果，保留安装配置、完整执行轨迹和补丁下载、数据集及论文引用信息。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Chunqiu Steven Xia"
+      },
+      {
+        "@type": "Person",
+        "name": "Zhe Wang"
+      },
+      {
+        "@type": "Person",
+        "name": "Yan Yang"
+      },
+      {
+        "@type": "Person",
+        "name": "Yuxiang Wei"
+      },
+      {
+        "@type": "Person",
+        "name": "Lingming Zhang"
+      }
+    ]
+  },
+  "intelligent-delegation": {
+    "description": "Google DeepMind《智能 AI 委派》完整论文中文译文，讨论任务分解、动态分配、监测、信任、权限与可验证完成，并分析人类监督、责任归属及 Agent 协议的设计，保留全部图表、代码和参考文献。",
+    "authors": [
+      {
+        "@type": "Person",
+        "name": "Nenad Tomašev"
+      },
+      {
+        "@type": "Person",
+        "name": "Matija Franklin"
+      },
+      {
+        "@type": "Person",
+        "name": "Simon Osindero"
+      }
+    ]
   }
 }

@@ -1,0 +1,388 @@
+{
+  "title": "在多 Agent 运行框架中组织上下文",
+  "original_title": "Organizing Context in a Multi-Agent Harness",
+  "url": "https://www.langchain.com/blog/organizing-context-in-a-multi-agent-harness",
+  "date": "2026-09-08",
+  "publisher": "LangChain",
+  "author": "Thushanth Bengre, Chester Curme",
+  "source_order": 49,
+  "slug": "multi-agent-context",
+  "source_id": "new49_multi_agent_context",
+  "category": "上下文工程",
+  "blocks": [
+    {
+      "id": "new49_multi_agent_context-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>TL;DR</strong></p>",
+      "zh": "<p><strong>摘要</strong></p>"
+    },
+    {
+      "id": "new49_multi_agent_context-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Most harnesses support a <a href=\"https://www.langchain.com/blog/choosing-the-right-multi-agent-architecture\" rel=\"noopener noreferrer\">subagents</a> feature to spawn new tasks from a supervisor agent. Subagents enable <a href=\"https://docs.langchain.com/oss/python/langchain/multi-agent\" rel=\"noopener noreferrer\">parallel reasoning and context isolation</a>, allowing a supervisor agent to delegate work without polluting the context window.</p>",
+      "zh": "<p>大多数运行框架都支持<a href=\"https://www.langchain.com/blog/choosing-the-right-multi-agent-architecture\" rel=\"noopener noreferrer\">子 Agent</a> 功能，让主管 Agent 能够派生新任务。子 Agent 提供<a href=\"https://docs.langchain.com/oss/python/langchain/multi-agent\" rel=\"noopener noreferrer\">并行推理和上下文隔离</a>能力，使主管 Agent 可以委派工作，同时避免污染自己的上下文窗口。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Supervisor agents specify the task, and subagents typically complete the task in a fresh context window. This can lead to waste: subagents may redo context-gathering operations, like file reads, already done by the supervisor.</p>",
+      "zh": "<p>主管 Agent 指定任务，而子 Agent 通常在一个全新的上下文窗口中完成任务。这可能造成浪费：子 Agent 可能重复执行主管 Agent 已经做过的上下文收集操作，例如读取文件。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For cases where subagents can benefit from the supervisor agent’s context, we built <a href=\"https://docs.langchain.com/oss/python/deepagents/subagents#forked-subagents\" rel=\"noopener noreferrer\">forked subagents</a>. Forked subagents inherit the supervisor’s full conversation instead of starting fresh. Forking can be faster and cheaper than isolated subagents, since reusing the supervisor’s conversation takes advantage of prompt caching and reduces repeated work.</p>",
+      "zh": "<p>对于能够从主管 Agent 的上下文中受益的子 Agent，我们构建了<a href=\"https://docs.langchain.com/oss/python/deepagents/subagents#forked-subagents\" rel=\"noopener noreferrer\">分叉子 Agent</a>。它们会继承主管 Agent 的完整对话，而不是从头开始。由于复用主管 Agent 的对话可以利用提示词缓存，并减少重复工作，分叉模式可能比隔离子 Agent 更快、成本更低。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Harnesses with subagents</h2>",
+      "zh": "<h2>支持子 Agent 的运行框架</h2>"
+    },
+    {
+      "id": "new49_multi_agent_context-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Delegating tasks to subagents is one effective way that an agent can manage its own context. Subagents provide <a href=\"https://docs.langchain.com/oss/python/langchain/multi-agent\" rel=\"noopener noreferrer\">context isolation</a>, so that the details of individual tasks can be withheld from a supervisor agent’s context window. If you’re curious to learn more, <a href=\"https://www.langchain.com/blog/choosing-the-right-multi-agent-architecture\" rel=\"noopener noreferrer\">we’ve written at length</a> about different multi-agent architectures!</p>",
+      "zh": "<p>将任务委派给子 Agent，是 Agent 管理自身上下文的一种有效方式。子 Agent 提供<a href=\"https://docs.langchain.com/oss/python/langchain/multi-agent\" rel=\"noopener noreferrer\">上下文隔离</a>，让各项任务的细节可以不进入主管 Agent 的上下文窗口。如果你想了解更多，我们已经<a href=\"https://www.langchain.com/blog/choosing-the-right-multi-agent-architecture\" rel=\"noopener noreferrer\">详细撰文</a>介绍过不同的多 Agent 架构！</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <a href=\"https://docs.langchain.com/oss/python/deepagents/subagents\" rel=\"noopener noreferrer\">supervisor</a> is one of the most generalizable patterns, and most coding harnesses have adopted it. Here, a supervisor maintains a plan and delegates work to specialized subagents. For example,</p>",
+      "zh": "<p><a href=\"https://docs.langchain.com/oss/python/deepagents/subagents\" rel=\"noopener noreferrer\">主管模式</a>是适用范围最广的模式之一，大多数编程运行框架都采用了它。在这种模式下，主管 Agent 维护计划，并将工作委派给专门的子 Agent。例如：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-007",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Workers: addressing some well-scoped implementation.</li><li>Reviewers: independent judgment on work already done.</li></ul>",
+      "zh": "<ul><li>执行者：完成某项范围明确的实现工作。</li><li>审查者：对已完成的工作作出独立判断。</li></ul>"
+    },
+    {
+      "id": "new49_multi_agent_context-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The supervisor agent typically receives just the outcome of a task from the subagents; their intermediate reasoning is withheld from its context window. However, what context subagents should receive from the supervisor is dependent on what the subagent is used for.</p>",
+      "zh": "<p>主管 Agent 通常只接收子 Agent 返回的任务结果；子 Agent 的中间推理过程不会进入主管 Agent 的上下文窗口。然而，子 Agent 应从主管 Agent 那里接收哪些上下文，取决于子 Agent 的用途。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-009",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Context modes for subagents</h2>",
+      "zh": "<h2>子 Agent 的上下文模式</h2>"
+    },
+    {
+      "id": "new49_multi_agent_context-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>To help specify this, we introduced context modes in the latest version of <code>deepagents</code>. Context modes specify what context subagents can receive from the supervisor. Supported values are <code>\"isolated\"</code> and <code>\"fork\"</code>.</p>",
+      "zh": "<p>为便于明确指定这一点，我们在最新版 <code>deepagents</code> 中引入了上下文模式。上下文模式指定子 Agent 可以从主管 Agent 那里接收哪些上下文。支持的取值为 <code>\"isolated\"</code> 和 <code>\"fork\"</code>。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-011",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Isolated subagents</h3>",
+      "zh": "<h3>隔离子 Agent</h3>"
+    },
+    {
+      "id": "new49_multi_agent_context-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This is the default and pre-existing behavior for subagents in <a href=\"https://docs.langchain.com/oss/python/deepagents/overview\" rel=\"noopener noreferrer\">Deep Agents</a>. Subagents spawn with a fresh context window, receiving only the task description specified by the supervisor.</p>",
+      "zh": "<p>这是 <a href=\"https://docs.langchain.com/oss/python/deepagents/overview\" rel=\"noopener noreferrer\">Deep Agents</a> 中子 Agent 原有的默认行为。子 Agent 启动时拥有一个全新的上下文窗口，只接收主管 Agent 指定的任务描述。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-013",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-center w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/fdeec42d5acda9771a3ae06b.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new49_multi_agent_context-014",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Forked subagents</h3>",
+      "zh": "<h3>分叉子 Agent</h3>"
+    },
+    {
+      "id": "new49_multi_agent_context-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Set <code>\"mode\": \"fork\"</code> and the supervisor’s current state propagates to the subagents instead of starting it empty. This is effectively a forked continuation of the current thread— with an added directive written by the supervisor— that is finally unwound into a single tool result read by the supervisor.</p>",
+      "zh": "<p>设置 <code>\"mode\": \"fork\"</code> 后，主管 Agent 的当前状态会传递给子 Agent，而不是让子 Agent 从空状态启动。这实际上是当前对话线程的一条分叉延续，并附加一条由主管 Agent 编写的指令；最终，分叉中的工作会收束为一个工具结果，供主管 Agent 读取。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-016",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-center w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/30ac1e194053c91edb69cd92.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new49_multi_agent_context-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Specifically:</p>",
+      "zh": "<p>具体而言：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-018",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>Supervisor agents generate a tool call invoking the subagent with a task description.</li><li>The subagent receives the entire supervisor agent’s state, including conversation history. The trailing tool call is excised, and its task description is formatted into a user message alongside a fixed <a href=\"https://github.com/langchain-ai/deepagents/blob/15454a85438146a59c804af3a525f96091c55fe8/libs/deepagents/deepagents/middleware/subagents.py#L357\" rel=\"noopener noreferrer\">preamble</a> clarifying its role.</li><li>When the subagent finishes, the supervisor receives its final message as a response to the originating tool call.</li></ul>",
+      "zh": "<ul><li>主管 Agent 生成一次工具调用，携带任务描述来调用子 Agent。</li><li>子 Agent 接收主管 Agent 的全部状态，包括对话历史。末尾的工具调用会被移除，其中的任务描述会与一段用于说明子 Agent 角色的固定<a href=\"https://github.com/langchain-ai/deepagents/blob/15454a85438146a59c804af3a525f96091c55fe8/libs/deepagents/deepagents/middleware/subagents.py#L357\" rel=\"noopener noreferrer\">前置说明</a>一起，格式化为一条用户消息。</li><li>子 Agent 完成后，主管 Agent 会收到它的最终消息，作为最初那次工具调用的响应。</li></ul>"
+    },
+    {
+      "id": "new49_multi_agent_context-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Although forked subagents are seeded with more context than isolated subagents, prompt caching is respected by design. In cases where subagents require detailed context to correctly perform their tasks, forking can save repeated tool calls and context-gathering.</p>",
+      "zh": "<p>虽然分叉子 Agent 的初始上下文比隔离子 Agent 更多，但其设计保留了利用提示词缓存的能力。当子 Agent 需要详细上下文才能正确完成任务时，分叉可以省去重复的工具调用和上下文收集。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-020",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Choosing a context mode</h2>",
+      "zh": "<h2>选择上下文模式</h2>"
+    },
+    {
+      "id": "new49_multi_agent_context-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The right choice of context mode depends on the subagent’s relationship to the work. A useful way to think about them is with two common patterns: workers that continue the supervisor’s work, and verifiers that evaluate it independently.</p>",
+      "zh": "<p>应当选择哪种上下文模式，取决于子 Agent 与这项工作的关系。可以借助两种常见模式来理解：执行者继续主管 Agent 的工作，而验证者则独立评估这项工作。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-022",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4><strong>Worker Agent</strong>: continue work already in progress</h4>",
+      "zh": "<h4><strong>执行 Agent</strong>：继续已经开展的工作</h4>"
+    },
+    {
+      "id": "new49_multi_agent_context-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A worker carries out a piece of work after the supervisor has already gathered context or made a decision. For example, the supervisor might inspect an error, trace it to a particular function, and then delegate the implementation and testing of a fix.<br><br>Starting the worker in isolation would force it to rediscover its evidence. With <code>fork</code>, it receives the supervisor’s history and can pick up where the investigation left off. A supervisor calls this when some work needs to be done, but doesn’t necessarily care about the intermediate steps it takes to arrive to a conclusion.<br></p>",
+      "zh": "<p>主管 Agent 已经收集上下文或作出决策后，执行 Agent 会接手其中一部分工作。例如，主管 Agent 可能先检查一个错误，将其追踪到某个具体函数，再将修复的实现和测试委派出去。<br><br>如果让执行 Agent 在隔离模式下启动，它就不得不重新搜集相关证据。使用 <code>fork</code> 时，它会收到主管 Agent 的历史记录，可以从调查暂停的地方继续。主管 Agent 在有工作需要完成、但未必关心执行者得出结论的中间步骤时，会调用这类 Agent。<br></p>"
+    },
+    {
+      "id": "new49_multi_agent_context-024",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre class=\"w-code-block\"><code class=\"language-typescript\"><span><span>const</span><span> fixerSubagent: SubAgent = {\n</span></span><span><span>  </span><span class=\"hljs-attr\">mode</span><span>: </span><span>\"fork\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">name</span><span>: </span><span>\"fixer\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">description</span><span>:\n</span></span><span><span>    </span><span>\"Use when a problem has already been diagnosed and the remaining work is to implement and test the fix\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">systemPrompt</span><span>: </span><span>\"...\"</span><span>,\n</span></span><span>}</span></code></pre>"
+    },
+    {
+      "id": "new49_multi_agent_context-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The supervisor might invoke it with a task like:</p>",
+      "zh": "<p>主管 Agent 可能这样分配任务：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-026",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>Update the retry logic based on the timeout issue we identified, then add a regression test</blockquote>",
+      "zh": "<blockquote>根据我们已发现的超时问题更新重试逻辑，然后添加一项回归测试。</blockquote>"
+    },
+    {
+      "id": "new49_multi_agent_context-027",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4><strong>Verifier agent</strong>: independently evaluate work</h4>",
+      "zh": "<h4><strong>验证 Agent</strong>：独立评估工作</h4>"
+    },
+    {
+      "id": "new49_multi_agent_context-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A verifier reviews another agent’s work against some criteria- for example, checking a diff for correctness, backwards compatibility, and test coverage.</p>",
+      "zh": "<p>验证 Agent 根据某些标准审查另一个 Agent 的工作，例如检查代码差异的正确性、向后兼容性和测试覆盖情况。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In this case, inheriting the supervisor’s reasoning can be counterproductive. The verifier should evaluate the work itself rather than being anchored by the supervisor’s diagnosis or expectations. <code>isolated</code> mode gives it the task and relevant review materials without the preceding conversation.</p>",
+      "zh": "<p>在这种情况下，继承主管 Agent 的推理可能适得其反。验证 Agent 应当评估工作本身，而不是受主管 Agent 的诊断或预期所锚定。<code>isolated</code> 模式只向它提供任务和相关审查材料，不包含此前的对话。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-030",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre class=\"w-code-block\"><code class=\"language-typescript\"><span><span>const</span><span> reviewerSubagent: SubAgent = {\n</span></span><span><span>  </span><span class=\"hljs-attr\">mode</span><span>: </span><span>\"isolated\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">name</span><span>: </span><span>\"reviewer\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">description</span><span>:\n</span></span><span><span>    </span><span>\"Use after an implementation is complete and needs an independent review\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">systemPrompt</span><span>: </span><span>\"...\"</span><span>,\n</span></span><span>}</span></code></pre>"
+    },
+    {
+      "id": "new49_multi_agent_context-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The supervisor might invoke it with:</p>",
+      "zh": "<p>主管 Agent 可能这样调用它：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-032",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>Review this diff for completeness, backwards compatibility, and adequate test coverage.</blockquote>",
+      "zh": "<blockquote>审查这份代码差异，检查其完整性、向后兼容性，以及测试覆盖是否充分。</blockquote>"
+    },
+    {
+      "id": "new49_multi_agent_context-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We’ve previously written about <a href=\"https://www.langchain.com/blog/introducing-rubrics-for-deepagents\" rel=\"noopener noreferrer\">RubricMiddleware</a> which is another instance of using an independent verifier!</p>",
+      "zh": "<p>我们此前介绍过 <a href=\"https://www.langchain.com/blog/introducing-rubrics-for-deepagents\" rel=\"noopener noreferrer\">RubricMiddleware</a>，这也是使用独立验证者的一个例子！</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-034",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Specializing subagents</h3>",
+      "zh": "<h3>让子 Agent 专门化</h3>"
+    },
+    {
+      "id": "new49_multi_agent_context-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Alongside things like tools and middleware, context modes are one of the levers you can use to specialize subagents to a task. Here's a few subagents we consider specialized and their relationship to context modes:</p>",
+      "zh": "<p>除了工具和中间件等手段，上下文模式也是让子 Agent 针对某项任务实现专门化的一种调节手段。以下是几种我们认为具有专门用途的子 Agent，以及它们与上下文模式的关系：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-036",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4><strong>Researcher agent</strong>: investigate a question</h4>",
+      "zh": "<h4><strong>研究 Agent</strong>：调查问题</h4>"
+    },
+    {
+      "id": "new49_multi_agent_context-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A researcher investigates a question and returns a condensed answer to the supervisor. For example, a supervisor might delegate separate questions about an unfamiliar library, a competitor, or the history of a technical decision.</p>",
+      "zh": "<p>研究 Agent 调查一个问题，并向主管 Agent 返回精炼的答案。例如，主管 Agent 可能将关于某个陌生库、某个竞争对手，或某项技术决策历史的不同问题分别委派出去。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>When the question can stand on its own, the researcher does not need the supervisor’s conversation. Using <code>isolated</code> keeps its context focused on the question at hand. This is especially useful when several researchers run in parallel: forking each one would duplicate the supervisor’s history even though each researcher only needs its assigned question.</p>",
+      "zh": "<p>当问题本身独立成立时，研究 Agent 不需要主管 Agent 的对话。使用 <code>isolated</code> 可以让它的上下文专注于当前问题。在多个研究 Agent 并行运行时，这尤其有用：如果让每个研究 Agent 都采用分叉模式，就会重复携带主管 Agent 的历史记录，但它们其实各自只需要被分配到的问题。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-039",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre class=\"w-code-block\"><code class=\"language-typescript\"><span><span>const</span><span> researcherSubagent: SubAgent = {\n</span></span><span><span>  </span><span class=\"hljs-attr\">mode</span><span>: </span><span>'isolated'</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">name</span><span>: </span><span>'researcher'</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">description</span><span>:\n</span></span><span><span>    </span><span>'Use to investigate a self-contained question and return a condensed, well-sourced answer'</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">tools</span><span>: [search_engine],\n</span></span><span>};</span></code></pre>"
+    },
+    {
+      "id": "new49_multi_agent_context-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The supervisor might invoke it with:</p>",
+      "zh": "<p>主管 Agent 可能这样调用它：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-041",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>Determine whether the API changed between versions 1.2 and 1.3, and link to the relevant release notes.</blockquote>",
+      "zh": "<blockquote>确定 API 在 1.2 和 1.3 版本之间是否发生了变化，并提供相关发行说明的链接。</blockquote>"
+    },
+    {
+      "id": "new49_multi_agent_context-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We can give the subagent its own capabilities (like a <code>search_engine</code> tool) to help it complete its task.</p>",
+      "zh": "<p>我们可以为子 Agent 配置独立的能力（例如一个 <code>search_engine</code> 工具），帮助它完成任务。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-043",
+      "tag": "h4",
+      "preserve": false,
+      "en": "<h4><strong>Memory agent</strong>: retain information from the conversation</h4>",
+      "zh": "<h4><strong>记忆 Agent</strong>：保留对话中的信息</h4>"
+    },
+    {
+      "id": "new49_multi_agent_context-044",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A memory agent identifies information from an interaction that should be available later- for example, a user preference, an architectural decision, or a constraint established during the conversation.</p>",
+      "zh": "<p>记忆 Agent 从一次交互中识别出日后应该能够获取的信息，例如用户偏好、架构决策，或对话中确立的约束。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here, the conversation is the material the agent needs to analyze. With <code>fork</code>, the memory agent receives the full interaction and can decide what is worth preserving without requiring the supervisor to restate it in the task.</p>",
+      "zh": "<p>这里，对话本身就是 Agent 需要分析的材料。使用 <code>fork</code> 时，记忆 Agent 会收到完整交互，可以自行判断哪些内容值得保存，无需主管 Agent 在任务中重新叙述。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-046",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre class=\"w-code-block\"><code class=\"language-typescript\"><span><span>const</span><span> memorizerSubagent: SubAgent = {\n</span></span><span><span>  </span><span class=\"hljs-attr\">mode</span><span>: </span><span>\"fork\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">name</span><span>: </span><span>\"memorizer\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">description</span><span>:\n</span></span><span><span>    </span><span>\"Use when the conversation contains durable decisions, facts, or preferences worth saving to memory\"</span><span>,\n</span></span><span><span>  </span><span class=\"hljs-attr\">permissions</span><span>: [\n</span></span><span>    {\n</span><span><span>      </span><span class=\"hljs-attr\">operations</span><span>: [</span><span>\"write\"</span><span>],\n</span></span><span><span>      </span><span class=\"hljs-attr\">paths</span><span>: [</span><span>\"/**\"</span><span>],\n</span></span><span><span>      </span><span class=\"hljs-attr\">mode</span><span>: </span><span>\"deny\"</span><span>,\n</span></span><span>    },\n</span><span>    {\n</span><span><span>      </span><span class=\"hljs-attr\">operations</span><span>: [</span><span>\"read\"</span><span>],\n</span></span><span><span>      </span><span class=\"hljs-attr\">paths</span><span>: [</span><span>\"/AGENTS.md\"</span><span>, </span><span>\"/docs/**\"</span><span>],\n</span></span><span><span>      </span><span class=\"hljs-attr\">mode</span><span>: </span><span>\"allow\"</span><span>,\n</span></span><span>    },\n</span><span>  ],\n</span><span>};</span></code></pre>"
+    },
+    {
+      "id": "new49_multi_agent_context-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The supervisor might invoke it with:</p>",
+      "zh": "<p>主管 Agent 可能这样调用它：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-048",
+      "tag": "blockquote",
+      "preserve": false,
+      "en": "<blockquote>Memorize the decisions and preferences established in this conversation.</blockquote>",
+      "zh": "<blockquote>记住本次对话中确立的决策和偏好。</blockquote>"
+    },
+    {
+      "id": "new49_multi_agent_context-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Because we want to limit exactly what the memorizer agent can edit, we can specialize the subagent by setting restrictions on what files it can edit while it works.</p>",
+      "zh": "<p>由于我们希望精确限制记忆 Agent 能够编辑的内容，可以通过限制它工作时可编辑的文件范围，让这个子 Agent 更适合其专门用途。</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-050",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Try It</h3>",
+      "zh": "<h3>试用</h3>"
+    },
+    {
+      "id": "new49_multi_agent_context-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><code>deepagents</code> is a framework we’re building that takes our lessons learned from working with thousands of different teams shipping agents. You can try subagent context modes (see the docs <a href=\"https://docs.langchain.com/oss/python/deepagents/subagents#forked-subagents\" rel=\"noopener noreferrer\">here</a>), and much more by installing:</p>",
+      "zh": "<p><code>deepagents</code> 是我们正在构建的一个框架，凝聚了我们与数千个交付 Agent 的不同团队合作所得的经验。安装后，你就可以试用子 Agent 的上下文模式（文档见<a href=\"https://docs.langchain.com/oss/python/deepagents/subagents#forked-subagents\" rel=\"noopener noreferrer\">这里</a>）以及更多功能：</p>"
+    },
+    {
+      "id": "new49_multi_agent_context-052",
+      "tag": "pre",
+      "preserve": true,
+      "en": "<pre class=\"w-code-block\"><code class=\"language-bash\"><span><span># Python</span><span>\n</span></span><span>uv add deepagents\n</span><span><span></span><span># Typescript</span><span>\n</span></span><span>pnpm i deepagents</span></code></pre>"
+    },
+    {
+      "id": "new49_multi_agent_context-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Let us know what you think via GitHub <a href=\"https://github.com/langchain-ai/deepagents/issues\" rel=\"noopener noreferrer\">issues</a>, the <a href=\"https://forum.langchain.com/\" rel=\"noopener noreferrer\">forum</a>, or on X / LinkedIn!</p>",
+      "zh": "<p>欢迎通过 GitHub <a href=\"https://github.com/langchain-ai/deepagents/issues\" rel=\"noopener noreferrer\">issues</a>、<a href=\"https://forum.langchain.com/\" rel=\"noopener noreferrer\">论坛</a>，或 X / LinkedIn 告诉我们你的想法！</p>"
+    }
+  ],
+  "description": "大多数运行框架都支持子 Agent 功能，让主管 Agent 能够派生新任务。子 Agent 提供并行推理和上下文隔离能力，使主管 Agent 可以委派工作，同时避免污染自己的上下文窗口",
+  "reading_minutes": 7,
+  "downloads": {}
+}

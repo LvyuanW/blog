@@ -1,0 +1,364 @@
+{
+  "title": "Better Harness：用评测逐步优化运行框架的方法",
+  "original_title": "Better Harness: A Recipe for Harness Hill-Climbing with Evals",
+  "url": "https://www.langchain.com/blog/better-harness-a-recipe-for-harness-hill-climbing-with-evals",
+  "date": "2026-04-08",
+  "publisher": "LangChain",
+  "author": "Vivek Trivedy",
+  "source_order": 47,
+  "slug": "better-harness",
+  "source_id": "new47_better_harness",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new47_better_harness-000",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 class=\"t-heading-6-rg\">Key Takeaways</h2>",
+      "zh": "<h2 class=\"t-heading-6-rg\">要点</h2>"
+    },
+    {
+      "id": "new47_better_harness-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>TL;DR:</strong> We can build better agents by building better harnesses. But to autonomously build a “better” harness, we need a strong learning signal to “hill-climb” on. We share how we use evals as that signal, plus design decisions that help our agent generalize instead of overfit. Better-Harness is a system for iteratively sourcing and improving your harness with evals.</p>",
+      "zh": "<p><strong>摘要：</strong>构建更好的运行框架，就能构建更好的 Agent。但要自主构建“更好”的运行框架，就需要一个强有力的学习信号，供系统据此进行“爬山优化”。本文分享我们如何将评测用作这一信号，以及哪些设计决策有助于 Agent 泛化，而非过拟合。Better-Harness 是一个利用评测，迭代获取改进依据并优化运行框架的系统。</p>"
+    },
+    {
+      "id": "new47_better_harness-002",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Evals are training data for agents</h2>",
+      "zh": "<h2>评测是 Agent 的训练数据</h2>"
+    },
+    {
+      "id": "new47_better_harness-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In classical machine learning, training data guides the model’s learning process. Each training example contributes a gradient that updates the model’s weights toward “correctness.” We have a similar learning loop for agents.</p>",
+      "zh": "<p>在传统机器学习中，训练数据引导模型的学习过程。每个训练样本都会提供一个梯度，更新模型权重，使模型朝“正确”的方向迈进。对于 Agent，我们也有一个类似的学习循环。</p>"
+    },
+    {
+      "id": "new47_better_harness-004",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/ec3c46b0f6e92b53c2eb7de5.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new47_better_harness-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Evals encode the behavior we want our agent to exhibit in production.</strong> They’re the \"training data\" for harness engineering. Each eval case contributes a signal like “did the agent take the right action” or “produce the right outcome?” That signal guides the next proposed edit to the harness.</p>",
+      "zh": "<p><strong>评测将我们希望 Agent 在生产环境中展现的行为编码下来。</strong>它们是运行框架工程的“训练数据”。每个评测用例都会提供一个信号，例如“Agent 是否采取了正确行动”或“是否产生了正确结果”。这一信号会指导下一次对运行框架提出的修改。</p>"
+    },
+    {
+      "id": "new47_better_harness-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The same rigor and care we put into data quality and curation for model training should also go into eval design. We discuss the importance of data quality in a previous post, <a href=\"https://blog.langchain.com/how-we-build-evals-for-deep-agents/\" rel=\"noopener noreferrer\"><strong>how we build evals for Deep Agents</strong></a>.</p>",
+      "zh": "<p>我们在模型训练的数据质量和数据整理上投入的严谨与用心，也应当投入到评测设计中。此前的文章<a href=\"https://blog.langchain.com/how-we-build-evals-for-deep-agents/\" rel=\"noopener noreferrer\"><strong>《我们如何为 Deep Agents 构建评测》</strong></a>讨论了数据质量的重要性。</p>"
+    },
+    {
+      "id": "new47_better_harness-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There’s some great recent work that formalize the steps to optimize harnesses including <a href=\"https://arxiv.org/abs/2603.28052?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Meta-Harness</strong></a> from Stanford and <a href=\"https://arxiv.org/pdf/2603.03329?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Auto-Harness</strong></a> from DeepMind. We also previously shared a <a href=\"https://blog.langchain.com/improving-deep-agents-with-harness-engineering/\" rel=\"noopener noreferrer\"><strong>Harness Improvement Loop to hill-climb Terminal Bench 2.0</strong></a> by just tweaking the harness layer. We think there’s great future work to be done around the update algorithm itself, but harness improvement is a compound system that goes beyond the update algorithm which is what we talk about here.</p>",
+      "zh": "<p>近期一些出色的工作将运行框架优化的步骤形式化，包括斯坦福的 <a href=\"https://arxiv.org/abs/2603.28052?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Meta-Harness</strong></a> 和 DeepMind 的 <a href=\"https://arxiv.org/pdf/2603.03329?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Auto-Harness</strong></a>。我们此前也分享过一套<a href=\"https://blog.langchain.com/improving-deep-agents-with-harness-engineering/\" rel=\"noopener noreferrer\"><strong>仅调整运行框架层，就能在 Terminal Bench 2.0 上进行爬山优化的运行框架改进循环</strong></a>。我们认为，更新算法本身仍有许多值得探索的方向；但运行框架改进是一套超越更新算法的复合系统，这正是本文讨论的内容。</p>"
+    },
+    {
+      "id": "new47_better_harness-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Better-Harness is a take on compound systems engineering.</strong></p>",
+      "zh": "<p><strong>Better-Harness 是对复合系统工程的一种实践。</strong></p>"
+    },
+    {
+      "id": "new47_better_harness-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>data sourcing → experiment design —&gt; optimization —&gt; review &amp; acceptance</strong></p>",
+      "zh": "<p><strong>数据获取 → 实验设计 → 优化 → 审查与验收</strong></p>"
+    },
+    {
+      "id": "new47_better_harness-010",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>So we include practical details that go alongside the update loop such as how we source evals in the first place, how we design against overfitting, store traces over time, and manually review updates to sanity check anything we ship to production.</p>",
+      "zh": "<p>因此，我们也介绍更新循环周边的实践细节，例如最初如何获取评测用例，如何在设计上防止过拟合，如何持续保存执行轨迹，以及如何人工审查更新，对任何准备发布到生产环境的改动做合理性检查。</p>"
+    },
+    {
+      "id": "new47_better_harness-011",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Sourcing good evals</h2>",
+      "zh": "<h2>获取优质评测用例</h2>"
+    },
+    {
+      "id": "new47_better_harness-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Evals are the foundation that power the harness hill-climbing process. Here are the practical ways we source, curate, and use them.</p>",
+      "zh": "<p>评测是支撑运行框架爬山优化过程的基础。下面是我们获取、整理和使用评测用例的具体方法。</p>"
+    },
+    {
+      "id": "new47_better_harness-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Hand-curated.</strong> For any given task, the team manually writes examples that capture what we think the agent should do in production. These are often high value, but difficult to generate at scale.</p>",
+      "zh": "<p><strong>人工编写与整理。</strong>针对某项任务，团队手工编写示例，记录我们认为 Agent 在生产环境中应该如何行动。这些示例通常很有价值，但难以大规模生成。</p>"
+    },
+    {
+      "id": "new47_better_harness-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Production traces.</strong> Every agent interaction generates a trace where failures become eval cases. Mining traces for eval material is the leverage, high-throughput way to improve evals over time. Even before running an agent over evals, often a team dogfooding our agent will report errors directly in Slack with a Trace link. We recommend dogfooding agents and directly sharing feedback for everyone to see, it helps build shared knowledge of agent behavior.</p>",
+      "zh": "<p><strong>生产环境执行轨迹。</strong>Agent 的每次交互都会产生一条执行轨迹，其中的失败可以转化为评测用例。从执行轨迹中挖掘评测素材，是一种投入产出比高、吞吐量大的方法，能够持续改进评测。往往在正式运行评测之前，内部试用 Agent 的团队就会直接在 Slack 中报告错误，并附上执行轨迹链接。我们建议亲自试用自己的 Agent，并直接分享反馈，让所有人都能看到；这有助于团队建立对 Agent 行为的共同认识。</p>"
+    },
+    {
+      "id": "new47_better_harness-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>External datasets.</strong> These datasets are useful but need to be manually curated to make sure the test cases used to improve the agent reflect desired behaviors. Often each task is adjusted to make sure they measure the important behavior.</p>",
+      "zh": "<p><strong>外部数据集。</strong>这些数据集很有用，但需要人工整理，确保用于改进 Agent 的测试用例反映的是期望行为。通常还要逐项调整任务，以确保它们衡量的是重要的行为。</p>"
+    },
+    {
+      "id": "new47_better_harness-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Tag everything.</strong> Every eval gets tagged to behavioral categories: \"tool selection,\" \"multi-step reasoning,\" etc. Tags enable meaningful holdout sets and targeted experiments. It also saves a lot of money because we can run subsets of evals.</p>",
+      "zh": "<p><strong>为所有用例打标签。</strong>每个评测用例都要标注其所属的行为类别，例如“工具选择”“多步推理”等。标签有助于构建有意义的留出集，并开展有针对性的实验。由于可以只运行评测子集，这也能节省大量费用。</p>"
+    },
+    {
+      "id": "new47_better_harness-017",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Building learning systems that generalize</h3>",
+      "zh": "<h3>构建具有泛化能力的学习系统</h3>"
+    },
+    {
+      "id": "new47_better_harness-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The ideal outcome for any learning system is <strong>generalization</strong>. We give an input signal that captures the distribution of behaviors we want in the wild. The system fits to it and then “just works” on new inputs it's never seen.</p>",
+      "zh": "<p>任何学习系统的理想结果都是<strong>泛化</strong>。我们提供一个输入信号，用来刻画期望在真实场景中出现的行为分布。系统对其进行拟合，随后面对从未见过的新输入时，也能“自然地正常工作”。</p>"
+    },
+    {
+      "id": "new47_better_harness-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The obvious problem:</strong> We don't have unlimited data.</p>",
+      "zh": "<p><strong>显而易见的问题：</strong>我们没有无限的数据。</p>"
+    },
+    {
+      "id": "new47_better_harness-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The fix:</strong> Encode important behaviors into curated evals. Quality &gt; quantity, a small set of well-tagged evals covering the behaviors you care about beats thousands of noisy but high-coverage evals.</p>",
+      "zh": "<p><strong>解决方法：</strong>将重要行为编码进精心整理的评测中。质量胜于数量：一小组标签完善、覆盖你所关心行为的评测，胜过数千个噪声很多、但覆盖面很广的评测。</p>"
+    },
+    {
+      "id": "new47_better_harness-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The subtle problem → agents are famous cheaters:</strong> Any learning system is prone to reward hacking where the agent overfits its structure to make the existing evals pass that it can see. This makes sense because the loop just wants to “make number go up” and doesn't know about generalization. We prompt to avoid overfitting but it isn’t perfect.</p>",
+      "zh": "<p><strong>更隐蔽的问题 → Agent 是出了名的作弊高手：</strong>任何学习系统都容易出现奖励投机：Agent 对自身结构进行过度拟合，只为通过它所能看到的现有评测。这不难理解，因为循环只想“让数字上涨”，并不了解泛化。我们会通过提示词要求系统避免过拟合，但这种做法并不完美。</p>"
+    },
+    {
+      "id": "new47_better_harness-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The fix:</strong> Holdout sets become a proxy for true generalization. We’ve seen approaches that We pair with human review as a second signal and we get semi-automated systems can improve scores while avoiding behaviors we don’t want in prod.</p>",
+      "zh": "<p><strong>解决方法：</strong>用留出集作为衡量真正泛化能力的替代指标。我们见过一些相关做法。我们再结合人工审查，将其作为第二种信号，由此得到的半自动系统就能提高得分，同时避免生产环境中不希望出现的行为。</p>"
+    },
+    {
+      "id": "new47_better_harness-023",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Better-Harness: a recipe for hill climbing your harness</h2>",
+      "zh": "<h2>Better-Harness：对运行框架进行爬山优化的方法</h2>"
+    },
+    {
+      "id": "new47_better_harness-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We created a scaffold for autonomously improving our harness using evals as a signal in each step. A research version is open sourced <a href=\"https://github.com/langchain-ai/deepagents/tree/main/examples/better-harness?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>here</strong></a>, here are the main steps:</p>",
+      "zh": "<p>我们创建了一套用于自主改进运行框架的支撑系统，在每一步都以评测作为信号。研究版本已在<a href=\"https://github.com/langchain-ai/deepagents/tree/main/examples/better-harness?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>这里</strong></a>开源，主要步骤如下：</p>"
+    },
+    {
+      "id": "new47_better_harness-025",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Source and tag evals.</strong> This is a mix of hand-writing evals, mining them from production traces, and using/adapting external datasets. We tag each eval to behavioral categories (like multi-step retrieval) and regularly remove evals that are saturated or we longer feel are useful for the agent + current generation of models.</li><li><strong>Split data per category.</strong> Create Optimization and Holdout sets. This is very important! We find that autonomouos hill-climbing has a tendency to overfit to tasks so holdout sets ensure that learned optimizations work on previously unseen data, though the general distirbution should match existing evals. This mirrors what production will look like.</li><li><strong>Run a Baseline.</strong> Run a baseline experiment on the Optimization &amp; Holdout sets before any edits. This grounds all updates in the update steps.</li><li><strong>Optimize.</strong> Each iteration runs autonomously with optional human review:<ul><li><strong>Diagnose</strong> from traces. Scores aggregate performance over categories and then Traces show the details of what went wrong and why.</li><li><strong>Experiment</strong> a targeted harness change. We scope to one change at a time to avoid confounding but that may mean updating a prompt and tool simultaneously so the system works well together.</li></ul></li><li><strong>Validate:</strong> In each step, the loop checks to make sure that the proposed change helped pass new evals while avoiding regressions on existing passing cases. It’s common that some change results in a net overall score gain with some regressions. The agent gets context of these regressions so it can try to fix them in the next update without losing the gains from the existing update.</li><li><strong>Human review.</strong> We manually review changes and edge cases metrics miss. This often includes instructions that are overfit to the optimization set and although they don’t hurt generalization, they end up being a waste of tokens. This gives us another sanity check and gate against overfitting.</li></ol>",
+      "zh": "<ol><li><strong>获取评测用例并打标签。</strong>综合使用人工编写的评测、从生产执行轨迹中挖掘的用例，以及直接使用或改编的外部数据集。我们为每个评测标注行为类别（例如多步检索），并定期移除已经达到饱和，或我们认为对于 Agent 与当前这一代模型已不再有用的评测。</li><li><strong>按类别划分数据。</strong>创建优化集和留出集。这一点非常重要！我们发现，自主爬山优化容易对任务过拟合，因此需要用留出集确保学到的优化也适用于此前未见过的数据，不过这些数据的总体分布应与现有评测一致。这也反映了生产环境中的情况。</li><li><strong>运行基线实验。</strong>在做任何修改之前，先在优化集和留出集上运行一次基线实验，为后续更新步骤中的所有改动提供依据。</li><li><strong>优化。</strong>每轮迭代自主运行，也可以选择加入人工审查：<ul><li>根据执行轨迹进行<strong>诊断</strong>。得分按类别汇总表现，而执行轨迹则展示哪里出了问题、为什么出问题等细节。</li><li>针对某项运行框架改动进行<strong>实验</strong>。我们每次只围绕一项改动展开，以避免混杂因素，但这项改动可能意味着同时更新提示词和工具，使系统各部分能够良好配合。</li></ul></li><li><strong>验证：</strong>在每一步中，循环都会检查所提出的改动是否帮助 Agent 通过了新的评测，同时避免在原本通过的用例上出现回归。某项改动使总分净增、却也带来一些回归，是很常见的情况。Agent 会获得这些回归的上下文，以便在下一次更新中尝试修复它们，同时保留本次更新带来的收益。</li><li><strong>人工审查。</strong>我们人工审查改动，以及指标未能捕捉的边界情况。其中常见的是对优化集过拟合的指令：它们虽然不会损害泛化，却最终只是浪费 token。这为我们提供了另一道合理性检查和防止过拟合的关卡。</li></ol>"
+    },
+    {
+      "id": "new47_better_harness-026",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-fullwidth w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/ac078cd0796fd6134cfb9ade.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new47_better_harness-027",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Examples of harness changes</h2>",
+      "zh": "<h2>运行框架改动示例</h2>"
+    },
+    {
+      "id": "new47_better_harness-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Here are the kinds of changes the optimization loop can discover and validate:</p>",
+      "zh": "<p>下面是优化循环能够发现并验证的几类改动：</p>"
+    },
+    {
+      "id": "new47_better_harness-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Prompt and instruction updates.</strong> The most common change. The agent keeps misinterpreting a tool's output format, or it's too aggressive about calling a tool when it should ask a clarifying question first. The fix is a targeted instruction update addition like \"when querying multiple files that have dependent information, offload information to the filesystem and re-aggregate before giving a final answer.\"</p>",
+      "zh": "<p><strong>更新提示词和指令。</strong>这是最常见的改动。Agent 可能反复误解工具的输出格式，或者本应先提出澄清问题，却过于急切地调用工具。解决方法是有针对性地补充或更新指令，例如：“查询多个包含相互依赖信息的文件时，先将信息卸载到文件系统，在给出最终答案前重新汇总。”</p>"
+    },
+    {
+      "id": "new47_better_harness-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Adding or updating a tool or tool description.</strong> The agent may fail contextualizing when to use a new tool. Edits include examples on of how to use, how to chain this tool, an updated tool description, and editing the overall tool suite to disambiguate similar tools</p>",
+      "zh": "<p><strong>添加或更新工具，或修改工具描述。</strong>Agent 可能无法结合上下文判断何时该使用一个新工具。相应改动包括补充工具使用示例、说明如何串联使用该工具、更新工具描述，以及调整整套工具，消除相似工具之间的歧义。</p>"
+    },
+    {
+      "id": "new47_better_harness-031",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Results from the Better-Harness loop</h2>",
+      "zh": "<h2>Better-Harness 循环的结果</h2>"
+    },
+    {
+      "id": "new47_better_harness-032",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We tested this approach with Claude Sonnet 4.6 and <a href=\"http://z.ai/?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Z.ai</strong></a>’s GLM-5 on a subset of our evals. <strong>Note:</strong> We have other work underway generalizing Better-Harness across many models in <code>deepagents</code> using a bigger eval suite. The goal is to publish a series of <strong>model profiles</strong> that capture the nuances of each model tuned for our evals as a public artifact.</p>",
+      "zh": "<p>我们在评测子集上，使用 Claude Sonnet 4.6 和 <a href=\"http://z.ai/?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Z.ai</strong></a> 的 GLM-5 测试了这一方法。<strong>说明：</strong>我们还有其他工作正在进行：利用更大的评测套件，将 Better-Harness 推广到 <code>deepagents</code> 中的多种模型。目标是发布一系列<strong>模型配置档案</strong>，记录各个模型针对我们的评测进行调优后的细微差别，并将其作为公开成果。</p>"
+    },
+    {
+      "id": "new47_better_harness-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We assembled a small representative sample from existing eval categories and split that sample into a set for hill-climbing and holdout to evaluate generalization. With large or expensive eval sets, we suggest representative/stratified sampling to give a good set to hill-climb against. Once this works well, it can be scaled up to the larger set.</p>",
+      "zh": "<p>我们从现有评测类别中选出一小组有代表性的样本，将其划分为用于爬山优化的数据集，以及用于评估泛化能力的留出集。对于规模较大或成本较高的评测集，我们建议进行代表性抽样或分层抽样，得到一组适合开展爬山优化的用例。待这种做法效果良好后，再扩展到更大的数据集。</p>"
+    },
+    {
+      "id": "new47_better_harness-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Main experiment goal:</strong> discover &amp; fix failure modes over our evals. Port general changes that increase eval performance back to the harness.</p>",
+      "zh": "<p><strong>主要实验目标：</strong>在评测中发现并修复失败模式，将能够提升评测表现的通用改动合并回运行框架。</p>"
+    },
+    {
+      "id": "new47_better_harness-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We previously observed failure modes such as over-asking follow-up questions and errors in chaining together new tools. After hill climbing on the optimization set, we evaluated the final harness on the holdout using two categories, <code>tool_selection</code> and <code>followup_quality</code>.</p>",
+      "zh": "<p>我们此前观察到的失败模式包括追问过多，以及串联使用新工具时出错。在优化集上完成爬山优化后，我们用留出集中的 <code>tool_selection</code> 和 <code>followup_quality</code> 两个类别评估了最终的运行框架。</p>"
+    },
+    {
+      "id": "new47_better_harness-036",
+      "tag": "table",
+      "preserve": true,
+      "en": "<table>\n<colgroup>\n<col>\n<col>\n<col>\n<col>\n<col>\n</colgroup>\n<thead>\n<tr>\n<th>Shared Change</th>\n<th>Tasks Observed In</th>\n<th>Models</th>\n<th>Instruction Added</th>\n<th>Effect After Change</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Use reasonable defaults</td>\n<td>tool_indirect_email_report</td>\n<td>Sonnet, GLM-5</td>\n<td>\"Use reasonable defaults when the request clearly implies them.\"</td>\n<td>The agent stopped blocking on trivial missing wording and completed action-taking evals more reliably.</td>\n</tr>\n<tr>\n<td>Respect already-fixed constraints</td>\n<td>followup_vague_send_report, followup_detailed_calendar_brief</td>\n<td>Sonnet, GLM-5</td>\n<td>\"Do not ask for details the user already supplied.\"</td>\n<td>Recurring-task followup evals stopped failing on redundant schedule questions.</td>\n</tr>\n<tr>\n<td>Bound exploration before acting</td>\n<td>tool_chain_search_then_email</td>\n<td>Mostly GLM-5</td>\n<td>\"Do not keep issuing near-duplicate searches once you have enough information to draft a concise summary.\"</td>\n<td>Search-then-deliver evals became much more reliable instead of looping.</td>\n</tr>\n<tr>\n<td>Ask domain-defining questions first</td>\n<td>followup_vague_customer_support, followup_vague_monitor_system</td>\n<td>Sonnet, GLM-5</td>\n<td>\"Ask domain-defining questions before implementation questions.\"</td>\n<td></td>\n</tr>\n</tbody>\n</table>"
+    },
+    {
+      "id": "new47_better_harness-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For evals that inject new tools into the default harness like <code>search-then-email</code> , the loop discovered better descriptions of how to use and compose those tools. This is promising for builders creating vertical agents across domains, because optimization loops adapt well to the task specifics in context.</p>",
+      "zh": "<p>对于向默认运行框架注入新工具的评测，例如 <code>search-then-email</code>，循环找到了更好的描述方式，说明如何使用和组合这些工具。对于在不同领域构建垂直 Agent 的开发者而言，这很有前景，因为优化循环能够很好地适应上下文中的具体任务要求。</p>"
+    },
+    {
+      "id": "new47_better_harness-038",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Evals maintenance &amp; regressions</h2>",
+      "zh": "<h2>评测维护与回归</h2>"
+    },
+    {
+      "id": "new47_better_harness-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Along with hill climbing, evals also explicitly capture and protect against regressions over time. Once our agent handles a case correctly, we don’t want to lose that gain. The eval becomes a regression test. This is similar to ideas in traditional software engineering like Test Driven Development (TDD). Some regressions are bound to happen across many changes over time so we select a subset of evals that we always want to pass and look at our run suspiciously if these suddenly fail.</p>",
+      "zh": "<p>除了爬山优化，评测还能明确记录回归，并在长期迭代中防范它们。一旦 Agent 正确处理了某个用例，我们就不希望失去这项进步。这个评测便成了一项回归测试。这与传统软件工程中的测试驱动开发（TDD）等思想相似。随着时间推移、改动不断累积，一些回归难以避免，因此我们会选出一组希望始终通过的评测；如果它们突然失败，就需要对本次运行提高警惕并加以检查。</p>"
+    },
+    {
+      "id": "new47_better_harness-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We don’t think our eval suite should grow monotonically, spring cleaning of evals is good! We regularly assess whether an eval is still useful because of more intelligent models or a different behavior we want for the agent.</p>",
+      "zh": "<p>我们并不认为评测套件应当只增不减；给评测做定期清理是好事！随着模型变得更智能，或我们对 Agent 的期望行为发生变化，我们会定期重新判断某项评测是否仍然有用。</p>"
+    },
+    {
+      "id": "new47_better_harness-041",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>The future: automated error detection &amp; fixes</h2>",
+      "zh": "<h2>未来：自动检测并修复错误</h2>"
+    },
+    {
+      "id": "new47_better_harness-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This approach works because <strong>traces give us a dense feedback signal</strong>. Evals benefit from traces to compare across versions and numerically ground which changes contribute to a better score (which should be a good proxy for a better user experience).</p>",
+      "zh": "<p>这种方法之所以有效，是因为<strong>执行轨迹提供了密集的反馈信号</strong>。借助执行轨迹，评测可以比较不同版本，并以数字为依据，确定哪些改动促成了更高的得分（而更高的得分理应是更好用户体验的一个良好替代指标）。</p>"
+    },
+    {
+      "id": "new47_better_harness-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Overall, we point agentic compute at traces to:</p>",
+      "zh": "<p>总体而言，我们将 Agent 的计算能力用于分析执行轨迹，以实现以下目标：</p>"
+    },
+    {
+      "id": "new47_better_harness-044",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><strong>Derive errors automatically.</strong> We want to constantly monitor our agent traces to classify and cluster failures in production.</li><li><strong>Generate evals from production.</strong> A trace where the agent made a mistake is an eval case. A trace where a user corrected the agent is even better. The flywheel: more usage → more traces → more evals → better harness</li><li><strong>Compare harness versions.</strong> Side-by-side trace comparisons show what changed in the harness that contributed to new behavior</li></ul>",
+      "zh": "<ul><li><strong>自动识别错误。</strong>我们希望持续监控 Agent 的执行轨迹，对生产环境中的失败进行分类和聚类。</li><li><strong>从生产环境生成评测。</strong>一条记录 Agent 出错的执行轨迹就是一个评测用例。如果执行轨迹中用户还纠正了 Agent，那就更好了。由此形成飞轮：使用越多 → 执行轨迹越多 → 评测越多 → 运行框架越好。</li><li><strong>比较运行框架版本。</strong>并排比较执行轨迹，可以看出运行框架中哪些变化促成了新的行为。</li></ul>"
+    },
+    {
+      "id": "new47_better_harness-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every trace contains valuable data to produce a potential eval. And every (good) eval makes the harness better. To facilitate this, all agent runs are logged to <a href=\"https://smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>LangSmith</strong></a> with full traces. This gives us trace-level diagnosis for the optimization loop, production monitoring for regression detection, and trace mining for eval generation.</p>",
+      "zh": "<p>每条执行轨迹都包含有价值的数据，可以用来生成潜在的评测。而每个优质评测都能让运行框架变得更好。为此，所有 Agent 运行都会连同完整的执行轨迹记录到 <a href=\"https://smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>LangSmith</strong></a>。这让我们能够基于执行轨迹诊断优化循环，通过生产监控检测回归，并通过挖掘执行轨迹生成评测。</p>"
+    },
+    {
+      "id": "new47_better_harness-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Our main takeaways and ongoing work:</p>",
+      "zh": "<p>我们的主要结论和正在推进的工作如下：</p>"
+    },
+    {
+      "id": "new47_better_harness-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Evals are training data for autonomous harness engineering.</strong> The same principles that make ML training work such as data quality, train/test splits, and generalization checks apply to agent development.</p>",
+      "zh": "<p><strong>评测是自主运行框架工程的训练数据。</strong>使机器学习训练奏效的那些原则，例如数据质量、训练集与测试集划分，以及泛化检查，同样适用于 Agent 开发。</p>"
+    },
+    {
+      "id": "new47_better_harness-048",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Fitting models to harnesses.</strong> There’s a large amount of work that goes into fitting every model to its harness. For example, the <a href=\"https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>codex prompting guide</strong></a> suggests a certain format for their <code>Edit</code> tool. This requires a bigger search search space and eval set, we’re excited to share real examples of what that looks like for any team looking to do this.</p>",
+      "zh": "<p><strong>让模型与运行框架相适配。</strong>为每个模型适配运行框架，需要投入大量工作。例如，<a href=\"https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>Codex 提示词指南</strong></a>建议为其 <code>Edit</code> 工具采用特定格式。这需要更大的搜索空间和评测集。我们期待分享真实示例，让任何希望开展此类工作的团队都能了解具体实践。</p>"
+    },
+    {
+      "id": "new47_better_harness-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Overall, tracing and maintaining good evals is what makes this system work in practice. Invest in this early with your team and come build the future of autonomously improving agents. We open sourced a <a href=\"https://github.com/langchain-ai/deepagents/tree/main/examples/better-harness?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>research version of this scaffold</strong></a> for builders to experiment with.</p>",
+      "zh": "<p>总体而言，记录执行轨迹并维护优质评测，是这套系统能够在实践中发挥作用的关键。请与你的团队尽早投入这方面的工作，一同构建 Agent 自主改进的未来。我们已开源这套<a href=\"https://github.com/langchain-ai/deepagents/tree/main/examples/better-harness?ref=blog.langchain.com\" rel=\"noopener noreferrer\"><strong>支撑系统的研究版本</strong></a>，供开发者实验。</p>"
+    }
+  ],
+  "description": "摘要：构建更好的运行框架，就能构建更好的 Agent。但要自主构建“更好”的运行框架，就需要一个强有力的学习信号，供系统据此进行“爬山优化”。本文分享我们如何将评测用作这一信号，以及哪些设计决策有助于 Agent 泛化，而非过拟合。Better-Ha…",
+  "reading_minutes": 10,
+  "downloads": {}
+}

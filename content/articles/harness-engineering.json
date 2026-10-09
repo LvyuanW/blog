@@ -1,0 +1,404 @@
+{
+  "title": "通过运行框架工程改进 Deep Agents",
+  "original_title": "Improving Deep Agents with harness engineering",
+  "url": "https://www.langchain.com/blog/improving-deep-agents-with-harness-engineering",
+  "date": "2026-02-17",
+  "publisher": "LangChain",
+  "author": "Vivek Trivedy",
+  "source_order": 46,
+  "slug": "harness-engineering",
+  "source_id": "new46_harness_engineering",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new46_harness_engineering-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>TLDR: Our coding agent went from Top 30 to Top 5 on <a href=\"https://www.tbench.ai/leaderboard/terminal-bench/2.0?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Terminal Bench 2.0</a>. We only changed the harness. Here’s our approach to harness engineering (teaser: self-verification &amp; tracing help a lot).</p>",
+      "zh": "<p>要点速览：我们的编程 Agent 在 <a href=\"https://www.tbench.ai/leaderboard/terminal-bench/2.0?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Terminal Bench 2.0</a> 上从前 30 名跃升至前 5 名。我们只改动了运行框架。下面介绍我们的运行框架工程方法，先透露一点：自我验证与执行轨迹记录非常有帮助。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-001",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>The Goal of Harness Engineering</h2>",
+      "zh": "<h2>运行框架工程的目标</h2>"
+    },
+    {
+      "id": "new46_harness_engineering-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The goal of a harness is to mold the inherently spiky intelligence of a model for tasks we care about. <strong>Harness Engineering</strong> is about systems, you’re building tooling around the model to optimize goals like task performance, token efficiency, latency, etc. Design decisions include the system prompt, tool choice, and execution flow.</p>",
+      "zh": "<p>运行框架的目标，是将模型先天参差不齐的智能塑造成适合目标任务的能力。<strong>运行框架工程</strong>关注的是系统：围绕模型构建工具与配套机制，优化任务表现、token 效率、时延等目标。设计决策包括系统提示词、工具选择和执行流程。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>But how should you change the harness to improve your agent?</p>",
+      "zh": "<p>但应当怎样改动运行框架，才能改进你的 Agent？</p>"
+    },
+    {
+      "id": "new46_harness_engineering-004",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>At LangChain, we use <a href=\"https://docs.langchain.com/langsmith/observability-quickstart?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Traces</a> to understand agent failure modes at scale. Models today are largely black-boxes, their inner mechanisms are hard to interpret. But we can see their inputs and outputs in text space which we then use in our improvement loops.</p>",
+      "zh": "<p>在 LangChain，我们利用<a href=\"https://docs.langchain.com/langsmith/observability-quickstart?ref=blog.langchain.com\" rel=\"noopener noreferrer\">执行轨迹</a>大规模分析 Agent 的失败模式。当今的模型在很大程度上仍是黑箱，内部机制难以解释。不过，我们能够在文本层面看到它们的输入和输出，并将这些信息用于改进循环。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We used a simple recipe to iteratively improve <a href=\"https://github.com/langchain-ai/deepagents/tree/main/libs/cli?ref=blog.langchain.com\" rel=\"noopener noreferrer\">deepagents-cli</a> (our coding agent) <code>13.7 points</code> from <code>52.8</code> to <code>66.5</code> on Terminal Bench 2.0. We only tweaked the harness and kept the model fixed, <code>gpt-5.2-codex</code>.</p>",
+      "zh": "<p>我们采用了一套简单的方法，迭代改进 <a href=\"https://github.com/langchain-ai/deepagents/tree/main/libs/cli?ref=blog.langchain.com\" rel=\"noopener noreferrer\">deepagents-cli</a>（我们的编程 Agent），使其在 Terminal Bench 2.0 上提升了 <code>13.7 points</code>，得分从 <code>52.8</code> 提高到 <code>66.5</code>。我们只调整了运行框架，模型始终保持为 <code>gpt-5.2-codex</code>。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-006",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-fullwidth w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/81e7778abf20b638ac8337ba.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new46_harness_engineering-007",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Experiment Setup &amp; The Knobs on a Harness</h2>",
+      "zh": "<h2>实验设置与运行框架中的可调项</h2>"
+    },
+    {
+      "id": "new46_harness_engineering-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We used <a href=\"https://www.tbench.ai/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Terminal Bench 2.0</a>, a now standard benchmark to evaluate agentic coding. It has 89 tasks across domains like machine learning, debugging, and biology. We use <a href=\"https://harborframework.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Harbor</a> to orchestrate the runs. It spins up sandboxes (<a href=\"https://www.daytona.io/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Daytona</a>), interacts with our agent loop, and runs verification + scoring.</p>",
+      "zh": "<p>我们使用了 <a href=\"https://www.tbench.ai/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Terminal Bench 2.0</a>，它如今已是评测 Agent 编程能力的常用基准。它包含 89 项任务，覆盖机器学习、调试和生物学等领域。我们使用 <a href=\"https://harborframework.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Harbor</a> 编排各次运行。它负责启动沙箱（<a href=\"https://www.daytona.io/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Daytona</a>）、与我们的 Agent 循环交互，以及执行验证和评分。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Every agent action is stored in <a href=\"https://smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangSmith</a>. It also includes metrics like latency, token counts, and costs.</p>",
+      "zh": "<p>Agent 的每项操作都会保存在 <a href=\"https://smith.langchain.com/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">LangSmith</a> 中，其中也包括时延、token 数量和成本等指标。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-010",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3><strong>The Knobs we can Turn</strong></h3>",
+      "zh": "<h3><strong>我们可以调整什么</strong></h3>"
+    },
+    {
+      "id": "new46_harness_engineering-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>An agent harness has a lot of knobs: system prompts, tools, hooks/middleware, skills, sub-agent delegation, memory systems, and more. We deliberately compress the optimization space and focus on three: <strong>System Prompt, Tools,</strong> and <a href=\"https://docs.langchain.com/oss/python/langchain/middleware/overview?ref=blog.langchain.com#the-agent-loop\" rel=\"noopener noreferrer\"><strong>Middleware</strong></a> (our term for hooks around model and tool calls).</p>",
+      "zh": "<p>Agent 运行框架有很多可调项：系统提示词、工具、钩子／中间件、技能、子 Agent 委派、记忆系统，等等。我们有意缩小优化空间，聚焦于三项：<strong>系统提示词、工具</strong>和<a href=\"https://docs.langchain.com/oss/python/langchain/middleware/overview?ref=blog.langchain.com#the-agent-loop\" rel=\"noopener noreferrer\"><strong>中间件</strong></a>（我们用这个词指围绕模型调用与工具调用设置的钩子）。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We start with a default prompt and standard tools+middleware. This scores 52.8% with GPT-5.2-Codex. A solid score, just outside the Top 30 of the leaderboard today, but room to grow.</p>",
+      "zh": "<p>我们从默认提示词和标准工具加中间件的配置开始。使用 GPT-5.2-Codex 时，这套配置的得分为 52.8%。这是一个不错的成绩，略低于当时排行榜前 30 名的水平，但仍有提升空间。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-013",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-fullwidth w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/15361f729c4a7eae22196230.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new46_harness_engineering-014",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3><strong>The Trace Analyzer Skill</strong></h3>",
+      "zh": "<h3><strong>执行轨迹分析技能</strong></h3>"
+    },
+    {
+      "id": "new46_harness_engineering-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We wanted trace analysis to be repeatable so we made it into an Agent Skill. This serves as our recipe to <strong>analyze errors across runs and make improvements to the harness</strong>. The flow is:</p>",
+      "zh": "<p>我们希望执行轨迹分析能够重复开展，因此将其做成了一个 Agent Skill。它提供了一套方法，用于<strong>分析多次运行中的错误，并改进运行框架</strong>。流程如下：</p>"
+    },
+    {
+      "id": "new46_harness_engineering-016",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li>Fetch experiment traces from LangSmith</li><li>Spawn parallel error analysis agents → main agent synthesizes findings + suggestions</li><li>Aggregate feedback and make targeted changes to the harness.</li></ol>",
+      "zh": "<ol><li>从 LangSmith 获取实验的执行轨迹。</li><li>启动并行的错误分析 Agent → 由主 Agent 汇总发现与建议。</li><li>汇总反馈，对运行框架进行有针对性的修改。</li></ol>"
+    },
+    {
+      "id": "new46_harness_engineering-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This works similarly to <a href=\"https://en.wikipedia.org/wiki/Boosting_(machine_learning)?ref=blog.langchain.com\" rel=\"noopener noreferrer\">boosting</a> which focuses on mistakes from previous runs. A human can be pretty helpful in Step 3 (though not required) to verify and discuss proposed changes. Changes that overfit to a task are bad for generalization and can lead to regressions in other Tasks.</p>",
+      "zh": "<p>这种方法类似于 <a href=\"https://en.wikipedia.org/wiki/Boosting_(machine_learning)?ref=blog.langchain.com\" rel=\"noopener noreferrer\">boosting</a>，重点关注此前运行中出现的错误。第 3 步中，人工参与可以很有帮助（但并非必需），用于核验和讨论提出的改动。对某项任务过拟合的改动会损害泛化能力，也可能使其他任务的表现退化。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Automated trace analysis saves hours of time and made it easy to quickly try experiments. We’ll be publishing this skill soon, we’re currently testing it for prompt optimization generally.</p>",
+      "zh": "<p>自动化执行轨迹分析节省了数小时的时间，也让我们能够方便、快速地尝试实验。我们将很快发布这项技能，目前正在测试它在通用提示词优化中的表现。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-019",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-fullwidth w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/3e3c0f0a80fdaab0e35c8070.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new46_harness_engineering-020",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>What Actually Improved Agent Performance</h2>",
+      "zh": "<h2>哪些改动真正改善了 Agent 的表现</h2>"
+    },
+    {
+      "id": "new46_harness_engineering-021",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Automated Trace analysis allowed us to <a href=\"https://www.langchain.com/conceptual-guides/agent-observability-powers-agent-evaluation?ref=blog.langchain.com\" rel=\"noopener noreferrer\">debug where agents were going wrong</a>. Issues included reasoning errors, not following task instructions, missing testing and verification, running out of time, etc. We go into these improvements in more details in the sections below.</p>",
+      "zh": "<p>自动化执行轨迹分析让我们能够<a href=\"https://www.langchain.com/conceptual-guides/agent-observability-powers-agent-evaluation?ref=blog.langchain.com\" rel=\"noopener noreferrer\">排查 Agent 在哪里出了问题</a>。这些问题包括推理错误、不遵循任务指令、缺少测试与验证、耗尽时间，等等。下面几节将更详细地介绍相应的改进。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-022",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Build &amp; Self-Verify</h3>",
+      "zh": "<h3>构建与自我验证</h3>"
+    },
+    {
+      "id": "new46_harness_engineering-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Today’s models are exceptional self-improvement machines.</p>",
+      "zh": "<p>当今的模型是出色的自我改进机器。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>Self-verification allows agents to self-improve via feedback within a run</strong>. However, they don’t have a natural tendency to enter this <strong>build-verify loop.</strong></p>",
+      "zh": "<p><strong>自我验证让 Agent 能够在一次运行过程中，通过反馈改进自身表现</strong>。不过，它们并不会自然而然地进入这种<strong>构建—验证循环。</strong></p>"
+    },
+    {
+      "id": "new46_harness_engineering-025",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The most common failure pattern was that the agent wrote a solution, re-read its own code, confirmed it looks ok, and stopped. Testing is a key part of autonomous agentic coding. It helps test for overall correctness and simultaneously gives agents signal to hill-climb against.</p>",
+      "zh": "<p>最常见的失败模式是：Agent 写出一个方案，重新读一遍自己的代码，确认看起来没问题，然后就停止了。测试是自主 Agent 编程的关键环节。它既有助于检验整体正确性，也为 Agent 提供逐步优化所依据的反馈信号。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-026",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We added guidance to the system prompt on how to approach problem solving.</p>",
+      "zh": "<p>我们在系统提示词中加入了解决问题的方法指导。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-027",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Planning &amp; Discovery:</strong> Read the task, scan the codebase, and build an initial plan based on the task specification and how to verify the solution.</li><li><strong>Build:</strong> Implement the plan with verification in mind. Build tests, if they don’t exist and test both happy paths and edge cases.</li><li><strong>Verify:</strong> Run tests, read the full output, compare against what was asked (not against your own code).</li><li><strong>Fix:</strong> Analyze any errors, revisit the original spec, and fix issues.</li></ol>",
+      "zh": "<ol><li><strong>规划与探索：</strong>阅读任务、浏览代码库，并根据任务规格以及如何验证解决方案，制定初步计划。</li><li><strong>构建：</strong>在实施计划时就考虑验证。如果还没有测试，就编写测试，同时覆盖正常流程和边界情况。</li><li><strong>验证：</strong>运行测试，阅读完整输出，并对照用户要求检查结果，而不是对照你自己的代码。</li><li><strong>修复：</strong>分析出现的错误，重新查看原始规格，并修复问题。</li></ol>"
+    },
+    {
+      "id": "new46_harness_engineering-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We really focus on testing because it powers the changes in every iteration. We found that alongside prompting, deterministic context injection helps agents verify their work. We use a <code>PreCompletionChecklistMiddleware</code> that intercepts the agent before it exits and reminds it to run a verification pass against the Task spec. This is similar to a <a href=\"https://ghuntley.com/loop/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ralph Wiggum Loop</a> where a hook forces the agent to continue executing on exit, we use this for verification.</p>",
+      "zh": "<p>我们非常重视测试，因为它为每一轮迭代中的改动提供依据。我们发现，除了提示词，确定性的上下文注入也能帮助 Agent 验证自己的工作。我们使用 <code>PreCompletionChecklistMiddleware</code>，在 Agent 退出前拦截它，提醒它对照任务规格进行一轮验证。这类似于 <a href=\"https://ghuntley.com/loop/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Ralph Wiggum Loop</a>：通过钩子在 Agent 退出时强制它继续执行；我们将这一机制用于验证。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-029",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-fullwidth w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/237712fd4f9066787199569a.png\" loading=\"lazy\" decoding=\"async\"></div></figure>"
+    },
+    {
+      "id": "new46_harness_engineering-030",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Giving Agents Context about their Environment</h3>",
+      "zh": "<h3>为 Agent 提供关于其环境的上下文</h3>"
+    },
+    {
+      "id": "new46_harness_engineering-031",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Part of harness engineering is <strong>building a good delivery mechanism for context engineering.</strong> Terminal Bench tasks come with directory structures, built-in tooling, and strict timeouts.</p>",
+      "zh": "<p>运行框架工程的一部分，是<strong>为上下文工程构建良好的信息交付机制。</strong>Terminal Bench 任务自带目录结构、内置工具，以及严格的超时限制。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-032",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Directory Context &amp; Tooling:</strong> A <code>LocalContextMiddleware</code> runs on agent start to map the <code>cwd</code> and other parent+children directories. We run <code>bash</code> commands to find tools like <code>Python</code> installations. Context discovery and search are error prone, so injecting context reduces this error surface and helps <strong>onboard the agent into its environment.</strong></li><li><strong>Teaching Agents to Write Testable Code:</strong> Agents don’t know how their code needs to be testable. We add prompting say their work will be measured against programatic tests, similar to when committing code. For example, Task specs that mention file paths should be followed exactly so the solutions works in an automated scoring step. Prompting that stresses edge-cases helps the agent avoid only checking “happy path” cases. Forcing models to conform to testing standards is a powerful strategy to avoid “slop buildup” over time.</li><li><strong>Time Budgeting:</strong> We inject time budget warnings to nudge the agent to finish work and shift to verification. Agents are famously bad at time estimation so this heuristic helps in this environment. Real world coding usually doesn’t have strict time limits, but without adding any knowledge of constraints, agents won’t work within time bounds.</li></ol>",
+      "zh": "<ol><li><strong>目录上下文与工具：</strong><code>LocalContextMiddleware</code> 会在 Agent 启动时运行，梳理 <code>cwd</code> 以及其他父目录和子目录。我们运行 <code>bash</code> 命令，查找已安装的 <code>Python</code> 等工具。上下文发现与搜索很容易出错，因此注入上下文能够减少这类出错机会，帮助<strong>Agent 熟悉其工作环境。</strong></li><li><strong>教 Agent 编写可测试的代码：</strong>Agent 并不知道代码需要具备怎样的可测试性。我们在提示词中说明，它的工作会接受程序化测试的检验，类似于提交代码时的检查。例如，任务规格提到的文件路径应当严格遵守，这样解决方案才能在自动评分环节正常工作。在提示词中强调边界情况，可以帮助 Agent 避免只检查“正常流程”。要求模型遵循测试标准，是防止低质量产物随时间不断堆积的一项有力策略。</li><li><strong>时间预算：</strong>我们注入时间预算提醒，促使 Agent 完成实现并转向验证。众所周知，Agent 不擅长估算时间，因此这一启发式方法在这种环境中很有帮助。现实中的编程通常没有严格的时间限制，但如果完全不给 Agent 提供约束信息，它们就不会在时间边界内开展工作。</li></ol>"
+    },
+    {
+      "id": "new46_harness_engineering-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The more that agents know about their environment, constraints, and evaluation criteria, the better they can autonomously self-direct their work.</p>",
+      "zh": "<p>Agent 越了解自己的环境、约束和评测标准，就越能自主安排工作。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-034",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>The purpose of the harness engineer: prepare and deliver context so agents can autonomously complete work.</strong></p>",
+      "zh": "<p><strong>运行框架工程师的职责：准备并提供上下文，让 Agent 能够自主完成工作。</strong></p>"
+    },
+    {
+      "id": "new46_harness_engineering-035",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Encouraging Agents to Step Back &amp; Reconsider Plans</h3>",
+      "zh": "<h3>鼓励 Agent 暂停推进，重新审视计划</h3>"
+    },
+    {
+      "id": "new46_harness_engineering-036",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Agents can be myopic once they’ve decided on a plan which results in “doom loops” that make small variations to the same broken approach (10+ times in some traces).</p>",
+      "zh": "<p>Agent 一旦确定了计划，就可能陷入狭隘视角，进入“死循环”，只对同一种行不通的方法做微小变动（某些执行轨迹中会重复 10 多次）。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We use a <code>LoopDetectionMiddleware</code> that tracks per-file edit counts via tool call hooks. It adds context like “…consider reconsidering your approach” after <code>N</code> edits to the same file. This can help agents recover from doom loops, though the model can continue down the same path if it thinks it’s correct.</p>",
+      "zh": "<p>我们使用 <code>LoopDetectionMiddleware</code>，通过工具调用钩子跟踪每个文件的编辑次数。在同一个文件被编辑 <code>N</code> 次后，它会加入类似“……考虑重新审视你的方法”的上下文。这可以帮助 Agent 摆脱死循环，不过，如果模型认为自己的方法正确，它仍可以沿着原来的路径继续。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Important note. This is a design heuristic that engineers around today’s perceived model issues. As models improve, these guardrails will likely be unnecessary, but today helps agents execute correctly and autonomously.</p>",
+      "zh": "<p>需要特别说明，这是一种针对目前观察到的模型问题所设计的启发式方法。随着模型进步，这些防护机制很可能不再必要；但在当下，它们有助于 Agent 正确、自主地执行任务。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-039",
+      "tag": "h3",
+      "preserve": false,
+      "en": "<h3>Choosing How Much Compute to Spend on Reasoning</h3>",
+      "zh": "<h3>决定在推理上投入多少计算资源</h3>"
+    },
+    {
+      "id": "new46_harness_engineering-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Reasoning models can run autonomously for hours so we have to decide how much compute to spend on every subtask. You can use the max reasoning budget on every task, but most work can benefit from optimizing reasoning compute spend.</p>",
+      "zh": "<p>推理模型可以自主运行数小时，因此我们必须决定每项子任务应投入多少计算资源。你可以对每项任务都使用最高推理预算，但对大多数工作而言，优化推理计算资源的投入会带来收益。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-041",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Terminal Bench timeout limits create a tradeoff. More reasoning helps agents evaluate each step, but can burn over <code>2x</code> more tokens/time. <code>gpt-5.2-codex</code> has 4 reasoning modes, <code>low</code>, <code>medium</code>, <code>high</code>, and <code>xhigh</code>.</p>",
+      "zh": "<p>Terminal Bench 的超时限制带来了取舍。更多推理有助于 Agent 评估每一步，但 token 和时间消耗可能达到 <code>2x</code> 以上。<code>gpt-5.2-codex</code> 有 4 种推理模式：<code>low</code>、<code>medium</code>、<code>high</code> 和 <code>xhigh</code>。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-042",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We found that reasoning helps with planning to fully understand the problem, some Terminal Bench tasks are very difficult. A good plan helps get to a working solution more quickly.</p>",
+      "zh": "<p>我们发现，推理有助于在规划阶段充分理解问题，而一些 Terminal Bench 任务非常困难。好的计划能够帮助模型更快地找到可行方案。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-043",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Later stage verification also benefits from more reasoning to catch mistakes and get a solution submitted. As a heuristic, we choose a xhigh-high-xhigh \"<strong>reasoning sandwich</strong>\" as a baseline.</p>",
+      "zh": "<p>在后期验证阶段，投入更多推理同样有助于发现错误，并提交解决方案。作为一种启发式方法，我们选择 xhigh-high-xhigh 的“<strong>推理三明治</strong>”作为基线。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-044",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure class=\"w-richtext-align-fullwidth w-richtext-figure-type-image\"><div><img alt=\"\" src=\"/media/3995b39805327e48c97fa7ba.png\" loading=\"lazy\" decoding=\"async\"></div><figcaption><em>Spending more reasoning compute on planning and verification</em></figcaption></figure>"
+    },
+    {
+      "id": "new46_harness_engineering-045",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Running only at <code>xhigh</code> scored poorly at <code>53.9%</code> due to agent timeouts compared to <code>63.6%</code> at <code>high</code>. There weren’t large differences in trial runs across reasoning budget splits so we stuck with our approach which pushed the score to <code>66.5%</code>.</p>",
+      "zh": "<p>全程只使用 <code>xhigh</code> 时，Agent 会因超时而表现不佳，得分仅为 <code>53.9%</code>；相比之下，使用 <code>high</code> 时得分为 <code>63.6%</code>。不同推理预算分配方式在试运行中的差异并不大，因此我们保留了自己的方案，将得分提升至 <code>66.5%</code>。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-046",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The natural approach for models is <strong>Adaptive Reasoning,</strong> seen with <a href=\"https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Claude</a> and <a href=\"https://ai.google.dev/gemini-api/docs/thinking?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Gemini</a> models where the model decides how much compute to spend on reasoning.</p>",
+      "zh": "<p>对模型而言，更自然的方式是<strong>自适应推理</strong>，例如 <a href=\"https://platform.claude.com/docs/en/build-with-claude/adaptive-thinking?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Claude</a> 和 <a href=\"https://ai.google.dev/gemini-api/docs/thinking?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Gemini</a> 模型采用的做法：由模型自行决定在推理上投入多少计算资源。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-047",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In a multi-model harness, balancing reasoning budgets could play out as using a large model for planning and <a href=\"https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs?ref=blog.langchain.com\" rel=\"noopener noreferrer\">handing off</a> to a smaller model for implementation.</p>",
+      "zh": "<p>在支持多模型的运行框架中，平衡推理预算可以体现为：使用大模型制定计划，再<a href=\"https://docs.langchain.com/oss/python/langchain/multi-agent/handoffs?ref=blog.langchain.com\" rel=\"noopener noreferrer\">交接</a>给较小的模型负责实现。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-048",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2>Practical Takeaways for Building Agent Harnesses</h2>",
+      "zh": "<h2>构建 Agent 运行框架的实践要点</h2>"
+    },
+    {
+      "id": "new46_harness_engineering-049",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The design space of agents is big. Here are some general principles from our experiments and building deepagents overall.</p>",
+      "zh": "<p>Agent 的设计空间很大。下面是我们从这些实验以及整体构建 deepagents 的过程中总结出的一些通用原则。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-050",
+      "tag": "ol",
+      "preserve": false,
+      "en": "<ol><li><strong>Context Engineering on Behalf of Agents.</strong> Context assembly is still difficult for agents today, especially in unseen environments. Onboarding models with context like directory structures, available tools, coding best practices, and problem solving strategies helps reduce the error surface for poor search and avoidable errors in planning.</li><li><strong>Help agents self-verify their work.</strong> Models are biased towards their first plausible solution. Prompt them aggressively to verify their work by running tests and refining solutions. This is especially important in autonomous coding systems that don’t have humans in the loop.</li><li><strong>Tracing as a feedback signal.</strong> Traces allow agents to self-evaluate and debug themselves. It’s important to debug tooling and reasoning together (ex: models go down wrong paths because they lack a tool or instructions how to do something).</li><li><strong>Detect and fix bad patterns in the short term.</strong> Models today aren’t perfect. The job of the harness designer is to design around today’s shortcomings while planning for smarter models in the future. Blind retries and not verifying work are good examples. These guardrails will almost surely dissolve over time, but to build robust agent applications today, they’re useful tools to experiment with.</li><li><strong>Tailor Harnesses to Models. T</strong>he <a href=\"https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Codex</a> and <a href=\"https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Claude</a> prompting guides show that models require different prompting. A test run with Claude Opus 4.6 scored <code>59.6%</code> with an earlier harness version, competitive but worse than Codex because we didn’t run the same Improvement Loop with Claude. Many principles generalize like good context preparation and a focus on verification, but running a few rounds of harness iterations for your task helps maximize agent performance across tasks.</li></ol>",
+      "zh": "<ol><li><strong>为 Agent 做好上下文工程。</strong>对当今的 Agent 而言，组织上下文仍然困难，尤其是在未见过的环境中。提供目录结构、可用工具、编程最佳实践和问题解决策略等上下文，帮助模型熟悉环境，可以减少搜索不当和可避免的规划错误所带来的出错机会。</li><li><strong>帮助 Agent 验证自己的工作。</strong>模型倾向于接受第一个看似可行的方案。应在提示词中强烈要求它通过运行测试、改进方案来验证工作。这对没有人工参与的自主编程系统尤其重要。</li><li><strong>将执行轨迹作为反馈信号。</strong>执行轨迹让 Agent 能够自我评估和自我调试。将工具与推理放在一起排查很重要，例如，模型可能因为缺少工具，或缺少如何完成某件事的指令，而走上错误的路径。</li><li><strong>在短期内检测并纠正不良模式。</strong>当今的模型并不完美。运行框架设计者的工作，是针对当前缺陷设计应对机制，同时为未来更聪明的模型做好准备。盲目重试、不验证工作，都是很好的例子。这些防护机制几乎肯定会随时间推移而消失，但要在当下构建稳健的 Agent 应用，它们仍是值得尝试的工具。</li><li><strong>针对模型定制运行框架。</strong><a href=\"https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Codex</a> 和 <a href=\"https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Claude</a> 的提示词指南表明，不同模型需要不同的提示方式。在较早版本运行框架上的一次试运行中，Claude Opus 4.6 得分为 <code>59.6%</code>，有竞争力，但低于 Codex，因为我们没有针对 Claude 运行同样的改进循环。许多原则具有通用性，例如充分准备上下文、重视验证；但针对自己的任务进行几轮运行框架迭代，有助于最大程度地提升 Agent 在各项任务中的表现。</li></ol>"
+    },
+    {
+      "id": "new46_harness_engineering-051",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>There’s more open research to do in harness design. Interesting avenues include multi-model systems (Codex, Gemini, and Claude together), memory primitives for continual learning so agents can autonomously improve on tasks, and measuring harness changes across models.</p>",
+      "zh": "<p>运行框架设计还有更多值得开放研究的方向。有意思的探索包括：将 Codex、Gemini 和 Claude 结合使用的多模型系统；用于持续学习的记忆基础机制，让 Agent 能够自主改进任务表现；以及衡量运行框架改动对不同模型的影响。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-052",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For the outer loop of improving agents, we’re looking at methods like <a href=\"https://alexzhang13.github.io/blog/2025/rlm/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">RLMs</a> to more efficiently mine traces. We’ll be continuing work to improve the harness and openly share our research.</p>",
+      "zh": "<p>对于改进 Agent 的外环，我们正在探索 <a href=\"https://alexzhang13.github.io/blog/2025/rlm/?ref=blog.langchain.com\" rel=\"noopener noreferrer\">RLM</a> 等方法，以更高效地挖掘执行轨迹。我们会继续改进运行框架，并公开分享研究成果。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-053",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We created <a href=\"https://smith.langchain.com/public/29393299-8f31-48bb-a949-5a1f5968a744/d?tab=2&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">a dataset of our Traces</a> to share with the community.</p>",
+      "zh": "<p>我们创建了一个<a href=\"https://smith.langchain.com/public/29393299-8f31-48bb-a949-5a1f5968a744/d?tab=2&amp;ref=blog.langchain.com\" rel=\"noopener noreferrer\">执行轨迹数据集</a>，与社区分享。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-054",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Deep Agents is open source. <a href=\"https://github.com/langchain-ai/deepagents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Python</a> and <a href=\"https://github.com/langchain-ai/deepagentsjs?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Javascript</a>.</p>",
+      "zh": "<p>Deep Agents 是开源的，提供 <a href=\"https://github.com/langchain-ai/deepagents?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Python</a> 和 <a href=\"https://github.com/langchain-ai/deepagentsjs?ref=blog.langchain.com\" rel=\"noopener noreferrer\">Javascript</a> 版本。</p>"
+    },
+    {
+      "id": "new46_harness_engineering-055",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p><strong>To more hill climbing and open research.</strong></p>",
+      "zh": "<p><strong>期待更多逐步优化与开放研究。</strong></p>"
+    }
+  ],
+  "description": "要点速览：我们的编程 Agent 在 Terminal Bench 2.0 上从前 30 名跃升至前 5 名。我们只改动了运行框架。下面介绍我们的运行框架工程方法，先透露一点：自我验证与执行轨迹记录非常有帮助",
+  "reading_minutes": 10,
+  "downloads": {}
+}

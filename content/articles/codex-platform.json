@@ -1,0 +1,302 @@
+{
+  "title": "Codex 作为平台：基于开放的 Agent 运行框架构建应用",
+  "original_title": "Codex as a platform: build on the open agent harness",
+  "url": "https://developers.openai.com/blog/codex-as-a-platform",
+  "date": "2026-08-19",
+  "publisher": "OpenAI",
+  "author": "Nicolas Bonamy, Derrick Choi",
+  "source_order": 52,
+  "slug": "codex-platform",
+  "source_id": "new52_codex_platform",
+  "category": "基础与架构",
+  "blocks": [
+    {
+      "id": "new52_codex_platform-000",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Build Codex into the products and workflows your users already know.</p>",
+      "zh": "<p>将 Codex 融入用户已经熟悉的产品与工作流。</p>"
+    },
+    {
+      "id": "new52_codex_platform-001",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Most people know Codex through the <a href=\"https://developers.openai.com/codex/app\" rel=\"noopener noreferrer\">App</a>, <a href=\"https://developers.openai.com/codex/cli\" rel=\"noopener noreferrer\">Command-Line Interface</a>, or <a href=\"https://developers.openai.com/codex/ide\" rel=\"noopener noreferrer\">IDE Extension</a>. Those experiences are important, but they are only a few of the ways the same underlying system can be used.</p>",
+      "zh": "<p>大多数人通过 <a href=\"https://developers.openai.com/codex/app\" rel=\"noopener noreferrer\">App</a>、<a href=\"https://developers.openai.com/codex/cli\" rel=\"noopener noreferrer\">命令行界面</a>或 <a href=\"https://developers.openai.com/codex/ide\" rel=\"noopener noreferrer\">IDE 扩展</a>认识 Codex。这些使用方式很重要，但它们只是同一底层系统的几种用途。</p>"
+    },
+    {
+      "id": "new52_codex_platform-002",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The <a href=\"https://github.com/openai/codex\" rel=\"noopener noreferrer\">open-source Codex harness</a> is what powers all these experiences. It helps models gather context, reason through tasks, use tools, operate within configured boundaries, request approval, and carry work forward.</p>",
+      "zh": "<p>为这些体验提供支持的，是<a href=\"https://github.com/openai/codex\" rel=\"noopener noreferrer\">开源的 Codex 运行框架</a>。它帮助模型收集上下文、推理任务、使用工具、在配置好的边界内运行、请求审批，并持续推进工作。</p>"
+    },
+    {
+      "id": "new52_codex_platform-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That changes what developers can build. Instead of asking every team to move its work into a general-purpose coding assistant, you can bring the agent into software designed around the actual job: an engineering workflow, an operations dashboard, a security investigation, a customer-support console, or an internal application built for one specialized team.</p>",
+      "zh": "<p>这改变了开发者能够构建的产品。你不必要求每个团队都把工作迁移到通用编程助手中，而可以将 Agent 带入围绕实际工作设计的软件：工程工作流、运营仪表盘、安全调查、客户支持控制台，或为某个专业团队构建的内部应用。</p>"
+    },
+    {
+      "id": "new52_codex_platform-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-the-reusable-part-is-the-agent-loop\">The reusable part is the agent loop</h2>",
+      "zh": "<h2 id=\"zh-source-the-reusable-part-is-the-agent-loop\">可复用的部分是 Agent 循环</h2>"
+    },
+    {
+      "id": "new52_codex_platform-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A capable agent is more than a prompt and a model response. It needs a way to understand a task, maintain context over time, inspect relevant information, call tools, expose progress, handle failures, request human approval when necessary, and return a useful result.</p>",
+      "zh": "<p>一个有能力的 Agent 不只是提示词和模型回复。它需要能够理解任务、随时间维护上下文、检查相关信息、调用工具、展示进度、处理失败、在必要时请求人工批准，并返回有用的结果。</p>"
+    },
+    {
+      "id": "new52_codex_platform-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That surrounding execution system is the harness.</p>",
+      "zh": "<p>包围模型的这套执行系统，就是运行框架（harness）。</p>"
+    },
+    {
+      "id": "new52_codex_platform-007",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Harness design can materially change results: on <a href=\"https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/\" rel=\"noopener noreferrer\">ARC-AGI-3</a>, retained reasoning and context compaction raised GPT-5.6 Sol’s score from 13.3% to 38.3% while reducing output tokens sixfold.</p>",
+      "zh": "<p>运行框架的设计能够显著改变结果：在 <a href=\"https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores/\" rel=\"noopener noreferrer\">ARC-AGI-3</a> 上，保留推理内容与上下文压缩将 GPT-5.6 Sol 的得分从 13.3% 提升到 38.3%，同时将输出 token 数降至原来的六分之一。</p>"
+    },
+    {
+      "id": "new52_codex_platform-008",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We built the Codex harness to manage conversation state, stream execution, use tools, enforce configured sandbox and approval policies, and carry work across turns. With <a href=\"https://developers.openai.com/codex/app-server\" rel=\"noopener noreferrer\">Codex app-server</a>, we expose those capabilities through a documented client protocol: applications can create threads, start turns, receive events, and handle approval requests.</p>",
+      "zh": "<p>我们构建 Codex 运行框架，用它管理对话状态、以流式方式推进执行、使用工具、落实配置好的沙箱和审批策略，并跨轮次延续工作。通过 <a href=\"https://developers.openai.com/codex/app-server\" rel=\"noopener noreferrer\">Codex app-server</a>，我们以有文档说明的客户端协议开放这些能力：应用可以创建会话线程、启动轮次、接收事件并处理审批请求。</p>"
+    },
+    {
+      "id": "new52_codex_platform-009",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you are building software that needs an agent, you can start with Codex instead of inventing a new runtime, then decide what the surrounding application should own.</p>",
+      "zh": "<p>如果你正在开发需要 Agent 的软件，可以从 Codex 起步，而不必另造一套运行时，再决定外围应用应该负责哪些部分。</p>"
+    },
+    {
+      "id": "new52_codex_platform-010",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-an-open-harness-developers-can-inspect-and-adapt\">An open harness developers can inspect and adapt</h2>",
+      "zh": "<h2 id=\"zh-source-an-open-harness-developers-can-inspect-and-adapt\">开发者可以检查并调整的开放运行框架</h2>"
+    },
+    {
+      "id": "new52_codex_platform-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Because the harness is open source, you can inspect the layer between your application and the model, understand how it behaves, and adapt the integration to fit your product.</p>",
+      "zh": "<p>运行框架是开源的，因此你可以检查应用与模型之间的这一层，理解它的行为，并调整集成方式来适配自己的产品。</p>"
+    },
+    {
+      "id": "new52_codex_platform-012",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>That gives developers control over the parts that make the agent fit their product:</p>",
+      "zh": "<p>这让开发者能够控制那些决定 Agent 是否适合其产品的部分：</p>"
+    },
+    {
+      "id": "new52_codex_platform-013",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>\n<p>The interface. A team can keep its existing dashboards, editors, queues, maps, records, and approval flows instead of forcing every interaction into a generic chat window.</p>\n</li>\n<li>\n<p>Context and tools. An application can expose the systems, documents, data, and actions that matter for a particular workflow, including application-owned <a href=\"https://developers.openai.com/codex/extend/mcp\" rel=\"noopener noreferrer\">MCP services</a>.</p>\n</li>\n<li>\n<p>Operational boundaries. The host application can decide where an agent runs, which files or tools it can access, which actions require approval, how work is observed, and how results return to the system of record.</p>\n</li>\n</ul>",
+      "zh": "<ul><li><p>界面。团队可以保留现有的仪表盘、编辑器、队列、地图、记录和审批流程，而不必强迫用户在通用聊天窗口中完成每一次交互。</p></li><li><p>上下文与工具。应用可以开放与某个具体工作流相关的系统、文档、数据和操作，包括应用自有的 <a href=\"https://developers.openai.com/codex/extend/mcp\" rel=\"noopener noreferrer\">MCP 服务</a>。</p></li><li><p>运行边界。宿主应用可以决定 Agent 在哪里运行、能访问哪些文件或工具、哪些操作需要审批、如何观察工作过程，以及如何将结果写回权威记录系统。</p></li></ul>"
+    },
+    {
+      "id": "new52_codex_platform-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We publish the <a href=\"https://developers.openai.com/codex/cli\" rel=\"noopener noreferrer\">Codex CLI</a>, <a href=\"https://developers.openai.com/codex/app-server\" rel=\"noopener noreferrer\">app-server</a>, and <a href=\"https://developers.openai.com/codex/codex-sdk\" rel=\"noopener noreferrer\">official Codex SDK</a> as open-source components. Our <a href=\"https://developers.openai.com/codex/open-source\" rel=\"noopener noreferrer\">open-source components guide</a> lists what is available and where each component lives.</p>",
+      "zh": "<p>我们将 <a href=\"https://developers.openai.com/codex/cli\" rel=\"noopener noreferrer\">Codex CLI</a>、<a href=\"https://developers.openai.com/codex/app-server\" rel=\"noopener noreferrer\">app-server</a> 和<a href=\"https://developers.openai.com/codex/codex-sdk\" rel=\"noopener noreferrer\">官方 Codex SDK</a> 作为开源组件发布。<a href=\"https://developers.openai.com/codex/open-source\" rel=\"noopener noreferrer\">开源组件指南</a>列出了可用组件及其所在位置。</p>"
+    },
+    {
+      "id": "new52_codex_platform-015",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The open-source layer is the harness and integration surface; model access and managed services remain separate.</p>",
+      "zh": "<p>开源的是运行框架和集成接口这一层；模型访问与托管服务仍然是独立的部分。</p>"
+    },
+    {
+      "id": "new52_codex_platform-016",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-choose-the-right-integration-layer\">Choose the right integration layer</h2>",
+      "zh": "<h2 id=\"zh-source-choose-the-right-integration-layer\">选择合适的集成层</h2>"
+    },
+    {
+      "id": "new52_codex_platform-017",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Building on Codex does not require the same integration for every use case.</p>",
+      "zh": "<p>基于 Codex 构建产品，并不意味着所有使用场景都要采用同一种集成方式。</p>"
+    },
+    {
+      "id": "new52_codex_platform-018",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>\n<p>For a script, CI job, or one-off background task, <a href=\"https://developers.openai.com/codex/non-interactive-mode\" rel=\"noopener noreferrer\">codex exec</a> can run a bounded agent workflow and return structured output.</p>\n</li>\n<li>\n<p>For application code that needs to start, resume, or stream Codex tasks, the <a href=\"https://developers.openai.com/codex/codex-sdk\" rel=\"noopener noreferrer\">official Codex SDK</a> provides a direct programmatic interface.</p>\n</li>\n</ul>",
+      "zh": "<ul><li><p>对于脚本、CI 作业或一次性后台任务，<a href=\"https://developers.openai.com/codex/non-interactive-mode\" rel=\"noopener noreferrer\">codex exec</a> 可以运行范围明确的 Agent 工作流，并返回结构化输出。</p></li><li><p>对于需要启动、恢复 Codex 任务或以流式方式接收其执行过程的应用代码，<a href=\"https://developers.openai.com/codex/codex-sdk\" rel=\"noopener noreferrer\">官方 Codex SDK</a> 提供了直接的编程接口。</p></li></ul>"
+    },
+    {
+      "id": "new52_codex_platform-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For a runnable example, see the <a href=\"https://learn.chatgpt.com/docs/codex-sdk\" rel=\"noopener noreferrer\">Codex SDK documentation</a>.</p>",
+      "zh": "<p>可运行示例见 <a href=\"https://learn.chatgpt.com/docs/codex-sdk\" rel=\"noopener noreferrer\">Codex SDK 文档</a>。</p>"
+    },
+    {
+      "id": "new52_codex_platform-020",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Use Codex app-server when the agent is part of the product itself. It lets your application connect to a local Codex process, keep conversations open, stream events, interrupt work, expose tools, and respond to approval requests. The SDK simplifies common programmatic workflows; app-server gives product teams direct control over the lifecycle and user experience.</p>",
+      "zh": "<p>当 Agent 是产品本身的一部分时，应使用 Codex app-server。它允许应用连接到本地 Codex 进程，保持对话持续进行、流式接收事件、中断工作、开放工具，并响应审批请求。SDK 简化常见的编程工作流；app-server 则让产品团队能够直接控制生命周期和用户体验。</p>"
+    },
+    {
+      "id": "new52_codex_platform-021",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-build-software-around-the-workflow\">Build software around the workflow</h2>",
+      "zh": "<h2 id=\"zh-source-build-software-around-the-workflow\">围绕工作流构建软件</h2>"
+    },
+    {
+      "id": "new52_codex_platform-022",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The most interesting opportunity is not to reproduce the Codex app with a different logo, but to build software that reflects how a specific person or team already works:</p>",
+      "zh": "<p>最值得探索的机会，不是给 Codex App 换个标志再做一遍，而是构建能够体现某个人或团队现有工作方式的软件：</p>"
+    },
+    {
+      "id": "new52_codex_platform-023",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>A security analyst might need an investigation queue, recent alerts, affected services, and an approval step before opening a remediation ticket. A support engineer might need account history, product logs, internal documentation, and a draft response. A product team might want a task board where moving an issue into a ready state begins a scoped implementation workflow.</p>",
+      "zh": "<p>安全分析师可能需要调查队列、近期告警、受影响的服务，以及在创建修复工单前进行审批的步骤。支持工程师可能需要账户历史、产品日志、内部文档和回复草稿。产品团队则可能希望有一块任务看板：将某个 issue 移到就绪状态，就能启动范围明确的实现工作流。</p>"
+    },
+    {
+      "id": "new52_codex_platform-024",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In each example, the interface is an important part of the experience. It tells the agent what the user is looking at, gives it the right tools, and gives the user a place to review what happens next.</p>",
+      "zh": "<p>在每个例子中，界面都是体验的重要组成部分。它告诉 Agent 用户正在查看什么，为 Agent 提供合适的工具，也给用户提供一个审阅后续操作的地方。</p>"
+    },
+    {
+      "id": "new52_codex_platform-025",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"Architecture diagram showing an application-owned interface, business context, and consent; Codex app-server agent loop and sandboxed execution; and application-owned MCP data and actions.\" src=\"/media/57d5c65617bee5a88fed456a.webp\" loading=\"lazy\" decoding=\"async\"><figcaption><p>Figure 1. Your application owns product context, business rules, and tools;\nCodex app-server provides the agent loop and sandboxed execution.</p></figcaption></figure>"
+    },
+    {
+      "id": "new52_codex_platform-026",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-example-relay\">Example: Relay</h2>",
+      "zh": "<h2 id=\"zh-source-example-relay\">示例：Relay</h2>"
+    },
+    {
+      "id": "new52_codex_platform-027",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>We built Relay as a sample operations application on Codex app-server. It places an agent beside a fictional shipment dashboard, connects it to application-owned MCP tools, and requires human approval before a shipment is rebooked.</p>",
+      "zh": "<p>我们基于 Codex app-server 构建了示例运营应用 Relay。它把 Agent 放在一个虚构的货运仪表盘旁边，将 Agent 连接到应用自有的 MCP 工具，并要求在重新预订货运之前获得人工批准。</p>"
+    },
+    {
+      "id": "new52_codex_platform-028",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The user does not start by writing a prompt from scratch. They select a shipment and click an action such as <strong>Compare recovery</strong>. The application supplies the relevant context, Codex retrieves the latest sample operational data, the agent explains the available options, and any consequential write requires approval.</p>",
+      "zh": "<p>用户不需要从零开始编写提示词。他们只需选择一票货运，再点击 <strong>Compare recovery（比较补救方案）</strong>之类的操作。应用会提供相关上下文，Codex 获取最新的示例运营数据，Agent 解释可选方案；任何会产生实际影响的写入操作都需要审批。</p>"
+    },
+    {
+      "id": "new52_codex_platform-029",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Codex can then use the application’s MCP tools to fetch current data before recommending—or, after approval, taking—an action. When a tool changes the underlying record, the application refreshes its business view. The harness handles the agent loop, conversation state, streamed activity, and tool interaction; the product continues to own its dashboard, records, and controls.</p>",
+      "zh": "<p>随后，Codex 可以使用应用的 MCP 工具获取当前数据，再提出操作建议，或在获批后执行操作。当工具修改了底层记录时，应用会刷新业务视图。运行框架负责 Agent 循环、对话状态、流式活动和工具交互；产品则继续负责自己的仪表盘、记录和控制机制。</p>"
+    },
+    {
+      "id": "new52_codex_platform-030",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Relay uses fictional seeded data, but the integration pattern is general. The same pattern could power incident response, account operations, research workflows, or other applications where an agent should work inside an existing product experience.</p>",
+      "zh": "<p>Relay 使用的是预置的虚构数据，但这种集成模式具有通用性。同样的模式可以用于事件响应、账户运营、研究工作流，或其他需要 Agent 在既有产品体验中工作的应用。</p>"
+    },
+    {
+      "id": "new52_codex_platform-031",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"Relay shipment operations dashboard showing an exception queue, shipment details, and a Codex agent investigating a delayed shipment.\" src=\"/media/d01c6abf5e49f0430446bb84.webp\" loading=\"lazy\" decoding=\"async\"><figcaption><p>Figure 2. Relay embeds Codex in a shipment operations dashboard, with\napplication-owned MCP tools and human approval for consequential actions.</p></figcaption></figure>"
+    },
+    {
+      "id": "new52_codex_platform-032",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-what-developers-are-building\">What developers are building</h2>",
+      "zh": "<h2 id=\"zh-source-what-developers-are-building\">开发者正在构建什么</h2>"
+    },
+    {
+      "id": "new52_codex_platform-033",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This pattern is already showing up in public implementations:</p>",
+      "zh": "<p>这种模式已经出现在公开的实现中：</p>"
+    },
+    {
+      "id": "new52_codex_platform-034",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul>\n<li>\n<a href=\"https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/\" rel=\"noopener noreferrer\"><p>GitHub and JetBrains</p></a>\n<p>bring Codex into existing IDE workflows.</p>\n</li>\n<li>\n<a href=\"https://blogs.cisco.com/ai/from-an-idea-to-a-live-app-on-cisco-in-minutes\" rel=\"noopener noreferrer\"><p>Cisco</p></a>\n<p>uses the Codex SDK in App Builder inside Cisco Cloud Control.</p>\n</li>\n<li>\n<a href=\"https://openai.com/index/building-self-improving-tax-agents-with-codex/\" rel=\"noopener noreferrer\"><p>Thrive Holdings and Crete</p></a>\n<p>use Codex in a tax-preparation workflow that incorporates practitioner\nfeedback. Their pilot processed 7,000 returns and reduced preparation time by\nabout a third.</p>\n</li>\n</ul>",
+      "zh": "<ul><li><a href=\"https://github.blog/changelog/2026-07-07-codex-as-agent-provider-and-agentic-enhancements-in-jetbrains-ides/\" rel=\"noopener noreferrer\"><p>GitHub 和 JetBrains</p></a><p>将 Codex 引入现有的 IDE 工作流。</p></li><li><a href=\"https://blogs.cisco.com/ai/from-an-idea-to-a-live-app-on-cisco-in-minutes\" rel=\"noopener noreferrer\"><p>Cisco</p></a><p>在 Cisco Cloud Control 内的 App Builder 中使用 Codex SDK。</p></li><li><a href=\"https://openai.com/index/building-self-improving-tax-agents-with-codex/\" rel=\"noopener noreferrer\"><p>Thrive Holdings 和 Crete</p></a><p>将 Codex 用于纳入从业者反馈的报税准备工作流。他们的试点处理了 7,000 份报税表，并将准备时间缩短了约三分之一。</p></li></ul>"
+    },
+    {
+      "id": "new52_codex_platform-035",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>These examples are not limited to engineering: the same pattern applies to support teams investigating customer issues, operations teams coordinating workflows, security teams triaging incidents, sales teams researching accounts, and marketing teams developing campaigns. In each case, the application provides the context, tools, and approvals, while Codex powers the underlying agent loop.</p>",
+      "zh": "<p>这些例子并不限于工程领域。同样的模式也适用于调查客户问题的支持团队、协调工作流的运营团队、对安全事件进行分诊的安全团队、研究客户账户的销售团队，以及策划活动的营销团队。在每种情况下，应用负责提供上下文、工具和审批，Codex 则为底层 Agent 循环提供支持。</p>"
+    },
+    {
+      "id": "new52_codex_platform-036",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-build-beyond-the-obvious\">Build beyond the obvious</h2>",
+      "zh": "<h2 id=\"zh-source-build-beyond-the-obvious\">探索更广泛的构建方式</h2>"
+    },
+    {
+      "id": "new52_codex_platform-037",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>For many kinds of work, the essential context is grounded in a dashboard, a timeline, a map, a document, or a system record. Those views are not there to be pretty: it is how people actually understand what is happening, make decisions, and stay in control.</p>",
+      "zh": "<p>对于许多工作，关键上下文都落在仪表盘、时间线、地图、文档或系统记录中。这些视图并非只是为了好看：人们正是通过它们理解正在发生的事情、作出决策并保持控制。</p>"
+    },
+    {
+      "id": "new52_codex_platform-038",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The opportunity is not to replace those interfaces with a universal chat box, but to make them more capable by giving them an agent that can understand the work, investigate the right context, propose a next step, and take an approved action.</p>",
+      "zh": "<p>机会不在于用一个通用聊天框取代这些界面，而在于为它们配备一个能够理解工作、调查相关上下文、提出下一步建议并执行获批操作的 Agent，从而增强这些界面的能力。</p>"
+    },
+    {
+      "id": "new52_codex_platform-039",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The Codex app, CLI, and IDE extension show what the harness can do. By making the harness open source, we give developers a way to inspect those capabilities, integrate them, and adapt them to their own products and workflows.</p>",
+      "zh": "<p>Codex App、CLI 和 IDE 扩展展示了运行框架能做什么。通过开源运行框架，我们让开发者能够检查这些能力、将其集成进产品，并针对自己的产品和工作流进行调整。</p>"
+    },
+    {
+      "id": "new52_codex_platform-040",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>If you want to build with the Codex harness, start with the <a href=\"https://github.com/openai/codex\" rel=\"noopener noreferrer\">open-source Codex repository</a>, then choose the integration that fits your product: <a href=\"https://developers.openai.com/codex/non-interactive-mode\" rel=\"noopener noreferrer\">codex exec</a> for noninteractive jobs, the <a href=\"https://developers.openai.com/codex/codex-sdk\" rel=\"noopener noreferrer\">Codex SDK</a> for programmatic agent workflows, or <a href=\"https://developers.openai.com/codex/app-server\" rel=\"noopener noreferrer\">Codex app-server</a> for applications that need persistent conversations, streamed events, and approval handling.</p>",
+      "zh": "<p>如果你想基于 Codex 运行框架构建产品，可以从 <a href=\"https://github.com/openai/codex\" rel=\"noopener noreferrer\">Codex 开源仓库</a>开始，再选择适合产品的集成方式：非交互式作业使用 <a href=\"https://developers.openai.com/codex/non-interactive-mode\" rel=\"noopener noreferrer\">codex exec</a>；通过编程实现的 Agent 工作流使用 <a href=\"https://developers.openai.com/codex/codex-sdk\" rel=\"noopener noreferrer\">Codex SDK</a>；需要持久对话、流式事件和审批处理的应用使用 <a href=\"https://developers.openai.com/codex/app-server\" rel=\"noopener noreferrer\">Codex app-server</a>。</p>"
+    }
+  ],
+  "description": "大多数人通过 App、命令行界面或 IDE 扩展认识 Codex。这些使用方式很重要，但它们只是同一底层系统的几种用途",
+  "reading_minutes": 7,
+  "downloads": {}
+}

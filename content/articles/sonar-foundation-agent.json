@@ -1,0 +1,154 @@
+{
+  "title": "Sonar Foundation Agent 介绍",
+  "original_title": "Introducing Sonar Foundation Agent",
+  "url": "https://www.sonarsource.com/blog/introducing-sonar-foundation-agent/",
+  "date": "2025-11-14",
+  "publisher": "Sonar",
+  "author": "Haifeng Ruan",
+  "source_order": 44,
+  "slug": "sonar-foundation-agent",
+  "source_id": "new44_sonar_foundation_agent",
+  "category": "评测与改进",
+  "blocks": [
+    {
+      "id": "new44_sonar_foundation_agent-000",
+      "tag": "img",
+      "preserve": true,
+      "en": "<img alt=\"\" src=\"/media/9480c24f549e279532e74370.webp\" loading=\"lazy\" decoding=\"async\">"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-001",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-tldr-overview\">TL;DR overview</h2>",
+      "zh": "<h2 id=\"zh-source-tldr-overview\">要点概览</h2>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-002",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li>The Sonar Foundation Agent is an AI-powered agentic tool that autonomously detects and remedies code quality and security issues, operating within the boundaries defined by Sonar's analysis engine.</li><li>Unlike general-purpose AI coding assistants, the Foundation Agent grounds its fixes in verified SonarQube findings, ensuring remediation targets real issues rather than hallucinated problems.</li><li>The agent integrates into existing CI/CD workflows, enabling automated fix proposals to be created and reviewed in pull requests—keeping humans in control of which fixes are accepted.</li><li>Early use cases include automating remediation of well-defined, deterministic issues like hardcoded secrets, missing null checks, and common security anti-patterns identified by Sonar's rules.</li></ul>",
+      "zh": "<ul><li>Sonar Foundation Agent 是一款由 AI 驱动的 Agent 工具，能够自主检测和修复代码质量与安全问题，并在 Sonar 分析引擎界定的范围内运行。</li><li>与通用 AI 编程助手不同，Foundation Agent 以经过验证的 SonarQube 检查结果作为修复依据，确保修复针对的是真实问题，而非幻觉产生的问题。</li><li>该 Agent 可集成到现有 CI/CD 工作流中，自动提出修复方案，并通过拉取请求进行审查，让人类始终掌握接受哪些修复的决定权。</li><li>早期用例包括自动修复 Sonar 规则识别出的、定义明确且具有确定性的问题，例如硬编码密钥、缺失空值检查，以及常见的安全反模式。</li></ul>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-003",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sonar Foundation Agent is a coding agent for general software issues, developed at Sonar by the former <a href=\"https://www.sonarsource.com/company/press-releases/sonar-acquires-autocoderover-to-supercharge-developers-with-ai-agents/\" title=\"AutoCodeRover team\" rel=\"noopener noreferrer\">AutoCodeRover team</a>. As of November 3, 2025, Sonar Foundation Agent scores 75% on <a href=\"https://www.swebench.com/\" title=\"SWE-bench\" rel=\"noopener noreferrer\">SWE-bench</a> Verified, while maintaining a low average cost of $1.26 and a high efficiency of 10.5 min per issue.</p>",
+      "zh": "<p>Sonar Foundation Agent 是一个面向一般软件问题的编程 Agent，由原 <a href=\"https://www.sonarsource.com/company/press-releases/sonar-acquires-autocoderover-to-supercharge-developers-with-ai-agents/\" title=\"AutoCodeRover team\" rel=\"noopener noreferrer\">AutoCodeRover 团队</a>在 Sonar 开发。截至 2025 年 11 月 3 日，Sonar Foundation Agent 在 <a href=\"https://www.swebench.com/\" title=\"SWE-bench\" rel=\"noopener noreferrer\">SWE-bench</a> Verified 上的得分为 75%，同时保持每个问题平均 1.26 美元的低成本，以及 10.5 分钟的高处理效率。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-004",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-implementation-with-the-llamaindex-framework\">Implementation with the LlamaIndex framework</h2>",
+      "zh": "<h2 id=\"zh-source-implementation-with-the-llamaindex-framework\">使用 LlamaIndex 框架实现</h2>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-005",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sonar Foundation Agent is a tool-calling-style agent, implemented with the LlamaIndex framework. Configured with a carefully-designed system prompt, Sonar Foundation Agent receives the description of the issue to solve and then iteratively invokes tools to investigate and resolve the issue. The final output is a patch to the code in the unified diff format.</p>",
+      "zh": "<p>Sonar Foundation Agent 是一个采用工具调用方式的 Agent，使用 LlamaIndex 框架实现。配置了精心设计的系统提示词后，Sonar Foundation Agent 会接收待解决问题的描述，然后迭代调用工具，调查并解决问题。最终输出是采用统一差异格式（unified diff）的代码补丁。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-006",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Sonar Foundation Agent has the following tools:</p>",
+      "zh": "<p>Sonar Foundation Agent 配备了以下工具：</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-007",
+      "tag": "ul",
+      "preserve": false,
+      "en": "<ul><li><code>bash</code>: A tool for executing arbitrary commands in bash. The tool is stateful, i.e., the same bash process is used across invocations of the tool.</li><li><code>str_replace_editor</code>: A tool for viewing, creating, and editing files. The edits happen by means of string replacement.</li><li><code>find_symbols</code>: A tool for searching the program AST for symbols, including classes, methods, and functions. This is the same AST search tool introduced in the original AutoCodeRover agent, making it easy and reliable to find relevant symbol definitions in the program.</li></ul>",
+      "zh": "<ul><li><code>bash</code>：用于在 bash 中执行任意命令的工具。该工具具有状态，也就是说，多次工具调用使用的是同一个 bash 进程。</li><li><code>str_replace_editor</code>：用于查看、创建和编辑文件的工具。编辑通过字符串替换完成。</li><li><code>find_symbols</code>：用于在程序的抽象语法树（AST）中搜索符号的工具，搜索对象包括类、方法和函数。它与最初的 AutoCodeRover Agent 引入的 AST 搜索工具相同，可以方便、可靠地找到程序中相关符号的定义。</li></ul>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-008",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-lesson-learned-tailoring-agent-autonomy\">Lesson learned: Tailoring agent autonomy</h2>",
+      "zh": "<h2 id=\"zh-source-lesson-learned-tailoring-agent-autonomy\">经验总结：调整 Agent 的自主程度</h2>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-009",
+      "tag": "figure",
+      "preserve": true,
+      "en": "<figure><img alt=\"\" src=\"/media/0e6194c4972d574d9dcba32a.png\" loading=\"lazy\" decoding=\"async\"></figure>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-010",
+      "tag": "p",
+      "preserve": true,
+      "en": "<p><em>Figure 1. Efficacy increases with the level of agent autonomy</em></p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-011",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>In trying to improve the efficacy of Sonar Foundation Agent, our team has conducted extensive research and experiments. During this process, it became clear to us that the key to a great agent is to match the level of autonomy with the capability of the underlying model. As shown in Figure 1, with the current powerful LLMs, the efficacy of our agent on SWE-bench Verified increases when given more autonomy.</p>",
+      "zh": "<p>为了提高 Sonar Foundation Agent 的效果，我们团队开展了大量研究和实验。在此过程中，我们逐渐认识到，优秀 Agent 的关键是让其自主程度与底层模型的能力相匹配。如图 1 所示，在使用当前这些强大的大语言模型时，赋予 Agent 更多自主权，可以提高它在 SWE-bench Verified 上的效果。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-012",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-constrained-workflow-earlydays-autocoderover\">Constrained workflow: Early-days AutoCodeRover</h2>",
+      "zh": "<h2 id=\"zh-source-constrained-workflow-earlydays-autocoderover\">受约束的工作流：早期的 AutoCodeRover</h2>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-013",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Back in April 2024, our team developed AutoCodeRover, which was one of the earliest coding agents. It has a clearly-defined 2-stage workflow: context retrieval, followed by patch generation. Either stage is handled by a separate agent. In the context retrieval stage, AutoCodeRover would repeatedly invoke an AST search tool to find the buggy location and accumulate relevant context, and most of the autonomy of AutoCodeRover lies in what AST searches to perform and when to stop. In the patch generation stage, AutoCodeRover would simply write a patch with the accumulated context. There is no autonomy in deciding the workflow.</p>",
+      "zh": "<p>早在 2024 年 4 月，我们团队就开发了 AutoCodeRover，它是最早的一批编程 Agent 之一。它采用明确定义的 2 阶段工作流：先检索上下文，再生成补丁。每个阶段分别由独立的 Agent 处理。在上下文检索阶段，AutoCodeRover 会反复调用 AST 搜索工具，寻找存在缺陷的位置并积累相关上下文；它的大部分自主权体现在决定执行哪些 AST 搜索，以及何时停止搜索。在补丁生成阶段，AutoCodeRover 只需利用积累的上下文编写补丁。它没有自主决定工作流的权力。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-014",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The limited autonomy to AutoCodeRover was a conscious decision. At that time, the capability of LLMs to grasp a long context was limited. When we instructed a single agent to first retrieve context and then write a patch, it would have lost sight of some context collected early on when writing the patch. Moreover, oftentimes, it would not write a patch altogether. Therefore, we broke the workflow into two distinct stages: the context is first collected and summarized by a first agent, and a patch is written by a second agent. We found that the separation improved both context utilization and instruction following, boosting AutoCodeRover’s efficacy under limited LLM capability.</p>",
+      "zh": "<p>我们有意限制了 AutoCodeRover 的自主权。当时，大语言模型理解长上下文的能力有限。如果我们要求单个 Agent 先检索上下文，再编写补丁，那么到编写补丁时，它就会忽略一部分较早收集到的上下文。而且，它经常根本不编写补丁。因此，我们将工作流分为两个独立阶段：第一个 Agent 先收集并总结上下文，第二个 Agent 再编写补丁。我们发现，这种拆分同时改善了上下文利用和指令遵循，让 AutoCodeRover 在大语言模型能力有限的情况下取得了更好的效果。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-015",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-more-autonomy-in-workflow-and-tools-sonar-foundation-agent\">More autonomy in workflow and tools: Sonar Foundation Agent</h2>",
+      "zh": "<h2 id=\"zh-source-more-autonomy-in-workflow-and-tools-sonar-foundation-agent\">在工作流和工具上给予更多自主权：Sonar Foundation Agent</h2>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-016",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>This time around, while developing Sonar Foundation Agent, we re-examined AutoCodeRover’s two-stage workflow and its basis. We realized that the capability of LLMs have evolved a lot over the past year and a half, and that the agent might now benefit from a more free workflow. Therefore, we switched to a single-agent workflow. The two-stage workflow was not totally discarded. Instead, we prompted the single agent to work in several stages, including the two stages and more patch testing and validation. We were glad to find that the latest models, including GPT-5 and Claude Sonnet 4.5, are able to deal with a longer context window and follow instructions significantly better. Using the same LLM, the change in workflow resulted in an efficacy boost from about 58% (“Two-Stage Workflow” in Figure 1) to 70% (“Free Workflow” in Figure 1).</p>",
+      "zh": "<p>这一次，在开发 Sonar Foundation Agent 时，我们重新审视了 AutoCodeRover 的两阶段工作流及其设计依据。我们意识到，在过去一年半里，大语言模型的能力已经大幅进步，现在 Agent 或许能从更加自由的工作流中获益。因此，我们改用了单 Agent 工作流。但我们并未完全抛弃两阶段工作流，而是通过提示词要求这个 Agent 分若干阶段工作，其中既包括原来的两个阶段，也包括更多补丁测试和验证。我们欣喜地发现，包括 GPT-5 和 Claude Sonnet 4.5 在内的最新模型能够处理更长的上下文窗口，指令遵循能力也显著提升。在使用同一个大语言模型的情况下，这一工作流调整将效果从约 58%（图 1 中的“Two-Stage Workflow”，即“两阶段工作流”）提高到了 70%（图 1 中的“Free Workflow”，即“自由工作流”）。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-017",
+      "tag": "h2",
+      "preserve": false,
+      "en": "<h2 id=\"en-source-more-autonomy-in-prompts-leveraging-thinking-models\">More autonomy in prompts: Leveraging thinking models</h2>",
+      "zh": "<h2 id=\"zh-source-more-autonomy-in-prompts-leveraging-thinking-models\">在提示词上给予更多自主权：发挥思考模型的能力</h2>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-018",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>Finally, we sought to unlock the power of thinking models. In an initial attempt, we simply turned on the extended thinking of Claude Sonnet 4.5. However, the efficacy remained at about 70%. We realized that the prompt was so detailed that even with extended thinking, the agent would do largely the same things and achieve similar results. Our realization was corroborated by Claude’s official prompting guide, which says thinking models can benefit from more concise and less prescriptive prompts. In light of this, we distilled the essence of our prompt, highlighting a test-driven approach to issue resolving, while removing the overly prescriptive instructions. This improvement in prompts gave us a final boost of efficacy to 75% (“Free Workflow+Extended Thinking” in the chart above).</p>",
+      "zh": "<p>最后，我们尝试释放思考模型的能力。最初，我们只是开启了 Claude Sonnet 4.5 的扩展思考功能，但效果仍停留在约 70%。我们意识到，提示词写得过于详细，即使开启扩展思考，Agent 做的事情也基本相同，因此结果也很接近。Claude 官方提示词指南印证了我们的认识：思考模型可以从更简洁、规定更少的提示词中获益。据此，我们提炼了提示词的核心内容，突出以测试驱动的方式解决问题，同时移除了规定过于具体的指令。这次提示词改进最终将效果进一步提升至 75%（上图中的“Free Workflow+Extended Thinking”，即“自由工作流＋扩展思考”）。</p>"
+    },
+    {
+      "id": "new44_sonar_foundation_agent-019",
+      "tag": "p",
+      "preserve": false,
+      "en": "<p>The journey from AutoCodeRover to the Sonar Foundation Agent offers a critical insight for the future of agentic coding: as underlying models grow more powerful, we must grant them more autonomy. Our research clearly shows that moving from a constrained, two-stage process to a \"Free Workflow\" and refining prompts to be less prescriptive unlocked the agent's full potential, boosting efficacy from 58% to 75%. This principle of matching agent autonomy to model capability will be foundational as we continue to push the boundaries of AI-driven software development.</p>",
+      "zh": "<p>从 AutoCodeRover 到 Sonar Foundation Agent 的发展历程，为 Agent 编程的未来提供了一条关键启示：随着底层模型越来越强大，我们必须赋予它们更多自主权。我们的研究清楚地表明，从受约束的两阶段流程转向“自由工作流”，并减少提示词中规定过细的内容，能够释放 Agent 的全部潜力，将效果从 58% 提升至 75%。在我们继续拓展 AI 驱动的软件开发边界时，让 Agent 的自主程度与模型能力相匹配，将成为一项基础原则。</p>"
+    }
+  ],
+  "description": "Sonar Foundation Agent 是一个面向一般软件问题的编程 Agent，由原 AutoCodeRover 团队在 Sonar 开发。截至 2025 年 11 月 3 日，Sonar Foundation Agent 在 SWE-ben…",
+  "reading_minutes": 6,
+  "downloads": {}
+}
